@@ -41,6 +41,20 @@
     -fx-cursor: hand;
 }
 
+.close-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 24px;
+    -fx-cursor: hand;
+}
+
+.reset-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+}
+
 /* --- setings sidebar --- */
 .settings-sidebar {
     -fx-background-color: -bg-settings;
@@ -61,12 +75,7 @@
     -fx-padding: 10 0 5 0;
 }
 
-.close-button {
-    -fx-background-color: transparent;
-    -fx-text-fill: -text-muted;
-    -fx-font-size: 24px;
-    -fx-cursor: hand;
-}
+
 
 /* --- sidebar styles --- */
 .slider .track {

@@ -127,6 +127,14 @@ public class PomodoroEngine {
     public void stop() {
         timeline.stop();
     }
+    public void resetToDefaults() {
+        this.workMins = 25;
+        this.shortMins = 5;
+        this.longMins = 15;
+        this.interval = 4;
+        this.autoStartBreaks = false;
+        this.autoStartPomodoros = false;
+    }
     //endregion
 
     //region Setters

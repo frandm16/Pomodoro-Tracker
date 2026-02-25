@@ -11,7 +11,7 @@
     <VBox alignment="CENTER" spacing="50">
         <VBox alignment="CENTER" spacing="15">
             <HBox alignment="CENTER" spacing="25">
-                <Button fx:id="settingsBtn" onAction="#toggleSettings" styleClass="button-secondary" text="⚙ Settings" />
+                <Button onAction="#toggleSettings" styleClass="button-secondary" text="⚙ Settings" />
                 <Label fx:id="stateLabel" text="READY TO START" styleClass="state-label" />
             </HBox>
 
@@ -41,7 +41,12 @@
         <Separator />
 
         <VBox spacing="25">
-            <Label text="Time (minutes)" styleClass="section-label" />
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Time (minutes)" styleClass="section-label" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button  onAction="#handleResetTimeSettings" text="Reset" styleClass="reset-button" />
+            </HBox>
+
 
             <VBox spacing="8">
                 <HBox alignment="CENTER_LEFT">
@@ -91,5 +96,6 @@
                 </VBox>
             </VBox>
         </VBox>
+
     </VBox>
 </StackPane>

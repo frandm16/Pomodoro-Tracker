@@ -1,13 +1,24 @@
 package com.frandm.pomodoro;
 
+//region JavaFX Animation & Layout
 import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
+
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.paint.Color;
+import javafx.util.Duration;
+//endregion
+//region JavaFX UI Controls & Application
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
+//endregion
 
 public class PomodoroController {
 
@@ -18,7 +29,7 @@ public class PomodoroController {
     @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel;
     @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider;
     @FXML private ToggleButton autoBreakToggle, autoPomoToggle;
-    @FXML private Button startPauseBtn, skipBtn, finishBtn, settingsBtn;
+    @FXML private Button startPauseBtn, skipBtn, finishBtn;
     //endregion
 
     //region Variables
@@ -41,14 +52,14 @@ public class PomodoroController {
 
         autoBreakToggle.setSelected(engine.isAutoStartBreaks());
         autoBreakToggle.setText(autoBreakToggle.isSelected() ? "ON" : "OFF");
-        autoBreakToggle.selectedProperty().addListener((obs, old, isSelected) -> {
+        autoBreakToggle.selectedProperty().addListener((_, _, isSelected) -> {
             autoBreakToggle.setText(isSelected ? "ON" : "OFF");
             updateEngineFlags();
         });
 
         autoPomoToggle.setSelected(engine.isAutoStartPomo());
         autoPomoToggle.setText(autoPomoToggle.isSelected() ? "ON" : "OFF");
-        autoPomoToggle.selectedProperty().addListener((obs, old, isSelected) -> {
+        autoPomoToggle.selectedProperty().addListener((_, _, isSelected) -> {
             autoPomoToggle.setText(isSelected ? "ON" : "OFF");
             updateEngineFlags();
         });
@@ -66,7 +77,7 @@ public class PomodoroController {
         slider.setValue(initialValue);
         label.setText(String.valueOf(initialValue));
 
-        slider.valueProperty().addListener((obs, oldVal, newVal) -> {
+        slider.valueProperty().addListener((_, _, newVal) -> {
             int val = newVal.intValue();
             label.setText(String.valueOf(val));
             updateAction.accept(val);
@@ -133,6 +144,21 @@ public class PomodoroController {
         engine.resetTimeForState(PomodoroEngine.State.MENU);
         updateUIFromEngine();
     }
+
+    @FXML
+    private void handleResetTimeSettings() {
+        engine.resetToDefaults();
+
+        workSlider.setValue(engine.getWorkMins());
+        shortSlider.setValue(engine.getShortMins());
+        longSlider.setValue(engine.getLongMins());
+        intervalSlider.setValue(engine.getInterval());
+
+        autoBreakToggle.setSelected(engine.isAutoStartBreaks());
+        autoPomoToggle.setSelected(engine.isAutoStartPomo());
+
+        updateUIFromEngine();
+    }
     //endregion
 
     //region UI Updates
@@ -141,8 +167,6 @@ public class PomodoroController {
         PomodoroEngine.State logical = engine.getLogicalState();
 
         boolean isMenu = (current == PomodoroEngine.State.MENU);
-        settingsBtn.setVisible(isMenu);
-        settingsBtn.setManaged(isMenu);
 
         boolean isWaitingOrMenu = (current == PomodoroEngine.State.WAITING || isMenu);
         startPauseBtn.setText(isWaitingOrMenu ? "START" : "PAUSE");
@@ -157,24 +181,58 @@ public class PomodoroController {
 
         switch (logical) {
             case WORK -> {
-                rootPane.setStyle("-fx-background-color: -color-work;");
+                animateBackgroundTransition("-color-work");
                 int session = engine.getSessionCounter() + 1;
                 stateLabel.setText(String.format("Pomodoro - Session %d", session));
             }
             case SHORT_BREAK -> {
-                rootPane.setStyle("-fx-background-color: -color-break;");
+                animateBackgroundTransition("-color-break");
                 stateLabel.setText("Short Break");
             }
             case LONG_BREAK -> {
-                rootPane.setStyle("-fx-background-color: -color-long-break;");
+                animateBackgroundTransition("-color-long-break");
                 stateLabel.setText("Long Break");
             }
             case MENU -> {
-                rootPane.setStyle("-fx-background-color: -color-menu;");
+                animateBackgroundTransition("-color-menu");
                 stateLabel.setText("Pomodoro");
             }
             default -> {}
         }
     }
+    //endregion
+
+    //region Animations
+    private void animateBackgroundTransition(String cssVar) {
+        Background currentBg = rootPane.getBackground();
+        Color start = (currentBg != null && !currentBg.getFills().isEmpty())
+                ? (Color) currentBg.getFills().getFirst().getFill()
+                : Color.web("#34495E");
+
+        rootPane.setStyle("-fx-background-color: " + cssVar + ";");
+        rootPane.applyCss();
+
+        Timeline fade = getTimeline(start);
+        fade.play();
+    }
+
+    private Timeline getTimeline(Color start) {
+        Background nextBackground = rootPane.getBackground();
+
+        Color target = (nextBackground != null && !nextBackground.getFills().isEmpty())
+                ? (Color) nextBackground.getFills().getFirst().getFill()
+                : start;
+
+        var colorProp = new javafx.beans.property.SimpleObjectProperty<>(start);
+        colorProp.addListener((_, _, n) -> rootPane.setBackground(new Background(new BackgroundFill(n, null, null))));
+
+
+        return new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(colorProp, start)),
+                new KeyFrame(Duration.millis(200), new KeyValue(colorProp, target))
+        );
+    }
+
+
     //endregion
 }
