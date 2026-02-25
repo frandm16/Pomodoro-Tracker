@@ -3,21 +3,50 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.frandm.pomodoro.PomodoroController" style="-fx-background-color: #f4f4f4;">
+<VBox alignment="CENTER" spacing="15.0" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.frandm.pomodoro.PomodoroController" style="-fx-background-color: #f8f9fa;">
     <padding>
-        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0"/>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
 
-    <Label text="Study Subject:" style="-fx-font-weight: bold;"/>
-    <ComboBox fx:id="subjectSelector" prefWidth="250.0"/>
+    <HBox spacing="10" alignment="CENTER">
+        <VBox alignment="CENTER">
+            <Label text="Work" style="-fx-font-size: 10px;"/>
+            <TextField fx:id="workTimeField" text="25" prefWidth="40"/>
+        </VBox>
+        <VBox alignment="CENTER">
+            <Label text="Short" style="-fx-font-size: 10px;"/>
+            <TextField fx:id="shortTimeField" text="5" prefWidth="40"/>
+        </VBox>
+        <VBox alignment="CENTER">
+            <Label text="Long" style="-fx-font-size: 10px;"/>
+            <TextField fx:id="longTimeField" text="15" prefWidth="40"/>
+        </VBox>
+    </HBox>
 
-    <Label fx:id="timerLabel" text="45:00" style="-fx-font-size: 60px; -fx-font-family: 'Monospaced'; -fx-text-fill: #2c3e50;"/>
+    <Separator/>
 
-    <GridPane hgap="10" vgap="10" alignment="CENTER">
-        <Button fx:id="startButton" text="Start" onAction="#handleStart" prefWidth="100" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-background-color: #27ae60; -fx-text-fill: white;"/>
-        <Button fx:id="pauseButton" text="Pause" onAction="#handlePause" prefWidth="100" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-background-color: #f39c12; -fx-text-fill: white;"/>
-        <Button fx:id="finishButton" text="Finish" onAction="#handleFinish" prefWidth="100" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-background-color: #2980b9; -fx-text-fill: white;"/>
-        <Button fx:id="resetButton" text="Reset" onAction="#handleReset" prefWidth="100" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
-    </GridPane>
+    <Label fx:id="stateLabel" text="READY TO FOCUS"
+           style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #34495e;"/>
+
+    <Label fx:id="timerLabel" text="25:00"
+           style="-fx-font-size: 65px; -fx-font-family: 'Monospaced'; -fx-text-fill: #2c3e50;"/>
+
+    <Label fx:id="sessionsLabel" text="Sessions: 0" style="-fx-text-fill: #7f8c8d;"/>
+
+    <Separator/>
+
+    <HBox spacing="10" alignment="CENTER">
+        <Button fx:id="startButton" text="Start" onAction="#handleStart" prefWidth="80"
+                style="-fx-background-color: #27ae60; -fx-text-fill: white;"/>
+        <Button fx:id="pauseButton" text="Pause" onAction="#handlePause" prefWidth="80" disable="true"
+                style="-fx-background-color: #f39c12; -fx-text-fill: white;"/>
+    </HBox>
+
+    <HBox spacing="10" alignment="CENTER">
+        <Button fx:id="finishButton" text="Finish &amp; Save" onAction="#handleFinish" prefWidth="120"
+                style="-fx-background-color: #2980b9; -fx-text-fill: white;"/>
+        <Button fx:id="resetButton" text="Reset" onAction="#handleReset" prefWidth="80"
+                style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+    </HBox>
 </VBox>

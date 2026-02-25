@@ -2,65 +2,83 @@ package com.frandm.pomodoro;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.paint.Color;
 
 public class PomodoroController {
-    @FXML private Label timerLabel;
-    @FXML private ComboBox<String> subjectSelector;
-    @FXML private Button startButton, pauseButton, finishButton, resetButton;
+    @FXML private Label timerLabel, stateLabel, sessionsLabel;
+    @FXML private TextField workTimeField, shortTimeField, longTimeField;
+    @FXML private Button startButton, pauseButton;
 
-    private PomodoroEngine pomodoroEngine;
-    private final int DEFAULT_MINUTES = 45;
+    private PomodoroEngine engine;
 
     @FXML
     public void initialize() {
         DatabaseHandler.initializeDatabase();
-        subjectSelector.getItems().addAll("test1", "test2"); // debug
-        subjectSelector.getSelectionModel().selectFirst(); // debug
 
-        pomodoroEngine = new PomodoroEngine(DEFAULT_MINUTES);
-        pomodoroEngine.setOnTick(() -> timerLabel.setText(pomodoroEngine.getFormattedTime()));
+        engine = new PomodoroEngine(25, 5, 15, 4);
+
+        engine.setOnTick(() -> timerLabel.setText(engine.getFormattedTime()));
+
+        engine.setOnStateChange(() -> {
+            updateUI();
+        });
+    }
+
+    private void updateUI() {
+        PomodoroEngine.State current = engine.getCurrentState();
+        stateLabel.setText("STAGE: " + current.name());
+        sessionsLabel.setText("Sessions completed: " + engine.getSessionCounter());
+
+        switch (current) {
+            case WORK -> stateLabel.setStyle("-fx-text-fill: #e74c3c;"); // Rojo
+            case SHORT_BREAK, LONG_BREAK -> stateLabel.setStyle("-fx-text-fill: #27ae60;"); // Verde
+            case WAITING -> stateLabel.setStyle("-fx-text-fill: #f39c12;"); // Naranja
+        }
     }
 
     @FXML
     private void handleStart() {
-        pomodoroEngine.start();
-        toggleButtons(true);
-        System.out.println("[DEBUG] pulsado start");
+        try {
+            engine.updateConfig(
+                    Integer.parseInt(workTimeField.getText()),
+                    Integer.parseInt(shortTimeField.getText()),
+                    Integer.parseInt(longTimeField.getText()),
+                    4
+            );
+
+            engine.start();
+            startButton.setDisable(true);
+            pauseButton.setDisable(false);
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid input in time fields");
+        }
     }
 
     @FXML
     private void handlePause() {
-        pomodoroEngine.pause();
-        toggleButtons(false);
-        System.out.println("[DEBUG] pulsado pause");
-    }
-
-    @FXML
-    private void handleReset() {
-        pomodoroEngine.reset();
-        timerLabel.setText(pomodoroEngine.getFormattedTime());
-        toggleButtons(false);
-        System.out.println("[DEBUG] pulsado reset");
+        engine.pause();
+        startButton.setDisable(false);
+        pauseButton.setDisable(true);
     }
 
     @FXML
     private void handleFinish() {
-        pomodoroEngine.stop();
-        int minutesDone = pomodoroEngine.getElapsedMinutes();
-        String subject = subjectSelector.getValue();
+        engine.stop();
+        int minutes = engine.getElapsedMinutes();
+        DatabaseHandler.saveSession("test", "tema1", "", minutes);
 
-        // only adds to the database if minutes studied >=1
-        if (minutesDone >= 1) {
-            DatabaseHandler.saveSession(subject, minutesDone);
-        }
-
-        handleReset(); // reset timer
-        System.out.println("[DEBUG] terminado");
+        handleReset();
+        System.out.println("[DEBUG] saved: " + minutes + " min");
     }
 
-    private void toggleButtons(boolean running) {
-        startButton.setDisable(running);
-        pauseButton.setDisable(!running);
+    @FXML
+    private void handleReset() {
+        engine.stop();
+        engine.resetToState(PomodoroEngine.State.WORK);
+        timerLabel.setText(engine.getFormattedTime());
+        stateLabel.setText("READY TO FOCUS");
+        stateLabel.setStyle("-fx-text-fill: #34495e;");
+        startButton.setDisable(false);
+        pauseButton.setDisable(true);
     }
-
 }
