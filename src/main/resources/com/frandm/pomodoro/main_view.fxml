@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.frandm.pomodoro.PomodoroController" style="-fx-background-color: #f4f4f4;">
+    <padding>
+        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0"/>
+    </padding>
+
+    <Label text="Study Subject:" style="-fx-font-weight: bold;"/>
+    <ComboBox fx:id="subjectSelector" prefWidth="250.0"/>
+
+    <Label fx:id="timerLabel" text="45:00" style="-fx-font-size: 60px; -fx-font-family: 'Monospaced'; -fx-text-fill: #2c3e50;"/>
+
+    <GridPane hgap="10" vgap="10" alignment="CENTER">
+        <Button fx:id="startButton" text="Start" onAction="#handleStart" prefWidth="100" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-background-color: #27ae60; -fx-text-fill: white;"/>
+        <Button fx:id="pauseButton" text="Pause" onAction="#handlePause" prefWidth="100" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-background-color: #f39c12; -fx-text-fill: white;"/>
+        <Button fx:id="finishButton" text="Finish" onAction="#handleFinish" prefWidth="100" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-background-color: #2980b9; -fx-text-fill: white;"/>
+        <Button fx:id="resetButton" text="Reset" onAction="#handleReset" prefWidth="100" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+    </GridPane>
+</VBox>
