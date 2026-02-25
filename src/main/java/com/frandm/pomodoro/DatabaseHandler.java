@@ -25,21 +25,24 @@ public class DatabaseHandler {
     }
 
     public static void saveSession(String subject, String topic, String description, int minutes) {
-        String sql = "INSERT INTO sessions(subject, topic, description, duration_minutes) VALUES(?, ?, ?, ?)";
+        if(minutes>=1){
+            String sql = "INSERT INTO sessions(subject, topic, description, duration_minutes) VALUES(?, ?, ?, ?)";
 
-        try (Connection conn = DriverManager.getConnection(URL);
-             PreparedStatement test = conn.prepareStatement(sql)) {
+            try (Connection conn = DriverManager.getConnection(URL);
+                 PreparedStatement test = conn.prepareStatement(sql)) {
 
-            test.setString(1, subject);
-            test.setString(2, topic);
-            test.setString(3, description);
-            test.setInt(4, minutes);
+                test.setString(1, subject);
+                test.setString(2, topic);
+                test.setString(3, description);
+                test.setInt(4, minutes);
 
-            test.executeUpdate();
-            System.out.println("[DEBUG] session saved: " + subject + " - " + topic);
+                test.executeUpdate();
+                System.out.println("[DEBUG] session saved: " + subject + " - " + topic + " - " + minutes + " min");
 
-        } catch (SQLException e) {
-            System.err.println("save error: " + e.getMessage());
+            } catch (SQLException e) {
+                System.err.println("save error: " + e.getMessage());
+            }
         }
+
     }
 }

@@ -1,84 +1,118 @@
 package com.frandm.pomodoro;
 
+import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
+import javafx.application.Platform;
 
 public class PomodoroController {
-    @FXML private Label timerLabel, stateLabel, sessionsLabel;
-    @FXML private TextField workTimeField, shortTimeField, longTimeField;
-    @FXML private Button startButton, pauseButton;
 
-    private PomodoroEngine engine;
+    @FXML private VBox settingsPane;
+    @FXML private Label timerLabel, stateLabel;
+    @FXML private Spinner<Integer> workSpinner, shortSpinner, longSpinner, intervalSpinner;
+    @FXML private ToggleButton autoBreakToggle, autoPomoToggle;
+    @FXML private Button startPauseBtn;
+
+    private boolean isSettingsOpen = false;
+    private PomodoroEngine engine = new PomodoroEngine();
 
     @FXML
     public void initialize() {
         DatabaseHandler.initializeDatabase();
 
-        engine = new PomodoroEngine(25, 5, 15, 4);
+        workSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 60, 25));
+        shortSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 30, 5));
+        longSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 45, 15));
+        intervalSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, 4));
 
-        engine.setOnTick(() -> timerLabel.setText(engine.getFormattedTime()));
+        engine.setOnTick(() -> Platform.runLater(() -> timerLabel.setText(engine.getFormattedTime())));
+        engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
 
-        engine.setOnStateChange(() -> {
-            updateUI();
-        });
-    }
-
-    private void updateUI() {
-        PomodoroEngine.State current = engine.getCurrentState();
-        stateLabel.setText("STAGE: " + current.name());
-        sessionsLabel.setText("Sessions completed: " + engine.getSessionCounter());
-
-        switch (current) {
-            case WORK -> stateLabel.setStyle("-fx-text-fill: #e74c3c;"); // Rojo
-            case SHORT_BREAK, LONG_BREAK -> stateLabel.setStyle("-fx-text-fill: #27ae60;"); // Verde
-            case WAITING -> stateLabel.setStyle("-fx-text-fill: #f39c12;"); // Naranja
-        }
+        updateUIFromEngine();
     }
 
     @FXML
-    private void handleStart() {
-        try {
-            engine.updateConfig(
-                    Integer.parseInt(workTimeField.getText()),
-                    Integer.parseInt(shortTimeField.getText()),
-                    Integer.parseInt(longTimeField.getText()),
-                    4
-            );
+    private void toggleSettings() {
+        TranslateTransition transition = new TranslateTransition(Duration.millis(350), settingsPane);
+        if (isSettingsOpen) {
+            transition.setToY(450);
+            applySettings();
+        } else {
+            transition.setToY(0);
+        }
+        transition.play();
+        isSettingsOpen = !isSettingsOpen;
+    }
 
+    private void applySettings() {
+        engine.updateSettings(
+                workSpinner.getValue(),
+                shortSpinner.getValue(),
+                longSpinner.getValue(),
+                intervalSpinner.getValue(),
+                autoBreakToggle.isSelected(),
+                autoPomoToggle.isSelected()
+        );
+    }
+
+    @FXML
+    private void handleStartPause() {
+        if (engine.getCurrentState() == PomodoroEngine.State.WAITING || engine.getCurrentState() == PomodoroEngine.State.MENU) {
             engine.start();
-            startButton.setDisable(true);
-            pauseButton.setDisable(false);
-        } catch (NumberFormatException e) {
-            System.err.println("Invalid input in time fields");
+        } else {
+            engine.pause();
         }
     }
 
     @FXML
-    private void handlePause() {
-        engine.pause();
-        startButton.setDisable(false);
-        pauseButton.setDisable(true);
+    private void handleSkip() {
+        engine.skip();
     }
 
     @FXML
     private void handleFinish() {
-        engine.stop();
-        int minutes = engine.getElapsedMinutes();
-        DatabaseHandler.saveSession("test", "tema1", "", minutes);
+        int mins = engine.getRealMinutesElapsed();
+        DatabaseHandler.saveSession("Estudio", "Sesión Terminada", "Guardado manual", mins);
 
-        handleReset();
-        System.out.println("[DEBUG] saved: " + minutes + " min");
+        engine.clearElapsedSeconds();
+        engine.stop();
+        engine.resetTimeForState(PomodoroEngine.State.MENU);
+        updateUIFromEngine();
     }
 
-    @FXML
-    private void handleReset() {
-        engine.stop();
-        engine.resetToState(PomodoroEngine.State.WORK);
-        timerLabel.setText(engine.getFormattedTime());
-        stateLabel.setText("READY TO FOCUS");
-        stateLabel.setStyle("-fx-text-fill: #34495e;");
-        startButton.setDisable(false);
-        pauseButton.setDisable(true);
+    private void updateUIFromEngine() {
+        PomodoroEngine.State current = engine.getCurrentState();
+
+        if (current == PomodoroEngine.State.WAITING || current == PomodoroEngine.State.MENU) {
+            startPauseBtn.setText("START");
+        } else {
+            startPauseBtn.setText("PAUSE");
+        }
+
+        switch (current) {
+            case WORK -> {
+                int session = engine.getSessionCounter() + 1;
+                stateLabel.setText(String.format("FOCUS TIME - %d", session));
+                stateLabel.setStyle("-fx-text-fill: #e74c3c;");
+            }
+            case SHORT_BREAK -> {
+                stateLabel.setText("BREAK TIME");
+                stateLabel.setStyle("-fx-text-fill: #27ae60;");
+            }
+            case LONG_BREAK -> {
+                stateLabel.setText("LONG BREAK TIME");
+                stateLabel.setStyle("-fx-text-fill: #27ae60;");
+            }
+            case WAITING -> {
+                stateLabel.setText("PAUSED");
+                stateLabel.setStyle("-fx-text-fill: #f39c12;");
+            }
+            case MENU -> {
+                stateLabel.setText("READY TO START");
+                stateLabel.setStyle("-fx-text-fill: #7f8c8d;");
+            }
+        }
     }
 }
