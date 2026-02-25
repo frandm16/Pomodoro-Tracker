@@ -11,33 +11,33 @@ import javafx.util.Duration;
 
 public class PomodoroController {
 
+    //region @FXML Components
     @FXML private StackPane rootPane;
     @FXML private VBox settingsPane;
     @FXML private Label timerLabel, stateLabel;
-
-    // Labels para mostrar el valor numérico de los Sliders
     @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel;
-
-    // Sliders
     @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider;
-
     @FXML private ToggleButton autoBreakToggle, autoPomoToggle;
     @FXML private Button startPauseBtn, skipBtn, finishBtn, settingsBtn;
+    //endregion
 
+    //region Variables
     private boolean isSettingsOpen = false;
-    private PomodoroEngine engine = new PomodoroEngine();
+    private final PomodoroEngine engine = new PomodoroEngine();
     private TranslateTransition settingsAnim;
+    //endregion
 
+    //region Initializer
     @FXML
     public void initialize() {
         DatabaseHandler.initializeDatabase();
 
         settingsPane.setTranslateX(-600);
 
-        setupSlider(workSlider, workValLabel, engine.getWorkMins(), val -> engine.setWorkMins(val));
-        setupSlider(shortSlider, shortValLabel, engine.getShortMins(), val -> engine.setShortMins(val));
-        setupSlider(longSlider, longValLabel, engine.getLongMins(), val -> engine.setLongMins(val));
-        setupSlider(intervalSlider, intervalValLabel, engine.getInterval(), val -> engine.setInterval(val));
+        setupSlider(workSlider, workValLabel, engine.getWorkMins(), engine::setWorkMins);
+        setupSlider(shortSlider, shortValLabel, engine.getShortMins(), engine::setShortMins);
+        setupSlider(longSlider, longValLabel, engine.getLongMins(), engine::setLongMins);
+        setupSlider(intervalSlider, intervalValLabel, engine.getInterval(), engine::setInterval);
 
         autoBreakToggle.setSelected(engine.isAutoStartBreaks());
         autoBreakToggle.setText(autoBreakToggle.isSelected() ? "ON" : "OFF");
@@ -59,7 +59,9 @@ public class PomodoroController {
         updateEngineFlags();
         updateUIFromEngine();
     }
+    //endregion
 
+    //region Setup Helpers
     private void setupSlider(Slider slider, Label label, int initialValue, java.util.function.Consumer<Integer> updateAction) {
         slider.setValue(initialValue);
         label.setText(String.valueOf(initialValue));
@@ -85,7 +87,9 @@ public class PomodoroController {
                 autoPomoToggle.isSelected()
         );
     }
+    //endregion
 
+    //region Button Handlers
     @FXML
     private void toggleSettings() {
         if (settingsAnim != null) settingsAnim.stop();
@@ -129,7 +133,9 @@ public class PomodoroController {
         engine.resetTimeForState(PomodoroEngine.State.MENU);
         updateUIFromEngine();
     }
+    //endregion
 
+    //region UI Updates
     private void updateUIFromEngine() {
         PomodoroEngine.State current = engine.getCurrentState();
         PomodoroEngine.State logical = engine.getLogicalState();
@@ -170,4 +176,5 @@ public class PomodoroController {
             default -> {}
         }
     }
+    //endregion
 }
