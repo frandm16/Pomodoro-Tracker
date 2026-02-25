@@ -1,5 +1,7 @@
 package com.frandm.pomodoro;
 
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.collections.ObservableList;
 //region JavaFX Animation & Layout
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
@@ -11,6 +13,7 @@ import javafx.animation.TranslateTransition;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Arc;
 import javafx.util.Duration;
 //endregion
 
@@ -21,11 +24,20 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+
+import javafx.scene.media.AudioClip;
+import java.net.URL;
 //endregion
 
 public class PomodoroController {
 
-    public VBox statebox;
+    @FXML private Arc progressArc;
+    @FXML private TableView<Session> sessionsTable;
+    @FXML private TableColumn<Session, String> colDate;
+    @FXML private TableColumn<Session, String> colSubject;
+    @FXML private TableColumn<Session, String> colTopic;
+    @FXML private TableColumn<Session, Integer> colDuration;
+
     public VBox mainContainer;
     public VBox statsContainer;
     //region @FXML Components
@@ -49,6 +61,14 @@ public class PomodoroController {
     public void initialize() {
         DatabaseHandler.initializeDatabase();
 
+        // --- CONFIGURACIÓN DE LA TABLA ---
+        // El nombre entre comillas DEBE coincidir con el nombre del atributo en la clase Session
+        colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
+        colSubject.setCellValueFactory(new PropertyValueFactory<>("subject"));
+        colTopic.setCellValueFactory(new PropertyValueFactory<>("topic"));
+        colDuration.setCellValueFactory(new PropertyValueFactory<>("duration"));
+        // ---------------------------------
+
         settingsPane.setTranslateX(-600);
 
         setupSlider(workSlider, workValLabel, engine.getWorkMins(), engine::setWorkMins);
@@ -70,8 +90,14 @@ public class PomodoroController {
             updateEngineFlags();
         });
 
-        engine.setOnTick(() -> Platform.runLater(() -> timerLabel.setText(engine.getFormattedTime())));
+        engine.setOnTick(() -> Platform.runLater(() -> {
+            timerLabel.setText(engine.getFormattedTime());
+            updateProgressCircle();
+        }));
         engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
+        engine.setOnTimerFinished(() -> Platform.runLater(() -> {
+            playAlarmSound();
+        }));
 
         updateEngineFlags();
         updateUIFromEngine();
@@ -110,6 +136,11 @@ public class PomodoroController {
     }
 
     private void showStatsView() {
+        if (statsContainer.isVisible()) return;
+
+        ObservableList<Session> datos = DatabaseHandler.getAllSessions();
+        sessionsTable.setItems(datos);
+
         switchPanels(mainContainer, statsContainer);
     }
     //endregion
@@ -281,5 +312,35 @@ public class PomodoroController {
         fadeOut.play();
     }
 
+    private void updateProgressCircle() {
+
+        double remaining = engine.getSecondsRemaining();
+        double total = engine.getTotalSecondsForCurrentState();
+        double elapsed = total - remaining;
+        double ratio = (total > 0) ? (elapsed/total) : 0;
+        double angle = ratio * -360;
+
+        Platform.runLater(() -> {
+            progressArc.setLength(angle);
+        });
+    }
+
     //endregion
+
+    private void playAlarmSound() {
+        try {
+            // buscamos el archivo en src/main/resources/com/frandm/pomodoro/sounds/
+            URL soundUrl = getClass().getResource("sounds/birds.mp3");
+
+            if (soundUrl != null) {
+                AudioClip alarm = new AudioClip(soundUrl.toExternalForm());
+                alarm.setVolume(0.5); // Volumen de 0.0 a 1.0
+                alarm.play();
+            } else {
+                System.err.println("No se encontró el archivo de sonido.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

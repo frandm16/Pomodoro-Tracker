@@ -4,7 +4,8 @@
     -color-work: #ec7b6d;       /* rojo */
     -color-break: #27AE60;      /* verde */
     -color-long-break: #2980B9; /* azul */
-    -color-menu: #34495E;       /* ris */
+    -color-menu: #34495E;
+    -color-hover: #5586c3; /* ris */
 
     /* colores */
     -bg-settings: #FFFFFF;

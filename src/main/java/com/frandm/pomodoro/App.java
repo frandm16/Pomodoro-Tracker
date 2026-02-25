@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
 
 public class App extends Application {
     @Override
@@ -13,9 +14,7 @@ public class App extends Application {
         Scene scene = new Scene(fxmlLoader.load());
 
         stage.setTitle("Pomodoro Tracker");
-
         stage.setMaximized(true);
-
         stage.setResizable(true);
 
         stage.setScene(scene);

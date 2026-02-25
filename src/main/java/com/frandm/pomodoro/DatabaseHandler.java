@@ -1,5 +1,8 @@
 package com.frandm.pomodoro;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import java.sql.*;
 
 public class DatabaseHandler {
@@ -44,5 +47,28 @@ public class DatabaseHandler {
             }
         }
 
+    }
+
+    public static ObservableList<Session> getAllSessions() {
+        ObservableList<Session> sessions = FXCollections.observableArrayList();
+
+        String sql = "SELECT subject, topic, duration_minutes, timestamp FROM sessions ORDER BY timestamp DESC";
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                sessions.add(new Session(
+                        rs.getString("timestamp"),
+                        rs.getString("subject"),
+                        rs.getString("topic"),
+                        rs.getInt("duration_minutes")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener sesiones: " + e.getMessage());
+        }
+        return sessions;
     }
 }

@@ -3,6 +3,9 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Arc?>
+<?import javafx.scene.Group?>
 <StackPane fx:id="rootPane" prefHeight="600.0" prefWidth="800.0"
            stylesheets="@styles.css" styleClass="root-pane"
            xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
@@ -10,8 +13,7 @@
 
 
 
-    <GridPane StackPane.alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="Infinity"
-              style="-fx-background-color: #f300ff">
+    <GridPane StackPane.alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="Infinity">
         <padding><Insets top="25" right="25" left="25" /></padding>
 
         <columnConstraints>
@@ -38,9 +40,29 @@
                 <Label fx:id="stateLabel" text="READY TO START" styleClass="state-label" />
             </HBox>
 
-            <Label fx:id="timerLabel" text="25:00" styleClass="timer-label" />
-        </VBox>
 
+        </VBox>
+        <StackPane maxWidth="-Infinity" maxHeight="-Infinity">
+
+            <Circle radius="250" fill="transparent" stroke="#34495e" strokeWidth="8" opacity="0.3" />
+
+            <Pane maxWidth="500" maxHeight="500" minWidth="500" minHeight="500">
+                <Arc fx:id="progressArc"
+                     radiusX="250.0"
+                     radiusY="250.0"
+                     centerX="250.0"
+                     centerY="250.0"
+                     startAngle="90"
+                     length="90"
+                     strokeWidth="12"
+                     stroke="#4a90e2"
+                     fill="transparent"
+                     strokeLineCap="ROUND"
+                     type="OPEN" />
+            </Pane>
+
+            <Label fx:id="timerLabel" text="25:00" styleClass="timer-label"/>
+        </StackPane>
         <HBox alignment="CENTER" spacing="25">
             <Button fx:id="startPauseBtn" onAction="#handleStartPause" prefHeight="60" prefWidth="140" text="START" styleClass="button-main" />
             <Button fx:id="skipBtn" onAction="#handleSkip" prefHeight="60" prefWidth="100" text="SKIP" styleClass="button-secondary" />
@@ -48,8 +70,25 @@
         </HBox>
     </VBox>
 
-    <VBox fx:id="statsContainer" alignment="CENTER" spacing="50"  maxHeight="-Infinity" maxWidth="-Infinity" visible="false" managed="false">
-        <Button text="Test"> </Button>
+    <VBox fx:id="statsContainer" alignment="CENTER" spacing="30"
+          maxHeight="-Infinity" maxWidth="-Infinity"
+          visible="false" managed="false">
+
+        <padding><Insets top="80" right="50" bottom="50" left="50" /></padding>
+
+        <Label text="HISTORIAL DE SESIONES" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;" />
+
+        <TableView fx:id="sessionsTable" VBox.vgrow="ALWAYS" maxWidth="-Infinity" styleClass="modern-table">
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+            </columnResizePolicy>
+            <columns>
+                <TableColumn fx:id="colDate" text="Date" prefWidth="250" />
+                <TableColumn fx:id="colSubject" text="Subject" prefWidth="200" />
+                <TableColumn fx:id="colTopic" text="Topic" prefWidth="200" />
+                <TableColumn fx:id="colDuration" text="Min" prefWidth="80" />
+            </columns>
+        </TableView>
     </VBox>
 
     <VBox fx:id="settingsPane" maxWidth="600.0" spacing="20" styleClass="settings-sidebar" translateX="-600" StackPane.alignment="CENTER_LEFT" >
@@ -78,7 +117,7 @@
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="workValLabel" text="25" styleClass="val-label-work" />
                 </HBox>
-                <Slider fx:id="workSlider" min="1" max="240" />
+                <Slider fx:id="workSlider" min="1" max="180" />
             </VBox>
 
             <VBox spacing="8">
@@ -87,7 +126,7 @@
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="shortValLabel" text="5" styleClass="val-label-break" />
                 </HBox>
-                <Slider fx:id="shortSlider" min="1" max="50" />
+                <Slider fx:id="shortSlider" min="1" max="25" />
             </VBox>
 
             <VBox spacing="8">
@@ -96,10 +135,17 @@
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="longValLabel" text="15" styleClass="val-label-long" />
                 </HBox>
-                <Slider fx:id="longSlider" min="1"/>
+                <Slider fx:id="longSlider" min="1" max="50"/>
             </VBox>
 
-            <Separator />
+            <VBox spacing="8">
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Long Break Interval" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Label fx:id="intervalValLabel" text="4" />
+                </HBox>
+                <Slider fx:id="intervalSlider" min="1" max="20"  />
+            </VBox>
 
             <VBox spacing="15">
                 <HBox alignment="CENTER_LEFT">
@@ -110,15 +156,8 @@
                     <Label text="Auto Start Pomodoros" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
                     <ToggleButton fx:id="autoPomoToggle" text="OFF" styleClass="toggle-sidebar" />
                 </HBox>
-                <VBox spacing="8">
-                    <HBox alignment="CENTER_LEFT">
-                        <Label text="Long Break Interval" />
-                        <Region HBox.hgrow="ALWAYS" />
-                        <Label fx:id="intervalValLabel" text="4" />
-                    </HBox>
-                    <Slider fx:id="intervalSlider" min="1" max="20" snapToTicks="true" majorTickUnit="1" minorTickCount="0" />
-                </VBox>
             </VBox>
+            <Separator />
         </VBox>
 
     </VBox>

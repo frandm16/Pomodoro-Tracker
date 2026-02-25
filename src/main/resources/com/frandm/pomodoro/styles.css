@@ -113,7 +113,7 @@
 }
 
 .slider:hover .thumb {
-    -fx-background-color: -color-work;
+    -fx-background-color: -color-hover;
     -fx-scale-x: 1.2;
     -fx-scale-y: 1.2;
 }
@@ -134,7 +134,12 @@
 }
 
 .toggle-sidebar:selected {
-    -fx-background-color: -color-break;
+    -fx-background-color: -color-menu;
+    -fx-text-fill: white;
+}
+
+.toggle-sidebar:hover {
+    -fx-background-color: -color-hover;
     -fx-text-fill: white;
 }
 
@@ -142,3 +147,78 @@
     -fx-text-fill: -text-dark;
     -fx-font-size: 16px;
 }
+
+/* --- stats table --- */
+
+/* Contenedor principal de la tabla */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 0;
+}
+
+/* Cabecera de la tabla */
+.table-view .column-header-background {
+    -fx-background-color: rgba(255, 255, 255, 0.05); /* Un brillo muy sutil */
+    -fx-background-radius: 10 10 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 40; /* Más alta para que respire */
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-width: 0 1 1 0;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-alignment: CENTER_LEFT;
+}
+
+/* Celdas y Filas */
+.table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.03);
+    -fx-border-width: 0 0 1 0; /* Solo línea inferior */
+}
+
+.table-row-cell:odd {
+    -fx-background-color: rgba(255, 255, 255, 0.01);
+}
+
+.table-row-cell:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.05); /* Efecto al pasar el ratón */
+}
+
+.table-row-cell:selected {
+    -fx-background-color: rgba(255, 255, 255, 0.1); /* Selección sutil */
+}
+
+.table-cell {
+    -fx-text-fill: white;
+    -fx-padding: 12;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 14px;
+}
+
+/* Quitar el scrollbar feo o hacerlo minimalista */
+.table-view .virtual-flow .scroll-bar:vertical,
+.table-view .virtual-flow .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.table-view .virtual-flow .scroll-bar .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 10;
+}
+
+/* Esquina muerta de la tabla */
+.table-view .column-header-background .filler {
+    -fx-background-color: transparent;
+}
+
+

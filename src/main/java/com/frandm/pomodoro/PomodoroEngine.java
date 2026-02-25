@@ -20,8 +20,10 @@ public class PomodoroEngine {
     private int secondsElapsed = 0;
     private int sessionCounter = 0;
 
+
     private Runnable onTick;
     private Runnable onStateChange;
+    private Runnable onTimerFinished;
     //endregion
 
     public PomodoroEngine() {
@@ -32,12 +34,13 @@ public class PomodoroEngine {
     private void setupTimeline() {
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             if (secondsRemaining > 0) {
-                secondsRemaining--;
+                secondsRemaining-=10;
                 if (currentState == State.WORK) {
-                    secondsElapsed++;
+                    secondsElapsed+=10;
                 }
                 if (onTick != null) onTick.run();
             } else {
+                if (onTimerFinished != null) onTimerFinished.run();
                 next();
             }
         }));
@@ -146,6 +149,8 @@ public class PomodoroEngine {
     public void setAutoStartPomo(boolean value) { this.autoStartPomodoros = value; }
     public void setOnTick(Runnable r) { this.onTick = r; }
     public void setOnStateChange(Runnable r) { this.onStateChange = r; }
+    public void setOnTimerFinished(Runnable r) {this.onTimerFinished = r;
+    }
     //endregion
 
     //region Getters
@@ -169,5 +174,18 @@ public class PomodoroEngine {
     public int getShortMins() { return shortMins; }
     public int getLongMins() { return longMins; }
     public int getInterval() { return interval; }
+    public int getTotalSecondsForCurrentState() {
+        State logical = getLogicalState();
+        return switch (logical) {
+            case WORK, MENU -> workMins * 60;
+            case SHORT_BREAK -> shortMins * 60;
+            case LONG_BREAK -> longMins * 60;
+            default -> workMins * 60;
+        };
+    }
+
+    public int getSecondsRemaining() {
+        return secondsRemaining;
+    }
     //endregion
 }
