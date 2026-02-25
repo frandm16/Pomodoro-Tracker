@@ -9,9 +9,15 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("main_view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 350, 400);
+
+        Scene scene = new Scene(fxmlLoader.load());
+
         stage.setTitle("Pomodoro Tracker");
-        stage.setResizable(false);
+
+        stage.setMaximized(true);
+
+        stage.setResizable(true);
+
         stage.setScene(scene);
         stage.show();
     }

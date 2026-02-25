@@ -4,65 +4,70 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<StackPane fx:id="rootPane" prefHeight="450.0" prefWidth="350.0" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.frandm.pomodoro.PomodoroController">
+<StackPane fx:id="rootPane" prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #ae4848;" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.frandm.pomodoro.PomodoroController">
 
-    <VBox alignment="CENTER" spacing="25" style="-fx-background-color: white;">
-        <VBox alignment="CENTER" spacing="5">
-            <Label fx:id="stateLabel" text="READY TO START" style="-fx-font-weight: bold; -fx-font-size: 16;" />
-            <Label fx:id="timerLabel" text="25:00">
-                <Font name="Monospaced Bold" size="64.0" />
+    <VBox alignment="CENTER" spacing="40" fillWidth="false">
+        <VBox alignment="CENTER" spacing="10">
+            <Label fx:id="stateLabel" text="READY TO START" style="-fx-font-weight: bold; -fx-font-size: 24; -fx-text-fill: #ffffff;" />
+            <Label fx:id="timerLabel" text="25:00" >
+                <Font name="Monospaced Bold" size="120.0" />
             </Label>
         </VBox>
 
-        <HBox alignment="CENTER" spacing="15">
-            <Button fx:id="startPauseBtn" onAction="#handleStartPause" prefHeight="40" prefWidth="90" text="START" />
-            <Button onAction="#handleSkip" prefHeight="40" prefWidth="70" text="SKIP" />
-            <Button onAction="#handleFinish" prefHeight="40" prefWidth="80" text="FINISH" />
+        <HBox alignment="CENTER" spacing="20">
+            <Button fx:id="startPauseBtn" onAction="#handleStartPause" prefHeight="50" prefWidth="120" text="START" style="-fx-font-size: 16;" />
+            <Button fx:id="skipBtn" onAction="#handleSkip" prefHeight="50" prefWidth="100" text="SKIP" style="-fx-font-size: 16;" />
+            <Button fx:id="finishBtn" onAction="#handleFinish" prefHeight="50" prefWidth="110" text="FINISH" style="-fx-font-size: 16;" />
         </HBox>
 
-        <Button onAction="#toggleSettings" style="-fx-background-radius: 20;" text="⚙ SETTINGS" />
+        <Button fx:id="settingsBtn" onAction="#toggleSettings" style="-fx-background-radius: 20; -fx-padding: 10 20;" text="⚙ SETTINGS" />
     </VBox>
 
-    <VBox fx:id="settingsPane" spacing="15" style="-fx-background-color: #f9f9f9; -fx-border-color: #cccccc; -fx-border-width: 1 0 0 0;" translateY="450">
-        <padding><Insets bottom="20" left="20" right="20" top="20" /></padding>
+    <VBox fx:id="settingsPane" maxWidth="400.0" maxHeight="450.0" spacing="15"
+          style="-fx-background-color: #f9f9f9; -fx-border-color: #cccccc; -fx-border-width: 1; -fx-background-radius: 15 15 0 0; -fx-border-radius: 15 15 0 0;"
+          translateY="600" StackPane.alignment="BOTTOM_CENTER">
+
+        <padding><Insets bottom="30" left="30" right="30" top="20" /></padding>
 
         <HBox alignment="CENTER_LEFT">
             <Label text="TIMER SETTINGS" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;" />
             <Region HBox.hgrow="ALWAYS" />
-            <Button onAction="#toggleSettings" text="✕" style="-fx-background-color: transparent; -fx-font-weight: bold;" />
+            <Button onAction="#toggleSettings" text="✕" style="-fx-background-color: transparent; -fx-font-weight: bold; -fx-font-size: 18;" />
         </HBox>
 
         <Separator />
 
         <Label text="Time (minutes)" style="-fx-font-weight: bold;" />
-        <HBox spacing="10">
-            <VBox>
-                <Label style="-fx-font-size: 10;" text="Pomodoro" />
-                <Spinner fx:id="workSpinner" prefWidth="85" />
+        <HBox spacing="15" alignment="CENTER">
+            <VBox alignment="CENTER">
+                <Label style="-fx-font-size: 11;" text="Pomodoro" />
+                <Spinner fx:id="workSpinner" prefWidth="90" />
             </VBox>
-            <VBox>
-                <Label style="-fx-font-size: 10;" text="Short Break" />
-                <Spinner fx:id="shortSpinner" prefWidth="85" />
+            <VBox alignment="CENTER">
+                <Label style="-fx-font-size: 11;" text="Short" />
+                <Spinner fx:id="shortSpinner" prefWidth="90" />
             </VBox>
-            <VBox>
-                <Label style="-fx-font-size: 10;" text="Long Break" />
-                <Spinner fx:id="longSpinner" prefWidth="85" />
+            <VBox alignment="CENTER">
+                <Label style="-fx-font-size: 11;" text="Long" />
+                <Spinner fx:id="longSpinner" prefWidth="90" />
             </VBox>
         </HBox>
 
-        <HBox alignment="CENTER_LEFT">
-            <Label text="Auto Start Breaks" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
-            <ToggleButton fx:id="autoBreakToggle" />
-        </HBox>
+        <VBox spacing="12">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Auto Start Breaks" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                <ToggleButton fx:id="autoBreakToggle" text="OFF" />
+            </HBox>
 
-        <HBox alignment="CENTER_LEFT">
-            <Label text="Auto Start Pomodoros" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
-            <ToggleButton fx:id="autoPomoToggle" />
-        </HBox>
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Auto Start Pomodoros" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                <ToggleButton fx:id="autoPomoToggle" text="OFF" />
+            </HBox>
 
-        <HBox alignment="CENTER_LEFT">
-            <Label text="Long Break interval" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
-            <Spinner fx:id="intervalSpinner" prefWidth="70" />
-        </HBox>
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Long Break interval" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                <Spinner fx:id="intervalSpinner" prefWidth="80" />
+            </HBox>
+        </VBox>
     </VBox>
 </StackPane>

@@ -11,7 +11,7 @@ public class PomodoroEngine {
     private State lastActiveState = State.WORK;
     private Timeline timeline;
 
-    private int workMins = 25, shortMins = 5, longMins = 15, interval = 4;
+    private int workMins = 45, shortMins = 15, longMins = 25, interval = 4;
     private boolean autoStartBreaks = false;
     private boolean autoStartPomodoros = false;
 
@@ -30,9 +30,9 @@ public class PomodoroEngine {
     private void setupTimeline() {
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             if (secondsRemaining > 0) {
-                secondsRemaining--;
+                secondsRemaining-=120;
                 if (currentState == State.WORK) {
-                    secondsElapsed++;
+                    secondsElapsed+=120;
                 }
                 if (onTick != null) onTick.run();
             } else {
@@ -66,6 +66,7 @@ public class PomodoroEngine {
 
     public void next() {
         stop();
+
         if (currentState == State.WORK || (currentState == State.WAITING && lastActiveState == State.WORK)) {
             sessionCounter++;
             currentState = (sessionCounter % interval == 0) ? State.LONG_BREAK : State.SHORT_BREAK;
@@ -121,6 +122,13 @@ public class PomodoroEngine {
         }
     }
 
+    public State getLogicalState() {
+        if (currentState == State.WAITING) {
+            return lastActiveState;
+        }
+        return currentState;
+    }
+
     public int getRealMinutesElapsed() {
         return secondsElapsed / 60;
     }
@@ -129,12 +137,19 @@ public class PomodoroEngine {
         return String.format("%02d:%02d", secondsRemaining / 60, secondsRemaining % 60);
     }
 
-    public void clearElapsedSeconds() {
+    public void fullReset() {
         this.secondsElapsed = 0;
+        this.sessionCounter = 0;
     }
 
     public State getCurrentState() { return currentState; }
+    public State getLastActiveState() { return lastActiveState; }
     public int getSessionCounter() {return sessionCounter;}
     public void setOnTick(Runnable r) { this.onTick = r; }
     public void setOnStateChange(Runnable r) { this.onStateChange = r; }
+
+    public int getWorkMins() { return workMins; }
+    public int getShortMins() { return shortMins; }
+    public int getLongMins() { return longMins; }
+    public int getInterval() { return interval; }
 }
