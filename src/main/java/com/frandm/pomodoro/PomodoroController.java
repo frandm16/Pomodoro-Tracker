@@ -1,79 +1,117 @@
 package com.frandm.pomodoro;
 
+import javafx.animation.Interpolator;
 import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import javafx.application.Platform;
 
 public class PomodoroController {
 
+    @FXML private StackPane rootPane;
     @FXML private VBox settingsPane;
     @FXML private Label timerLabel, stateLabel;
-    @FXML private Spinner<Integer> workSpinner, shortSpinner, longSpinner, intervalSpinner;
+
+    // Labels para mostrar el valor numérico de los Sliders
+    @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel;
+
+    // Sliders
+    @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider;
+
     @FXML private ToggleButton autoBreakToggle, autoPomoToggle;
     @FXML private Button startPauseBtn, skipBtn, finishBtn, settingsBtn;
 
     private boolean isSettingsOpen = false;
     private PomodoroEngine engine = new PomodoroEngine();
+    private TranslateTransition settingsAnim;
 
     @FXML
     public void initialize() {
         DatabaseHandler.initializeDatabase();
 
-        workSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 60, engine.getWorkMins()));
-        shortSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 30, engine.getShortMins()));
-        longSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 45, engine.getLongMins()));
-        intervalSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, engine.getInterval()));
-        autoBreakToggle.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+        settingsPane.setTranslateX(-600);
+
+        setupSlider(workSlider, workValLabel, engine.getWorkMins(), val -> engine.setWorkMins(val));
+        setupSlider(shortSlider, shortValLabel, engine.getShortMins(), val -> engine.setShortMins(val));
+        setupSlider(longSlider, longValLabel, engine.getLongMins(), val -> engine.setLongMins(val));
+        setupSlider(intervalSlider, intervalValLabel, engine.getInterval(), val -> engine.setInterval(val));
+
+        autoBreakToggle.setSelected(engine.isAutoStartBreaks());
+        autoBreakToggle.setText(autoBreakToggle.isSelected() ? "ON" : "OFF");
+        autoBreakToggle.selectedProperty().addListener((obs, old, isSelected) -> {
             autoBreakToggle.setText(isSelected ? "ON" : "OFF");
-        });
-        autoPomoToggle.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
-            autoPomoToggle.setText(isSelected ? "ON" : "OFF");
+            updateEngineFlags();
         });
 
-        applySettings();
+        autoPomoToggle.setSelected(engine.isAutoStartPomo());
+        autoPomoToggle.setText(autoPomoToggle.isSelected() ? "ON" : "OFF");
+        autoPomoToggle.selectedProperty().addListener((obs, old, isSelected) -> {
+            autoPomoToggle.setText(isSelected ? "ON" : "OFF");
+            updateEngineFlags();
+        });
 
         engine.setOnTick(() -> Platform.runLater(() -> timerLabel.setText(engine.getFormattedTime())));
         engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
 
-
-
+        updateEngineFlags();
         updateUIFromEngine();
     }
 
-    @FXML
-    private void toggleSettings() {
-        TranslateTransition transition = new TranslateTransition(Duration.millis(350), settingsPane);
-        if (isSettingsOpen) {
-            transition.setToY(450);
-            applySettings();
-        } else {
-            transition.setToY(0);
-        }
-        transition.play();
-        isSettingsOpen = !isSettingsOpen;
+    private void setupSlider(Slider slider, Label label, int initialValue, java.util.function.Consumer<Integer> updateAction) {
+        slider.setValue(initialValue);
+        label.setText(String.valueOf(initialValue));
+
+        slider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            int val = newVal.intValue();
+            label.setText(String.valueOf(val));
+            updateAction.accept(val);
+
+            if (engine.getCurrentState() == PomodoroEngine.State.MENU) {
+                timerLabel.setText(engine.getFormattedTime());
+            }
+        });
     }
 
-    private void applySettings() {
+    private void updateEngineFlags() {
         engine.updateSettings(
-                workSpinner.getValue(),
-                shortSpinner.getValue(),
-                longSpinner.getValue(),
-                intervalSpinner.getValue(),
+                (int)workSlider.getValue(),
+                (int)shortSlider.getValue(),
+                (int)longSlider.getValue(),
+                (int)intervalSlider.getValue(),
                 autoBreakToggle.isSelected(),
                 autoPomoToggle.isSelected()
         );
     }
 
     @FXML
+    private void toggleSettings() {
+        if (settingsAnim != null) settingsAnim.stop();
+
+        settingsAnim = new TranslateTransition(Duration.millis(400), settingsPane);
+        settingsAnim.setInterpolator(Interpolator.EASE_BOTH);
+
+        if (isSettingsOpen) {
+            settingsAnim.setToX(-600); // hide settings
+        } else {
+            settingsAnim.setToX(0);    // show settings
+        }
+
+        settingsAnim.play();
+        isSettingsOpen = !isSettingsOpen;
+    }
+
+    @FXML
     private void handleStartPause() {
-        if (engine.getCurrentState() == PomodoroEngine.State.WAITING || engine.getCurrentState() == PomodoroEngine.State.MENU) {
+        PomodoroEngine.State current = engine.getCurrentState();
+        if (current == PomodoroEngine.State.WAITING || current == PomodoroEngine.State.MENU) {
             engine.start();
         } else {
             engine.pause();
         }
+        updateUIFromEngine();
     }
 
     @FXML
@@ -84,7 +122,7 @@ public class PomodoroController {
     @FXML
     private void handleFinish() {
         int mins = engine.getRealMinutesElapsed();
-        DatabaseHandler.saveSession("Estudio", "Sesión Terminada", "Guardado manual", mins);
+        DatabaseHandler.saveSession("test", "tema1", "esto es una descripcion test", mins);
 
         engine.fullReset();
         engine.stop();
@@ -113,22 +151,23 @@ public class PomodoroController {
 
         switch (logical) {
             case WORK -> {
+                rootPane.setStyle("-fx-background-color: -color-work;");
                 int session = engine.getSessionCounter() + 1;
-                stateLabel.setText(String.format("POMODORO - %d", session));
-                stateLabel.setStyle("-fx-text-fill: #ffffff;");
+                stateLabel.setText(String.format("Pomodoro - Session %d", session));
             }
             case SHORT_BREAK -> {
-                stateLabel.setText("SHORT BREAK");
-                stateLabel.setStyle("-fx-text-fill: #ffffff;");
+                rootPane.setStyle("-fx-background-color: -color-break;");
+                stateLabel.setText("Short Break");
             }
             case LONG_BREAK -> {
-                stateLabel.setText("LONG BREAK");
-                stateLabel.setStyle("-fx-text-fill: #ffffff;");
+                rootPane.setStyle("-fx-background-color: -color-long-break;");
+                stateLabel.setText("Long Break");
             }
             case MENU -> {
-                stateLabel.setText("");
-                stateLabel.setStyle("-fx-text-fill: #ffffff;");
+                rootPane.setStyle("-fx-background-color: -color-menu;");
+                stateLabel.setText("Pomodoro");
             }
+            default -> {}
         }
     }
 }

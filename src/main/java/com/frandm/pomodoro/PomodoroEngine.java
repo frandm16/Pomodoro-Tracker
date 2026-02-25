@@ -30,9 +30,9 @@ public class PomodoroEngine {
     private void setupTimeline() {
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             if (secondsRemaining > 0) {
-                secondsRemaining-=120;
+                secondsRemaining--;
                 if (currentState == State.WORK) {
-                    secondsElapsed+=120;
+                    secondsElapsed++;
                 }
                 if (onTick != null) onTick.run();
             } else {
@@ -120,6 +120,21 @@ public class PomodoroEngine {
         if (currentState == State.MENU) {
             resetTimeForState(State.MENU);
         }
+    }
+
+
+    public void setWorkMins(int mins) { this.workMins = mins; if(currentState == State.MENU) resetTimeForState(State.MENU); }
+    public void setShortMins(int mins) { this.shortMins = mins; }
+    public void setLongMins(int mins) { this.longMins = mins; }
+    public void setInterval(int interval) { this.interval = interval; }
+    public void setAutoStartBreaks(boolean value) { this.autoStartBreaks = value; }
+    public void setAutoStartPomo(boolean value) { this.autoStartPomodoros = value; }
+
+    public boolean isAutoStartBreaks() { return autoStartBreaks; }
+    public boolean isAutoStartPomo() { return autoStartPomodoros; }
+
+    public boolean isRunning() {
+        return currentState != State.WAITING && currentState != State.MENU;
     }
 
     public State getLogicalState() {

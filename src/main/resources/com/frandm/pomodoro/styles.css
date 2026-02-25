@@ -1,0 +1,114 @@
+@import "colors.css";
+
+/* --- main --- */
+.root-pane {
+    -fx-background-color: -color-menu;
+    -fx-transition: -fx-background-color 0.6s ease-in-out;
+}
+
+/* --- labels --- */
+.timer-label {
+    -fx-font-family: "JetBrains Mono", "Monospaced";
+    -fx-font-size: 160px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-main;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 0, 0, 0, 4);
+}
+
+.state-label {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-main;
+    -fx-opacity: 0.8;
+    -fx-letter-spacing: 4px;
+}
+
+/* --- buttons --- */
+.button-main {
+    -fx-background-color: -text-main;
+    -fx-text-fill: -color-menu;
+    -fx-font-size: 18px;
+    -fx-background-radius: 15;
+    -fx-cursor: hand;
+}
+
+.button-secondary {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
+    -fx-border-color: rgba(255, 255, 255, 0.4);
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-cursor: hand;
+}
+
+/* --- setings sidebar --- */
+.settings-sidebar {
+    -fx-background-color: -bg-settings;
+    -fx-background-radius: 0 40 40 0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 30, 0, 8, 0);
+}
+
+.sidebar-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-dark;
+}
+
+.section-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-muted;
+    -fx-padding: 10 0 5 0;
+}
+
+.close-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 24px;
+    -fx-cursor: hand;
+}
+
+/* --- sidebar styles --- */
+.slider .track {
+    -fx-background-color: -border-light;
+    -fx-background-radius: 10;
+    -fx-pref-height: 8;
+}
+
+.slider .thumb {
+    -fx-background-color: -color-menu;
+    -fx-background-radius: 15;
+    -fx-pref-width: 22;
+    -fx-pref-height: 22;
+}
+
+.slider:hover .thumb {
+    -fx-background-color: -color-work;
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+/* --- sliders number --- */
+.val-label-work { -fx-text-fill: -color-work; -fx-font-size: 18px; -fx-font-weight: bold; }
+.val-label-break { -fx-text-fill: -color-break; -fx-font-size: 18px; -fx-font-weight: bold; }
+.val-label-long { -fx-text-fill: -color-long-break; -fx-font-size: 18px; -fx-font-weight: bold; }
+
+/* --- toggle buttons --- */
+.toggle-sidebar {
+    -fx-background-radius: 25;
+    -fx-background-color: #E0E0E0;
+    -fx-text-fill: #757575;
+    -fx-pref-width: 80;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.toggle-sidebar:selected {
+    -fx-background-color: -color-break;
+    -fx-text-fill: white;
+}
+
+.settings-sidebar .label {
+    -fx-text-fill: -text-dark;
+    -fx-font-size: 16px;
+}
