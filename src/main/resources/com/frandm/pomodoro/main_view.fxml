@@ -8,10 +8,33 @@
            xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.frandm.pomodoro.PomodoroController">
 
-    <VBox alignment="CENTER" spacing="50">
+
+
+    <GridPane StackPane.alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="Infinity"
+              style="-fx-background-color: #f300ff">
+        <padding><Insets top="25" right="25" left="25" /></padding>
+
+        <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="150.0" /> <ColumnConstraints hgrow="ALWAYS" halignment="CENTER" minWidth="10.0" />   <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="150.0" halignment="RIGHT" /> </columnConstraints>
+
+        <HBox spacing="10" GridPane.columnIndex="1" alignment="CENTER">
+            <Button fx:id="menuBtn"
+                    text="Menu"
+                    onAction="#handleNavClick"
+                    styleClass="title-button, active" />
+
+            <Button fx:id="statsBtn"
+                    text="Stats"
+                    onAction="#handleNavClick"
+                    styleClass="title-button" />
+        </HBox>
+
+        <Button text="⚙ Settings" onAction="#toggleSettings" GridPane.columnIndex="2" styleClass="title-button"/>
+    </GridPane>
+
+    <VBox fx:id="mainContainer" alignment="CENTER" spacing="50"  maxHeight="-Infinity" maxWidth="-Infinity">
         <VBox alignment="CENTER" spacing="15">
             <HBox alignment="CENTER" spacing="25">
-                <Button onAction="#toggleSettings" styleClass="button-secondary" text="⚙ Settings" />
                 <Label fx:id="stateLabel" text="READY TO START" styleClass="state-label" />
             </HBox>
 
@@ -23,12 +46,13 @@
             <Button fx:id="skipBtn" onAction="#handleSkip" prefHeight="60" prefWidth="100" text="SKIP" styleClass="button-secondary" />
             <Button fx:id="finishBtn" onAction="#handleFinish" prefHeight="60" prefWidth="120" text="FINISH" styleClass="button-secondary" />
         </HBox>
-
-
     </VBox>
 
-    <VBox fx:id="settingsPane" maxWidth="600.0" spacing="20"
-          styleClass="settings-sidebar" translateX="-600" StackPane.alignment="CENTER_LEFT">
+    <VBox fx:id="statsContainer" alignment="CENTER" spacing="50"  maxHeight="-Infinity" maxWidth="-Infinity" visible="false" managed="false">
+        <Button text="Test"> </Button>
+    </VBox>
+
+    <VBox fx:id="settingsPane" maxWidth="600.0" spacing="20" styleClass="settings-sidebar" translateX="-600" StackPane.alignment="CENTER_LEFT" >
 
         <padding><Insets top="40" right="25" bottom="40" left="25"/></padding>
 

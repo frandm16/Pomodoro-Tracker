@@ -1,6 +1,7 @@
 package com.frandm.pomodoro;
 
 //region JavaFX Animation & Layout
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -12,8 +13,10 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 //endregion
+
 //region JavaFX UI Controls & Application
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -22,6 +25,9 @@ import javafx.scene.layout.VBox;
 
 public class PomodoroController {
 
+    public VBox statebox;
+    public VBox mainContainer;
+    public VBox statsContainer;
     //region @FXML Components
     @FXML private StackPane rootPane;
     @FXML private VBox settingsPane;
@@ -29,7 +35,7 @@ public class PomodoroController {
     @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel;
     @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider;
     @FXML private ToggleButton autoBreakToggle, autoPomoToggle;
-    @FXML private Button startPauseBtn, skipBtn, finishBtn;
+    @FXML private Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn;
     //endregion
 
     //region Variables
@@ -98,6 +104,14 @@ public class PomodoroController {
                 autoPomoToggle.isSelected()
         );
     }
+
+    private void showMainView() {
+        switchPanels(statsContainer, mainContainer);
+    }
+
+    private void showStatsView() {
+        switchPanels(mainContainer, statsContainer);
+    }
     //endregion
 
     //region Button Handlers
@@ -159,6 +173,22 @@ public class PomodoroController {
 
         updateUIFromEngine();
     }
+
+    @FXML
+    private void handleNavClick(ActionEvent event) {
+        Button source = (Button) event.getSource();
+
+        menuBtn.getStyleClass().remove("active");
+        statsBtn.getStyleClass().remove("active");
+
+        source.getStyleClass().add("active");
+
+        if (source == menuBtn) {
+            showMainView();
+        } else {
+            showStatsView();
+        }
+    }
     //endregion
 
     //region UI Updates
@@ -183,7 +213,7 @@ public class PomodoroController {
             case WORK -> {
                 animateBackgroundTransition("-color-work");
                 int session = engine.getSessionCounter() + 1;
-                stateLabel.setText(String.format("Pomodoro - Session %d", session));
+                stateLabel.setText(String.format("Pomodoro - #%d", session));
             }
             case SHORT_BREAK -> {
                 animateBackgroundTransition("-color-break");
@@ -233,6 +263,23 @@ public class PomodoroController {
         );
     }
 
+    private void switchPanels(VBox toHide, VBox toShow) {
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(150), toHide);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setOnFinished(_ -> {
+            toHide.setVisible(false);
+            toHide.setManaged(false);
+
+            toShow.setVisible(true);
+            toShow.setManaged(true);
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(150), toShow);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+        });
+        fadeOut.play();
+    }
 
     //endregion
 }

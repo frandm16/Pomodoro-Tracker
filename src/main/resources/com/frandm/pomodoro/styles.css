@@ -41,6 +41,27 @@
     -fx-cursor: hand;
 }
 
+.title-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 22px;
+    -fx-cursor: hand;
+    -fx-padding: 8 15;
+
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.title-button:hover {
+    -fx-border-color: white;
+}
+
+.title-button.active {
+    -fx-opacity: 1.0;
+    -fx-border-color: white;
+    -fx-text-fill: white;
+}
+
 .close-button {
     -fx-background-color: transparent;
     -fx-text-fill: -text-muted;
