@@ -5,19 +5,13 @@ import java.util.Properties;
 
 public class ConfigManager {
 
-    // 1. Definimos el nombre de la carpeta y el archivo
     private static final String FOLDER_NAME = ".pomodoro_app";
     private static final String FILE_NAME = "settings.properties";
 
-    /**
-     * Obtiene la ruta absoluta del archivo de configuración en la carpeta de usuario.
-     * Ejemplo: C:\Users\TuUsuario\.pomodoro_app\settings.properties
-     */
     private static File getConfigFile() {
         String userHome = System.getProperty("user.home");
         File configDir = new File(userHome, FOLDER_NAME);
 
-        // Si la carpeta no existe, la creamos
         if (!configDir.exists()) {
             configDir.mkdirs();
         }
@@ -34,6 +28,7 @@ public class ConfigManager {
         props.setProperty("interval", String.valueOf(engine.getInterval()));
         props.setProperty("autoBreak", String.valueOf(engine.isAutoStartBreaks()));
         props.setProperty("autoPomo", String.valueOf(engine.isAutoStartPomo()));
+        props.setProperty("countBreaks", String.valueOf(engine.isCountBreakTime()));
         props.setProperty("alarmSoundVolume", String.valueOf(engine.getAlarmSoundVolume()));
 
         File configFile = getConfigFile();
@@ -64,6 +59,7 @@ public class ConfigManager {
                     Integer.parseInt(props.getProperty("interval", String.valueOf(engine.getInterval()))),
                     Boolean.parseBoolean(props.getProperty("autoBreak", String.valueOf(engine.isAutoStartBreaks()))),
                     Boolean.parseBoolean(props.getProperty("autoPomo", String.valueOf(engine.isAutoStartPomo()))),
+                    Boolean.parseBoolean(props.getProperty("countBreaks", String.valueOf(engine.isCountBreakTime()))),
                     Integer.parseInt(props.getProperty("alarmSoundVolume", String.valueOf(engine.getAlarmSoundVolume())))
             );
         } catch (IOException | NumberFormatException e) {

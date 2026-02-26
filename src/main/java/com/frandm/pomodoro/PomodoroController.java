@@ -10,8 +10,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.util.Duration;
@@ -22,8 +21,6 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
 import javafx.scene.media.AudioClip;
 import java.net.URL;
@@ -31,6 +28,8 @@ import java.net.URL;
 
 public class PomodoroController {
 
+    public GridPane heatmapGrid;
+    public Pane monthLabelContainer;
     @FXML private Arc progressArc;
     @FXML private TableView<Session> sessionsTable;
     @FXML private TableColumn<Session, String> colDate;
@@ -46,7 +45,7 @@ public class PomodoroController {
     @FXML private Label timerLabel, stateLabel;
     @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel, alarmVolumeValLabel;
     @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider;
-    @FXML private ToggleButton autoBreakToggle, autoPomoToggle;
+    @FXML private ToggleButton autoBreakToggle, autoPomoToggle, countBreakTime;
     @FXML private Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn;
     //endregion
 
@@ -90,6 +89,14 @@ public class PomodoroController {
             updateEngineFlags();
         });
 
+        countBreakTime.setSelected(engine.isCountBreakTime());
+        countBreakTime.setText(countBreakTime.isSelected() ? "ON" : "OFF");
+        countBreakTime.selectedProperty().addListener((_, _, isSelected) -> {
+            countBreakTime.setText(isSelected ? "ON" : "OFF");
+            updateEngineFlags();
+        });
+
+
         engine.setOnTick(() -> Platform.runLater(() -> {
             timerLabel.setText(engine.getFormattedTime());
             updateProgressCircle();
@@ -97,6 +104,7 @@ public class PomodoroController {
         engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
         engine.setOnTimerFinished(() -> Platform.runLater(this::playAlarmSound));
 
+        drawHeatmap();
         updateEngineFlags();
         updateUIFromEngine();
     }
@@ -126,6 +134,7 @@ public class PomodoroController {
                 (int)intervalSlider.getValue(),
                 autoBreakToggle.isSelected(),
                 autoPomoToggle.isSelected(),
+                countBreakTime.isSelected(),
                 (int)alarmVolumeSlider.getValue()
         );
 
@@ -140,6 +149,8 @@ public class PomodoroController {
 
         ObservableList<Session> datos = DatabaseHandler.getAllSessions();
         sessionsTable.setItems(datos);
+
+        drawHeatmap();
 
         switchPanels(mainContainer, statsContainer);
     }
@@ -183,8 +194,8 @@ public class PomodoroController {
 
     @FXML
     private void handleFinish() {
-        int seconds = engine.getRealSecondsElapsed();
-        DatabaseHandler.saveSession("test", "tema1", "esto es una descripcion test", seconds);
+        int minutes = engine.getRealMinutesElapsed();
+        DatabaseHandler.saveSession("test", "tema1", "esto es una descripcion test", minutes);
 
         engine.fullReset();
         engine.stop();
@@ -203,8 +214,11 @@ public class PomodoroController {
 
         autoBreakToggle.setSelected(engine.isAutoStartBreaks());
         autoPomoToggle.setSelected(engine.isAutoStartPomo());
+        countBreakTime.setSelected(engine.isCountBreakTime());
 
+        updateEngineFlags();
         updateUIFromEngine();
+        ConfigManager.save(engine);
     }
 
     @FXML
@@ -345,4 +359,63 @@ public class PomodoroController {
             e.printStackTrace();
         }
     }
+    
+    //region HeatMap
+
+    private void drawHeatmap() {
+        heatmapGrid.getChildren().clear();
+        monthLabelContainer.getChildren().clear();
+
+        java.util.Map<java.time.LocalDate, Integer> data = DatabaseHandler.getMinutesPerDayLastYear();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate startDate = today.minusWeeks(52).with(java.time.DayOfWeek.MONDAY);
+
+        String lastMonthName = "";
+        double cellWidth = 12 + 3;
+
+        for (int week = 0; week <= 52; week++) {
+            for (int day = 0; day < 7; day++) {
+                java.time.LocalDate date = startDate.plusWeeks(week).plusDays(day);
+                if (date.isAfter(today)) continue;
+
+                // heatmap month name
+                String currentMonthName = date.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()).toUpperCase();
+                if (!currentMonthName.equals(lastMonthName)) {
+                    Label monthLabel = new Label(currentMonthName);
+                    monthLabel.setStyle("-fx-text-fill: #8b949e; -fx-font-size: 9px; -fx-font-weight: bold;");
+
+                    monthLabel.setLayoutX(week * cellWidth + 10);
+                    monthLabel.setLayoutY(5);
+
+                    monthLabelContainer.getChildren().add(monthLabel);
+                    lastMonthName = currentMonthName;
+                }
+
+                // heatmap slot
+                javafx.scene.shape.Rectangle rect = new javafx.scene.shape.Rectangle(12, 12);
+                rect.setArcWidth(3);
+                rect.setArcHeight(3);
+                rect.getStyleClass().add("heatmap-cell");
+                rect.setFill(getHeatmapColor(data.getOrDefault(date, 0)));
+
+                // tooltip
+                String tooltipText = String.format("%s\n%.1f h", date.toString(), (float)data.getOrDefault(date, 0)/60);
+                javafx.scene.control.Tooltip tt = new javafx.scene.control.Tooltip(tooltipText);
+                tt.setShowDelay(javafx.util.Duration.millis(50));
+                javafx.scene.control.Tooltip.install(rect, tt);
+
+                heatmapGrid.add(rect, week, day);
+            }
+        }
+    }
+
+
+    private javafx.scene.paint.Color getHeatmapColor(int minutes) {
+        if (minutes == 0)   return javafx.scene.paint.Color.web("#ebedf0"); // Sin actividad
+        if (minutes < 30)  return javafx.scene.paint.Color.web("#9be9a8"); // Poca
+        if (minutes < 90)  return javafx.scene.paint.Color.web("#40c463"); // Media
+        if (minutes < 180) return javafx.scene.paint.Color.web("#30a14e"); // Alta
+        return javafx.scene.paint.Color.web("#216e39"); // Muy alta
+    }
+    //endregion
 }

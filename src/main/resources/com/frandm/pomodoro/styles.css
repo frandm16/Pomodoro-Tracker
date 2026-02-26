@@ -217,9 +217,26 @@
     -fx-background-radius: 10;
 }
 
-/* Esquina muerta de la tabla */
-.table-view .column-header-background .filler {
-    -fx-background-color: transparent;
+
+.heatmap-cell {
+    -fx-cursor: hand;
+    -fx-stroke: rgba(0, 0, 0, 0.1);
+    -fx-stroke-type: inside;
+    -fx-stroke-width: 1;
 }
 
+.heatmap-cell:hover {
+    -fx-stroke: #58a6ff;
+    -fx-stroke-width: 2;
+    -fx-opacity: 0.8;
+}
 
+.tooltip {
+    -fx-background-color: #1c2128;
+    -fx-text-fill: #adbac7;
+    -fx-font-size: 12px;
+    -fx-padding: 5 10 5 10;
+    -fx-background-radius: 4;
+    -fx-border-color: #444c56;
+    -fx-border-radius: 4;
+}

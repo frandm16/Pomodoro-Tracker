@@ -76,7 +76,20 @@
 
         <padding><Insets top="80" right="50" bottom="50" left="50" /></padding>
 
-        <Label text="HISTORIAL DE SESIONES" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;" />
+        <VBox style="-fx-padding: 10;">
+            <Pane style="-fx-background-color: #ff0000" fx:id="monthLabelContainer" prefHeight="20" />
+
+            <ScrollPane pannable="true" fitToHeight="true" vbarPolicy="NEVER"
+                        style="-fx-background-color: #ffffff; -fx-background: transparent;">
+                <GridPane fx:id="heatmapGrid" hgap="3" vgap="3">
+                    <padding>
+                        <Insets top="5" right="10" bottom="10" left="10"/>
+                    </padding>
+                </GridPane>
+            </ScrollPane>
+        </VBox>
+
+        <Label text="HISTORY" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;" />
 
         <TableView fx:id="sessionsTable" VBox.vgrow="ALWAYS" maxWidth="-Infinity" styleClass="modern-table">
             <columnResizePolicy>
@@ -155,6 +168,10 @@
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Auto Start Pomodoros" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
                     <ToggleButton fx:id="autoPomoToggle" text="OFF" styleClass="toggle-sidebar" />
+                </HBox>
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Count Break Time" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                    <ToggleButton fx:id="countBreakTime" text="OFF" styleClass="toggle-sidebar" />
                 </HBox>
             </VBox>
             <Separator />

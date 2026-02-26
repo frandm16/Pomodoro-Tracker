@@ -17,6 +17,7 @@ public class PomodoroEngine {
     private int workMins = 25, shortMins = 5, longMins = 15, interval = 4;
     private boolean autoStartBreaks = false;
     private boolean autoStartPomodoros = false;
+    private boolean countBreakTime = false;
 
     private int secondsRemaining;
     private int secondsElapsed = 0;
@@ -37,9 +38,9 @@ public class PomodoroEngine {
     private void setupTimeline() {
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             if (secondsRemaining > 0) {
-                secondsRemaining--;
-                if (currentState == State.WORK) {
-                    secondsElapsed++;
+                secondsRemaining-=60;
+                if (currentState == State.WORK || countBreakTime) {
+                    secondsElapsed+=60;
                 }
                 if (onTick != null) onTick.run();
             } else {
@@ -61,24 +62,21 @@ public class PomodoroEngine {
         if (onTick != null) onTick.run();
         if (onStateChange != null) onStateChange.run();
     }
-    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo, int alarmVolume) {
+    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo, boolean cBreak, int alarmVolume) {
         this.workMins = w;
         this.shortMins = s;
         this.longMins = l;
         this.interval = i;
         this.autoStartBreaks = aBreak;
         this.autoStartPomodoros = aPomo;
+        this.countBreakTime = cBreak;
         this.alarmSoundVolume = alarmVolume;
 
         if (currentState == State.MENU) {
             resetTimeForState(State.MENU);
         }
     }
-    public boolean isAutoStartBreaks() { return autoStartBreaks; }
-    public boolean isAutoStartPomo() { return autoStartPomodoros; }
-    public boolean isRunning() {
-        return currentState != State.WAITING && currentState != State.MENU;
-    }
+
     public void fullReset() {
         this.secondsElapsed = 0;
         this.sessionCounter = 0;
@@ -141,6 +139,7 @@ public class PomodoroEngine {
         this.interval = 4;
         this.autoStartBreaks = false;
         this.autoStartPomodoros = false;
+        this.countBreakTime = false;
     }
     //endregion
 
@@ -151,6 +150,7 @@ public class PomodoroEngine {
     public void setInterval(int interval) { this.interval = interval; }
     public void setAutoStartBreaks(boolean value) { this.autoStartBreaks = value; }
     public void setAutoStartPomo(boolean value) { this.autoStartPomodoros = value; }
+    public void setCountBreakTime(boolean value) { this.countBreakTime = value; }
     public void setOnTick(Runnable r) { this.onTick = r; }
     public void setOnStateChange(Runnable r) { this.onStateChange = r; }
     public void setOnTimerFinished(Runnable r) {this.onTimerFinished = r;}
@@ -170,14 +170,17 @@ public class PomodoroEngine {
         }
         return currentState;
     }
-    public int getRealSecondsElapsed() {
-        return secondsElapsed;
+    public int getRealMinutesElapsed() {
+        return secondsElapsed/60;
     }
 
     public int getWorkMins() { return workMins; }
     public int getShortMins() { return shortMins; }
     public int getLongMins() { return longMins; }
     public int getInterval() { return interval; }
+    public boolean isAutoStartBreaks() { return this.autoStartBreaks; }
+    public boolean isAutoStartPomo() { return this.autoStartPomodoros; }
+    public boolean isCountBreakTime() { return this.countBreakTime; }
     public int getTotalSecondsForCurrentState() {
         State logical = getLogicalState();
         return switch (logical) {

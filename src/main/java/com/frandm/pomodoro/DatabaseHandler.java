@@ -27,21 +27,21 @@ public class DatabaseHandler {
                 "subject TEXT NOT NULL, " +
                 "topic TEXT, " +
                 "description TEXT, " +
-                "duration_seconds INTEGER NOT NULL, " +
+                "duration_minutes INTEGER NOT NULL, " +
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
              Statement test = conn.createStatement()) {
             test.execute(sql);
-            System.out.println("[DEBUG] database initialized correctly");
+            System.out.println("[DEBUG] Database initialized correctly");
         } catch (SQLException e) {
             System.err.println("DB Init Error: " + e.getMessage());
         }
     }
 
-    public static void saveSession(String subject, String topic, String description, int seconds) {
-        if(seconds>=15){
-            String sql = "INSERT INTO sessions(subject, topic, description, duration_seconds) VALUES(?, ?, ?, ?)";
+    public static void saveSession(String subject, String topic, String description, int minutes) {
+        if(minutes>=0){
+            String sql = "INSERT INTO sessions(subject, topic, description, duration_minutes) VALUES(?, ?, ?, ?)";
 
             try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
                  PreparedStatement test = conn.prepareStatement(sql)) {
@@ -49,20 +49,20 @@ public class DatabaseHandler {
                 test.setString(1, subject);
                 test.setString(2, topic);
                 test.setString(3, description);
-                test.setInt(4, seconds);
+                test.setInt(4, minutes);
 
                 test.executeUpdate();
-                System.out.println("[DEBUG] session saved: " + subject + " - " + topic + " - " + seconds + " sec");
+                System.out.println("[DEBUG] Session saved: " + subject + " - " + topic + " - " + minutes + " sec");
 
             } catch (SQLException e) {
-                System.err.println("save error: " + e.getMessage());
+                System.err.println("Error saving session: " + e.getMessage());
             }
         }
     }
 
     public static ObservableList<Session> getAllSessions() {
         ObservableList<Session> sessions = FXCollections.observableArrayList();
-        String sql = "SELECT subject, topic, duration_seconds, timestamp FROM sessions ORDER BY timestamp DESC";
+        String sql = "SELECT subject, topic, duration_minutes, timestamp FROM sessions ORDER BY timestamp DESC";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
              Statement stmt = conn.createStatement();
@@ -73,12 +73,32 @@ public class DatabaseHandler {
                         rs.getString("timestamp"),
                         rs.getString("subject"),
                         rs.getString("topic"),
-                        rs.getInt("duration_seconds")
+                        rs.getInt("duration_minutes")
                 ));
             }
         } catch (SQLException e) {
-            System.err.println("Error al obtener sesiones: " + e.getMessage());
+            System.err.println("Error getAllSessions(): " + e.getMessage());
         }
         return sessions;
+    }
+
+    public static java.util.Map<java.time.LocalDate, Integer> getMinutesPerDayLastYear() {
+        java.util.Map<java.time.LocalDate, Integer> data = new java.util.HashMap<>();
+        String sql = "SELECT date(timestamp) as day, SUM(duration_minutes) as total " +
+                "FROM sessions " +
+                "WHERE timestamp >= date('now', '-1 year') " +
+                "GROUP BY day";
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                data.put(java.time.LocalDate.parse(rs.getString("day")), rs.getInt("total"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error loading heatmap: " + e.getMessage());
+        }
+        return data;
     }
 }
