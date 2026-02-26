@@ -5,6 +5,8 @@ import javafx.animation.Timeline;
 import javafx.util.Duration;
 
 public class PomodoroEngine {
+
+
     public enum State { MENU, WORK, SHORT_BREAK, LONG_BREAK, WAITING }
 
     //region Variables
@@ -20,6 +22,7 @@ public class PomodoroEngine {
     private int secondsElapsed = 0;
     private int sessionCounter = 0;
 
+    private int alarmSoundVolume = 100;
 
     private Runnable onTick;
     private Runnable onStateChange;
@@ -58,13 +61,14 @@ public class PomodoroEngine {
         if (onTick != null) onTick.run();
         if (onStateChange != null) onStateChange.run();
     }
-    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo) {
+    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo, int alarmVolume) {
         this.workMins = w;
         this.shortMins = s;
         this.longMins = l;
         this.interval = i;
         this.autoStartBreaks = aBreak;
         this.autoStartPomodoros = aPomo;
+        this.alarmSoundVolume = alarmVolume;
 
         if (currentState == State.MENU) {
             resetTimeForState(State.MENU);
@@ -149,8 +153,8 @@ public class PomodoroEngine {
     public void setAutoStartPomo(boolean value) { this.autoStartPomodoros = value; }
     public void setOnTick(Runnable r) { this.onTick = r; }
     public void setOnStateChange(Runnable r) { this.onStateChange = r; }
-    public void setOnTimerFinished(Runnable r) {this.onTimerFinished = r;
-    }
+    public void setOnTimerFinished(Runnable r) {this.onTimerFinished = r;}
+    public void setAlarmSoundVolume(int alarmSoundVolume) {this.alarmSoundVolume = alarmSoundVolume;}
     //endregion
 
     //region Getters
@@ -166,8 +170,8 @@ public class PomodoroEngine {
         }
         return currentState;
     }
-    public int getRealMinutesElapsed() {
-        return secondsElapsed / 60;
+    public int getRealSecondsElapsed() {
+        return secondsElapsed;
     }
 
     public int getWorkMins() { return workMins; }
@@ -183,9 +187,9 @@ public class PomodoroEngine {
             default -> workMins * 60;
         };
     }
-
     public int getSecondsRemaining() {
         return secondsRemaining;
     }
+    public int getAlarmSoundVolume() {return alarmSoundVolume;}
     //endregion
 }

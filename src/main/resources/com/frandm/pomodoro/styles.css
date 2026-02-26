@@ -99,6 +99,9 @@
 
 
 /* --- sidebar styles --- */
+.slider {
+    -fx-padding: 0 20 0 20;
+}
 .slider .track {
     -fx-background-color: -border-light;
     -fx-background-radius: 10;
@@ -119,9 +122,7 @@
 }
 
 /* --- sliders number --- */
-.val-label-work { -fx-text-fill: -color-work; -fx-font-size: 18px; -fx-font-weight: bold; }
-.val-label-break { -fx-text-fill: -color-break; -fx-font-size: 18px; -fx-font-weight: bold; }
-.val-label-long { -fx-text-fill: -color-long-break; -fx-font-size: 18px; -fx-font-weight: bold; }
+.val-label { -fx-font-size: 18px; -fx-font-weight: bold; }
 
 /* --- toggle buttons --- */
 .toggle-sidebar {

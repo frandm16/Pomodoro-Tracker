@@ -44,8 +44,8 @@ public class PomodoroController {
     @FXML private StackPane rootPane;
     @FXML private VBox settingsPane;
     @FXML private Label timerLabel, stateLabel;
-    @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel;
-    @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider;
+    @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel, alarmVolumeValLabel;
+    @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider;
     @FXML private ToggleButton autoBreakToggle, autoPomoToggle;
     @FXML private Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn;
     //endregion
@@ -60,9 +60,8 @@ public class PomodoroController {
     @FXML
     public void initialize() {
         DatabaseHandler.initializeDatabase();
+        ConfigManager.load(engine);
 
-        // --- CONFIGURACIÓN DE LA TABLA ---
-        // El nombre entre comillas DEBE coincidir con el nombre del atributo en la clase Session
         colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
         colSubject.setCellValueFactory(new PropertyValueFactory<>("subject"));
         colTopic.setCellValueFactory(new PropertyValueFactory<>("topic"));
@@ -75,6 +74,7 @@ public class PomodoroController {
         setupSlider(shortSlider, shortValLabel, engine.getShortMins(), engine::setShortMins);
         setupSlider(longSlider, longValLabel, engine.getLongMins(), engine::setLongMins);
         setupSlider(intervalSlider, intervalValLabel, engine.getInterval(), engine::setInterval);
+        setupSlider(alarmVolumeSlider, alarmVolumeValLabel, engine.getAlarmSoundVolume(), engine::setAlarmSoundVolume);
 
         autoBreakToggle.setSelected(engine.isAutoStartBreaks());
         autoBreakToggle.setText(autoBreakToggle.isSelected() ? "ON" : "OFF");
@@ -95,9 +95,7 @@ public class PomodoroController {
             updateProgressCircle();
         }));
         engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
-        engine.setOnTimerFinished(() -> Platform.runLater(() -> {
-            playAlarmSound();
-        }));
+        engine.setOnTimerFinished(() -> Platform.runLater(this::playAlarmSound));
 
         updateEngineFlags();
         updateUIFromEngine();
@@ -127,8 +125,10 @@ public class PomodoroController {
                 (int)longSlider.getValue(),
                 (int)intervalSlider.getValue(),
                 autoBreakToggle.isSelected(),
-                autoPomoToggle.isSelected()
+                autoPomoToggle.isSelected(),
+                (int)alarmVolumeSlider.getValue()
         );
+
     }
 
     private void showMainView() {
@@ -154,6 +154,8 @@ public class PomodoroController {
         settingsAnim.setInterpolator(Interpolator.EASE_BOTH);
 
         if (isSettingsOpen) {
+            updateEngineFlags();
+            ConfigManager.save(engine);
             settingsAnim.setToX(-600); // hide settings
         } else {
             settingsAnim.setToX(0);    // show settings
@@ -181,8 +183,8 @@ public class PomodoroController {
 
     @FXML
     private void handleFinish() {
-        int mins = engine.getRealMinutesElapsed();
-        DatabaseHandler.saveSession("test", "tema1", "esto es una descripcion test", mins);
+        int seconds = engine.getRealSecondsElapsed();
+        DatabaseHandler.saveSession("test", "tema1", "esto es una descripcion test", seconds);
 
         engine.fullReset();
         engine.stop();
@@ -334,7 +336,7 @@ public class PomodoroController {
 
             if (soundUrl != null) {
                 AudioClip alarm = new AudioClip(soundUrl.toExternalForm());
-                alarm.setVolume(0.5); // Volumen de 0.0 a 1.0
+                alarm.setVolume((double) engine.getAlarmSoundVolume() /100); // Volumen de 0.0 a 1.0
                 alarm.play();
             } else {
                 System.err.println("No se encontró el archivo de sonido.");

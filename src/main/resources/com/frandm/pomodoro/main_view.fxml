@@ -115,7 +115,7 @@
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Pomodoro" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Label fx:id="workValLabel" text="25" styleClass="val-label-work" />
+                    <Label fx:id="workValLabel" text="25" styleClass="val-label" />
                 </HBox>
                 <Slider fx:id="workSlider" min="1" max="180" />
             </VBox>
@@ -124,7 +124,7 @@
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Short Break" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Label fx:id="shortValLabel" text="5" styleClass="val-label-break" />
+                    <Label fx:id="shortValLabel" text="5" styleClass="val-label" />
                 </HBox>
                 <Slider fx:id="shortSlider" min="1" max="25" />
             </VBox>
@@ -133,7 +133,7 @@
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Long Break" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Label fx:id="longValLabel" text="15" styleClass="val-label-long" />
+                    <Label fx:id="longValLabel" text="15" styleClass="val-label" />
                 </HBox>
                 <Slider fx:id="longSlider" min="1" max="50"/>
             </VBox>
@@ -142,7 +142,7 @@
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Long Break Interval" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Label fx:id="intervalValLabel" text="4" />
+                    <Label fx:id="intervalValLabel" text="4" styleClass="val-label" />
                 </HBox>
                 <Slider fx:id="intervalSlider" min="1" max="20"  />
             </VBox>
@@ -158,6 +158,15 @@
                 </HBox>
             </VBox>
             <Separator />
+
+            <VBox spacing="8">
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Alarm Volume" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Label fx:id="alarmVolumeValLabel" text="100" styleClass="val-label" />
+                </HBox>
+                <Slider fx:id="alarmVolumeSlider" min="0" max="100"/>
+            </VBox>
         </VBox>
 
     </VBox>
