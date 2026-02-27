@@ -24,6 +24,7 @@ public class PomodoroEngine {
     private int sessionCounter = 0;
 
     private int alarmSoundVolume = 100;
+    private int widthStats = 50;
 
     private Runnable onTick;
     private Runnable onStateChange;
@@ -62,7 +63,7 @@ public class PomodoroEngine {
         if (onTick != null) onTick.run();
         if (onStateChange != null) onStateChange.run();
     }
-    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo, boolean cBreak, int alarmVolume) {
+    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo, boolean cBreak, int alarmVolume, int inWidthStats) {
         this.workMins = w;
         this.shortMins = s;
         this.longMins = l;
@@ -71,6 +72,7 @@ public class PomodoroEngine {
         this.autoStartPomodoros = aPomo;
         this.countBreakTime = cBreak;
         this.alarmSoundVolume = alarmVolume;
+        this.widthStats = inWidthStats;
 
         if (currentState == State.MENU) {
             resetTimeForState(State.MENU);
@@ -155,12 +157,11 @@ public class PomodoroEngine {
     public void setOnStateChange(Runnable r) { this.onStateChange = r; }
     public void setOnTimerFinished(Runnable r) {this.onTimerFinished = r;}
     public void setAlarmSoundVolume(int alarmSoundVolume) {this.alarmSoundVolume = alarmSoundVolume;}
+    public void setWidthStats(int widthStats) {this.widthStats = widthStats;}
     //endregion
 
     //region Getters
-    public String getFormattedTime() {
-        return String.format("%02d:%02d", secondsRemaining / 60, secondsRemaining % 60);
-    }
+    public String getFormattedTime() {return String.format("%02d:%02d", secondsRemaining / 60, secondsRemaining % 60);}
     public State getCurrentState() { return currentState; }
     //public State getLastActiveState() { return lastActiveState; }
     public int getSessionCounter() {return sessionCounter;}
@@ -173,7 +174,6 @@ public class PomodoroEngine {
     public int getRealMinutesElapsed() {
         return secondsElapsed/60;
     }
-
     public int getWorkMins() { return workMins; }
     public int getShortMins() { return shortMins; }
     public int getLongMins() { return longMins; }
@@ -193,5 +193,6 @@ public class PomodoroEngine {
         return secondsRemaining;
     }
     public int getAlarmSoundVolume() {return alarmSoundVolume;}
+    public int getWidthStats() {return widthStats;}
     //endregion
 }

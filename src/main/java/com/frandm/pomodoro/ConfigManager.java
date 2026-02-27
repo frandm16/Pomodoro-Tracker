@@ -33,6 +33,7 @@ public class ConfigManager {
         props.setProperty("autoPomo", String.valueOf(engine.isAutoStartPomo()));
         props.setProperty("countBreaks", String.valueOf(engine.isCountBreakTime()));
         props.setProperty("alarmSoundVolume", String.valueOf(engine.getAlarmSoundVolume()));
+        props.setProperty("widthStats", String.valueOf(engine.getWidthStats()));
 
         File configFile = getConfigFile();
 
@@ -63,7 +64,8 @@ public class ConfigManager {
                     Boolean.parseBoolean(props.getProperty("autoBreak", String.valueOf(engine.isAutoStartBreaks()))),
                     Boolean.parseBoolean(props.getProperty("autoPomo", String.valueOf(engine.isAutoStartPomo()))),
                     Boolean.parseBoolean(props.getProperty("countBreaks", String.valueOf(engine.isCountBreakTime()))),
-                    Integer.parseInt(props.getProperty("alarmSoundVolume", String.valueOf(engine.getAlarmSoundVolume())))
+                    Integer.parseInt(props.getProperty("alarmSoundVolume", String.valueOf(engine.getAlarmSoundVolume()))),
+                    Integer.parseInt(props.getProperty("widthStats", String.valueOf(engine.getWidthStats())))
             );
         } catch (IOException | NumberFormatException e) {
             System.err.println("Error loading config file: " + e.getMessage());

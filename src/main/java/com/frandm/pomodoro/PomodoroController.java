@@ -1,7 +1,7 @@
 package com.frandm.pomodoro;
 
 //region Imports
-import javafx.scene.chart.PieChart;
+import javafx.scene.chart.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.collections.ObservableList;
 import javafx.animation.FadeTransition;
@@ -20,12 +20,20 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.media.AudioClip;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Map;
 //endregion
 
 public class PomodoroController {
+    public Slider widthSlider;
+    public Label widthSliderValLabel;
+    public ColumnConstraints colRightStats, colCenterStats, colLeftStats;
+    @FXML private AreaChart<String, Number> weeklyLineChart;
+    @FXML private CategoryAxis weeksXAxis;
     public PieChart subjectsPieChart;
     public Button historyBtn;
     public VBox historyContainer;
@@ -78,11 +86,17 @@ public class PomodoroController {
 
         settingsPane.setTranslateX(-600);
 
-        setupSlider(workSlider, workValLabel, engine.getWorkMins(), engine::setWorkMins);
-        setupSlider(shortSlider, shortValLabel, engine.getShortMins(), engine::setShortMins);
-        setupSlider(longSlider, longValLabel, engine.getLongMins(), engine::setLongMins);
-        setupSlider(intervalSlider, intervalValLabel, engine.getInterval(), engine::setInterval);
-        setupSlider(alarmVolumeSlider, alarmVolumeValLabel, engine.getAlarmSoundVolume(), engine::setAlarmSoundVolume);
+        setupSlider(workSlider, workValLabel, engine.getWorkMins(), engine::setWorkMins, "");
+        setupSlider(shortSlider, shortValLabel, engine.getShortMins(), engine::setShortMins, "");
+        setupSlider(longSlider, longValLabel, engine.getLongMins(), engine::setLongMins, "");
+        setupSlider(intervalSlider, intervalValLabel, engine.getInterval(), engine::setInterval, "");
+        setupSlider(alarmVolumeSlider, alarmVolumeValLabel, engine.getAlarmSoundVolume(), engine::setAlarmSoundVolume, "%");
+        setupSlider(widthSlider,widthSliderValLabel,engine.getWidthStats(), engine::setWidthStats, "%");
+
+
+        colCenterStats.percentWidthProperty().bind(widthSlider.valueProperty());
+        colLeftStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
+        colRightStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
 
         autoBreakToggle.setSelected(engine.isAutoStartBreaks());
         autoBreakToggle.setText(autoBreakToggle.isSelected() ? "ON" : "OFF");
@@ -119,13 +133,13 @@ public class PomodoroController {
     //endregion
 
     //region Setup Helpers
-    private void setupSlider(Slider slider, Label label, int initialValue, java.util.function.Consumer<Integer> updateAction) {
+    private void setupSlider(Slider slider, Label label, int initialValue, java.util.function.Consumer<Integer> updateAction, String text) {
         slider.setValue(initialValue);
-        label.setText(String.valueOf(initialValue));
+        label.setText(String.valueOf(initialValue) + text);
 
         slider.valueProperty().addListener((_, _, newVal) -> {
             int val = newVal.intValue();
-            label.setText(String.valueOf(val));
+            label.setText(String.valueOf(val) + text);
             updateAction.accept(val);
 
             if (engine.getCurrentState() == PomodoroEngine.State.MENU) {
@@ -133,7 +147,6 @@ public class PomodoroController {
             }
         });
     }
-
     private void updateEngineFlags() {
         engine.updateSettings(
                 (int)workSlider.getValue(),
@@ -143,17 +156,16 @@ public class PomodoroController {
                 autoBreakToggle.isSelected(),
                 autoPomoToggle.isSelected(),
                 countBreakTime.isSelected(),
-                (int)alarmVolumeSlider.getValue()
+                (int)alarmVolumeSlider.getValue(),
+                (int)widthSlider.getValue()
         );
 
     }
-
     private void showMainView() {
         Region currentVisible = statsContainer.isVisible() ? statsContainer : historyContainer;
         if (mainContainer.isVisible()) return;
         switchPanels(currentVisible, mainContainer);
     }
-
     private void showStatsView() {
         if (statsContainer.isVisible()) return;
 
@@ -164,7 +176,6 @@ public class PomodoroController {
         Region currentVisible = mainContainer.isVisible() ? mainContainer : historyContainer;
         switchPanels(currentVisible, statsContainer);
     }
-
     private void showHistoryView() {
         if (historyContainer.isVisible()) return;
 
@@ -195,7 +206,6 @@ public class PomodoroController {
         settingsAnim.play();
         isSettingsOpen = !isSettingsOpen;
     }
-
     @FXML
     private void handleStartPause() {
         PomodoroEngine.State current = engine.getCurrentState();
@@ -206,12 +216,10 @@ public class PomodoroController {
         }
         updateUIFromEngine();
     }
-
     @FXML
     private void handleSkip() {
         engine.skip();
     }
-
     @FXML
     private void handleFinish() {
         int minutes = engine.getRealMinutesElapsed();
@@ -222,7 +230,6 @@ public class PomodoroController {
         engine.resetTimeForState(PomodoroEngine.State.MENU);
         updateUIFromEngine();
     }
-
     @FXML
     private void handleResetTimeSettings() {
         engine.resetToDefaults();
@@ -240,7 +247,6 @@ public class PomodoroController {
         updateUIFromEngine();
         ConfigManager.save(engine);
     }
-
     @FXML
     private void handleNavClick(ActionEvent event) {
         Button clickedBtn = (Button) event.getSource();
@@ -313,7 +319,6 @@ public class PomodoroController {
         Timeline fade = getTimeline(start);
         fade.play();
     }
-
     private Timeline getTimeline(Color start) {
         Background nextBackground = rootPane.getBackground();
 
@@ -330,25 +335,28 @@ public class PomodoroController {
                 new KeyFrame(Duration.millis(200), new KeyValue(colorProp, target))
         );
     }
-
     private void switchPanels(Region toHide, Region toShow) {
-        FadeTransition fadeOut = new FadeTransition(Duration.millis(150), toHide);
+        toShow.setOpacity(0.0);
+        toHide.setOpacity(1.0);
+        toShow.setVisible(true);
+        toShow.setManaged(true);
+
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(200), toHide);
         fadeOut.setFromValue(1.0);
         fadeOut.setToValue(0.0);
+
         fadeOut.setOnFinished(_ -> {
             toHide.setVisible(false);
             toHide.setManaged(false);
 
-            toShow.setVisible(true);
-            toShow.setManaged(true);
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(150), toShow);
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(200), toShow);
             fadeIn.setFromValue(0.0);
             fadeIn.setToValue(1.0);
             fadeIn.play();
         });
+
         fadeOut.play();
     }
-
     private void updateProgressCircle() {
 
         double remaining = engine.getSecondsRemaining();
@@ -381,6 +389,7 @@ public class PomodoroController {
         updateBestDay(sessions);
         tasksLabel.setText(String.valueOf(sessions.size()));
         updateSubjectsChart(sessions);
+        updateWeeklyChart(sessions);
     }
 
     private void updateTimeLastMonth(ObservableList<Session> sessions, LocalDate today) {
@@ -487,6 +496,60 @@ public class PomodoroController {
 
             data.getNode().setOnMouseEntered(_ -> data.getNode().setStyle("-fx-opacity: 0.75; -fx-cursor: hand;"));
             data.getNode().setOnMouseExited(_ -> data.getNode().setStyle("-fx-opacity: 1.0;"));
+        }
+    }
+
+    private void updateWeeklyChart(ObservableList<Session> sessions) {
+        weeklyLineChart.getData().clear();
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        java.time.format.DateTimeFormatter dateFormatter =
+                java.time.format.DateTimeFormatter.ofPattern("dd MMM", java.util.Locale.getDefault());
+
+        java.time.format.DateTimeFormatter labelFormatter = java.time.format.DateTimeFormatter.ofPattern("dd MMM");
+
+        for (int i = 11; i >= 0; i--) {
+            LocalDate endOfWeek = LocalDate.now().minusWeeks(i).with(java.time.DayOfWeek.SUNDAY);
+            LocalDate startOfWeek = endOfWeek.minusDays(6);
+
+            double totalHours = sessions.stream()
+                    .filter(s -> {
+                        LocalDate d = LocalDate.parse(s.getDate().substring(0, 10), DATE_FORMATTER);
+                        return !d.isBefore(startOfWeek) && !d.isAfter(endOfWeek);
+                    })
+                    .mapToDouble(Session::getDuration)
+                    .sum() / 60;
+
+            String label = startOfWeek.format(labelFormatter);
+            XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(label, totalHours);
+
+            dataPoint.setExtraValue(new LocalDate[]{startOfWeek, endOfWeek});
+            series.getData().add(dataPoint);
+        }
+
+        weeklyLineChart.getData().add(series);
+
+        for (XYChart.Data<String, Number> data : series.getData()) {
+            LocalDate[] dates = (LocalDate[]) data.getExtraValue();
+            LocalDate start = dates[0];
+            LocalDate end = dates[1];
+
+            Tooltip tooltip = new Tooltip(String.format("%s - %s\n%.1fh", start.format(dateFormatter), end.format(dateFormatter), data.getYValue().doubleValue()));
+
+            tooltip.setShowDelay(Duration.millis(50));
+            tooltip.getStyleClass().add("heatmap-tooltip");
+
+            Tooltip.install(data.getNode(), tooltip);
+
+            data.getNode().setOnMouseEntered(e -> {
+                data.getNode().setScaleX(1.5);
+                data.getNode().setScaleY(1.5);
+                data.getNode().setCursor(javafx.scene.Cursor.HAND);
+            });
+
+            data.getNode().setOnMouseExited(e -> {
+                data.getNode().setScaleX(1.0);
+                data.getNode().setScaleY(1.0);
+            });
         }
     }
 //endregion

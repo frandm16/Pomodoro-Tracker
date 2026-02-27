@@ -76,7 +76,7 @@
     -fx-cursor: hand;
 }
 
-/* --- setings sidebar --- */
+/* --- settings sidebar --- */
 .settings-sidebar {
     -fx-background-color: -bg-settings;
     -fx-background-radius: 0 40 40 0;
@@ -210,43 +210,49 @@
 
 /* --- scroll bar (heatmap) --- */
 
-.heatmap-scroll .scroll-bar:horizontal {
+.scroll-pane .scroll-bar {
     -fx-background-color: transparent;
-    -fx-pref-height: 12px;
-    -fx-min-height: 12px;
-    -fx-padding: 4 0 0 0;
     -fx-opacity: 0;
+    -fx-transition: -fx-opacity 0.3s ease-in-out;
 }
 
-.heatmap-scroll:hover .scroll-bar:horizontal {
+.scroll-pane:hover .scroll-bar {
     -fx-opacity: 1;
 }
 
-.heatmap-scroll .scroll-bar:horizontal .track {
+.scroll-pane .scroll-bar:horizontal {
+    -fx-pref-height: 12px;
+    -fx-min-height: 12px;
+    -fx-padding: 4 0 0 0;
+}
+
+.scroll-pane .scroll-bar:vertical {
+    -fx-pref-width: 12px;
+    -fx-min-width: 12px;
+    -fx-padding: 0 0 0 4;
+}
+
+.scroll-pane .scroll-bar .track {
     -fx-background-color: rgba(255, 255, 255, 0.05);
     -fx-background-radius: 10;
 }
 
-.heatmap-scroll .scroll-bar:horizontal .thumb {
+.scroll-pane .scroll-bar .thumb {
     -fx-background-color: rgba(255, 255, 255, 0.2);
     -fx-background-radius: 10;
     -fx-background-insets: 2;
 }
 
-.heatmap-scroll .scroll-bar:horizontal .thumb:hover {
+.scroll-pane .scroll-bar .thumb:hover {
     -fx-background-color: -heatmap-medium;
 }
-
-.heatmap-scroll .scroll-bar:horizontal .increment-button,
-.heatmap-scroll .scroll-bar:horizontal .decrement-button {
+.scroll-pane .scroll-bar .increment-button,
+.scroll-pane .scroll-bar .decrement-button,
+.scroll-pane .scroll-bar .increment-arrow,
+.scroll-pane .scroll-bar .decrement-arrow {
     -fx-background-color: transparent;
     -fx-padding: 0;
-}
-
-.heatmap-scroll .scroll-bar:horizontal .increment-arrow,
-.heatmap-scroll .scroll-bar:horizontal .decrement-arrow {
     -fx-shape: "";
-    -fx-padding: 0;
 }
 
 /* --- stats --- */
@@ -263,8 +269,7 @@
 
 .stats-content-wrapper {
     -fx-background-color: transparent;
-    -fx-max-width: 1200;
-    -fx-padding: 80 50 50 50;
+    -fx-padding: 80 0 50 0;
 }
 
 .stat-card {
@@ -274,6 +279,7 @@
     -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-radius: 16;
     -fx-max-width: Infinity;
+    -fx-max-height: Infinity;
 }
 
 .small-card-title {
@@ -284,7 +290,7 @@
 
 .small-card-main-content {
     -fx-text-fill: white;
-    -fx-font-size: 24px;
+    -fx-font-size: 34 px;
     -fx-font-weight: bold;
 }
 
@@ -295,15 +301,15 @@
 
 .big-card-title {
     -fx-text-fill: #ffffff;
-    -fx-font-size: 25px;
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
-    -fx-padding: 10 20 0 20;
+
 }
 
 .big-card-description {
     -fx-text-fill: #cacaca;
-    -fx-font-size: 15px;
-    -fx-padding: 5 20 10 20;
+    -fx-font-size: 14px;
+    -fx-padding: 0 0 15 0;
 }
 
 .big-card-separator .line {
@@ -369,3 +375,75 @@
 .default-color3.chart-pie { -fx-pie-color: -heatmap-low; }
 .default-color4.chart-pie { -fx-pie-color: -heatmap-very-high; }
 .default-color5.chart-pie { -fx-pie-color: -heatmap-high; }
+
+/* --- scroll --- */
+.main-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-focus-color: transparent;
+}
+
+.main-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.main-scroll {
+    -fx-vbar-policy: never;
+    -fx-hbar-policy: never;
+}
+
+/* --- xy chart --- */
+
+.chart {
+    -fx-background-color: transparent;
+    -fx-padding: 0px;
+}
+
+.chart-content {
+    -fx-padding: 0px;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-series-area-line {
+    -fx-stroke: -heatmap-high;
+    -fx-stroke-width: 3px;
+}
+
+.chart-series-area-fill {
+    -fx-fill: linear-gradient(to bottom, -heatmap-low, transparent);
+}
+
+.chart-area-symbol {
+    -fx-background-color: -heatmap-high, white;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 5px;
+    -fx-padding: 5px;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: transparent;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: rgba(255, 255, 255, 0.1);
+    -fx-stroke-dash-array: 2 5;
+}
+
+.axis {
+    -fx-tick-label-fill: -text-main;
+    -fx-font-size: 10px;
+}
+
+.axis:bottom .axis-line {
+    -fx-stroke: transparent;
+    -fx-stroke-width: 0px;
+}
+
+.axis:bottom .axis-tick-mark {
+    -fx-stroke: transparent;
+    -fx-opacity: 0;
+}
