@@ -38,9 +38,9 @@ public class PomodoroEngine {
     private void setupTimeline() {
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), _ -> {
             if (secondsRemaining > 0) {
-                secondsRemaining-=60;
+                secondsRemaining-=43;
                 if (currentState == State.WORK || countBreakTime) {
-                    secondsElapsed+=60;
+                    secondsElapsed+=43;
                 }
                 if (onTick != null) onTick.run();
             } else {
