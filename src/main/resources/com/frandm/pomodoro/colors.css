@@ -10,8 +10,10 @@
     -text-muted: #94a3b8;
     -border-light: #ECF0F1;
     -heatmap-empty: #1e293b;
-    -heatmap-low: rgba(135, 68, 255, 0.39);
+    -heatmap-very-low: rgba(135, 68, 255, 0.20);
+    -heatmap-low: rgba(135, 68, 255, 0.45);
     -heatmap-medium: rgba(124, 58, 237, 0.82);
     -heatmap-high: #a855f7;
-    -heatmap-extreme: #d1a6ff;
+    -heatmap-very-high: #c084fc;
+    -heatmap-extreme: #d8b4fe;
 }

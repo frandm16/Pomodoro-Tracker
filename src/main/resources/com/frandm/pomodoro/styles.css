@@ -163,7 +163,7 @@
 
 .month-label-container {
     -fx-pref-height: 15;
-    -fx-padding: 0 0 25 0;
+    -fx-padding: 0 0 0 0;
 }
 
 .month-label {
@@ -180,6 +180,7 @@
     -fx-arc-width: 6;
     -fx-arc-height: 6;
 }
+
 .legend-text {
     -fx-text-fill: #cacaca;
     -fx-font-size: 15px;
@@ -205,6 +206,47 @@
     -fx-text-fill: white;
     -fx-font-size: 13px;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 15, 0, 0, 10);
+}
+
+/* --- scroll bar (heatmap) --- */
+
+.heatmap-scroll .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-pref-height: 12px;
+    -fx-min-height: 12px;
+    -fx-padding: 4 0 0 0;
+    -fx-opacity: 0;
+}
+
+.heatmap-scroll:hover .scroll-bar:horizontal {
+    -fx-opacity: 1;
+}
+
+.heatmap-scroll .scroll-bar:horizontal .track {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-radius: 10;
+}
+
+.heatmap-scroll .scroll-bar:horizontal .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 10;
+    -fx-background-insets: 2;
+}
+
+.heatmap-scroll .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: -heatmap-medium;
+}
+
+.heatmap-scroll .scroll-bar:horizontal .increment-button,
+.heatmap-scroll .scroll-bar:horizontal .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.heatmap-scroll .scroll-bar:horizontal .increment-arrow,
+.heatmap-scroll .scroll-bar:horizontal .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
 }
 
 /* --- stats --- */
@@ -273,3 +315,57 @@
     -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-width: 1px;
 }
+
+/* --- Chart Pie --- */
+
+.chart-pie-label {
+    -fx-fill: #ecf0f1;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.chart-pie-label-line {
+    -fx-stroke: #7f8c8d;
+    -fx-stroke-width: 1px;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+    -fx-hgap: 10px;
+    -fx-vgap: 5px;
+    -fx-content-display: LEFT;
+}
+
+.chart-legend-item {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 15px;
+}
+
+.chart-legend-item:hover {
+    -fx-text-fill: -text-main;
+    -fx-cursor: hand;
+}
+
+.chart-legend-item-symbol {
+    -fx-background-radius: 5px;
+}
+.chart-pie:hover {
+    -fx-opacity: 0.85;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.chart {
+    -fx-padding: 20 100 0 10;
+}
+.chart-pie {
+    -fx-border-color: transparent;
+    -fx-stroke: transparent;
+}
+
+.default-color0.chart-pie { -fx-pie-color: -heatmap-very-low; }
+.default-color1.chart-pie { -fx-pie-color: -heatmap-extreme; }
+.default-color2.chart-pie { -fx-pie-color: -heatmap-medium; }
+.default-color3.chart-pie { -fx-pie-color: -heatmap-low; }
+.default-color4.chart-pie { -fx-pie-color: -heatmap-very-high; }
+.default-color5.chart-pie { -fx-pie-color: -heatmap-high; }

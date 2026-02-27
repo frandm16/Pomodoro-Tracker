@@ -1,6 +1,7 @@
 package com.frandm.pomodoro;
 
 //region Imports
+import javafx.scene.chart.PieChart;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.collections.ObservableList;
 import javafx.animation.FadeTransition;
@@ -23,6 +24,9 @@ import java.time.LocalDate;
 //endregion
 
 public class PomodoroController {
+    public PieChart subjectsPieChart;
+    public Button historyBtn;
+    public VBox historyContainer;
     @FXML private Label streakLabel;
     @FXML private Label timeThisWeekLabel;
     @FXML private Label timeLastMonthLabel;
@@ -143,19 +147,30 @@ public class PomodoroController {
     }
 
     private void showMainView() {
-        switchPanels(statsContainer, mainContainer);
+        Region currentVisible = statsContainer.isVisible() ? statsContainer : historyContainer;
+        if (mainContainer.isVisible()) return;
+        switchPanels(currentVisible, mainContainer);
     }
 
     private void showStatsView() {
         if (statsContainer.isVisible()) return;
 
         ObservableList<Session> datos = DatabaseHandler.getAllSessions();
-        sessionsTable.setItems(datos);
-
         statsDashboard.updateHeatmap(DatabaseHandler.getMinutesPerDayLastYear());
         updateStatsCards(datos);
 
-        switchPanels(mainContainer, statsContainer);
+        Region currentVisible = mainContainer.isVisible() ? mainContainer : historyContainer;
+        switchPanels(currentVisible, statsContainer);
+    }
+
+    private void showHistoryView() {
+        if (historyContainer.isVisible()) return;
+
+        ObservableList<Session> datos = DatabaseHandler.getAllSessions();
+        sessionsTable.setItems(datos);
+
+        Region currentVisible = mainContainer.isVisible() ? mainContainer : statsContainer;
+        switchPanels(currentVisible, historyContainer);
     }
     //endregion
 
@@ -226,17 +241,19 @@ public class PomodoroController {
 
     @FXML
     private void handleNavClick(ActionEvent event) {
-        Button source = (Button) event.getSource();
+        Button clickedBtn = (Button) event.getSource();
 
         menuBtn.getStyleClass().remove("active");
         statsBtn.getStyleClass().remove("active");
+        historyBtn.getStyleClass().remove("active");
+        clickedBtn.getStyleClass().add("active");
 
-        source.getStyleClass().add("active");
-
-        if (source == menuBtn) {
+        if (clickedBtn == menuBtn) {
             showMainView();
-        } else {
+        } else if (clickedBtn == statsBtn) {
             showStatsView();
+        } else if (clickedBtn == historyBtn) {
+            showHistoryView();
         }
     }
     //endregion
@@ -363,6 +380,7 @@ public class PomodoroController {
         calculateStreak(sessions);
         updateBestDay(sessions);
         tasksLabel.setText(String.valueOf(sessions.size()));
+        updateSubjectsChart(sessions);
     }
 
     private void updateTimeLastMonth(ObservableList<Session> sessions, LocalDate today) {
@@ -429,6 +447,54 @@ public class PomodoroController {
             check = check.minusDays(1);
         }
         streakLabel.setText(streak + " Days");
+    }
+
+    private void updateSubjectsChart(ObservableList<Session> sessions) {
+        if (sessions == null || sessions.isEmpty()) {
+            subjectsPieChart.getData().clear();
+            return;
+        }
+
+        java.util.Map<String, Integer> timeBySubject = sessions.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        Session::getSubject,
+                        java.util.stream.Collectors.summingInt(Session::getDuration)
+                ));
+
+        double totalMinsAll = timeBySubject.values().stream().mapToDouble(Integer::doubleValue).sum();
+
+        javafx.collections.ObservableList<PieChart.Data> pieData = javafx.collections.FXCollections.observableArrayList();
+
+        timeBySubject.forEach((subject, totalMinutes) -> {
+            float hours = (float) totalMinutes / 60;
+            double percentage = (totalMinutes / totalMinsAll) * 100;
+
+            String label = String.format("%s (%.1fh)", subject, hours);
+
+            PieChart.Data data = new PieChart.Data(label, hours);
+            pieData.add(data);
+        });
+
+        subjectsPieChart.setData(pieData);
+
+        for (PieChart.Data data : subjectsPieChart.getData()) {
+            double sliceValue = data.getPieValue();
+            double totalValue = pieData.stream().mapToDouble(PieChart.Data::getPieValue).sum();
+            double percent = (sliceValue / totalValue) * 100;
+
+            Tooltip tt = new Tooltip(String.format("%.1f%%\n%s", percent, data.getName()));
+            tt.getStyleClass().add("heatmap-tooltip");
+            tt.setShowDelay(Duration.millis(75));
+
+            Tooltip.install(data.getNode(), tt);
+
+            data.getNode().setOnMouseEntered(_ -> {
+                data.getNode().setStyle("-fx-opacity: 0.75; -fx-cursor: hand;");
+            });
+            data.getNode().setOnMouseExited(_ -> {
+                data.getNode().setStyle("-fx-opacity: 1.0;");
+            });
+        }
     }
 //endregion
 
