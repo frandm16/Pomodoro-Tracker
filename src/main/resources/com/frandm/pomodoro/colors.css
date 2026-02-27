@@ -1,19 +1,17 @@
-
 .root {
-
-    -color-work: #ec7b6d;       /* rojo */
-    -color-break: #27AE60;      /* verde */
-    -color-long-break: #2980B9; /* azul */
-    -color-menu: #34495E;
-    -color-hover: #5586c3; /* ris */
-
-    /* colores */
+    -color-work: #ec7b6d;
+    -color-break: #27AE60;
+    -color-long-break: #2980B9;
+    -color-menu: #0f172a;
+    -color-hover: #1e293b;
     -bg-settings: #FFFFFF;
     -text-main: #FFFFFF;
     -text-dark: #2C3E50;
-    -text-muted: #95A5A6;
-
-    /* sombras y bordes */
-    -shadow-color: rgba(0, 0, 0, 0.2);
+    -text-muted: #94a3b8;
     -border-light: #ECF0F1;
+    -heatmap-empty: #1e293b;
+    -heatmap-low: rgba(135, 68, 255, 0.39);
+    -heatmap-medium: rgba(124, 58, 237, 0.82);
+    -heatmap-high: #a855f7;
+    -heatmap-extreme: #d1a6ff;
 }

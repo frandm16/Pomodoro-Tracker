@@ -11,7 +11,11 @@ public class App extends Application {
     public void start(Stage stage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("main_view.fxml"));
 
+
         Scene scene = new Scene(fxmlLoader.load());
+        scene.getStylesheets().add(
+                App.class.getResource("/com/frandm/pomodoro/styles.css").toExternalForm()
+        );
 
         stage.setTitle("Pomodoro Tracker");
         stage.setMaximized(true);

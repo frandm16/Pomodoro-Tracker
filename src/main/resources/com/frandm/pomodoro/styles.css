@@ -108,12 +108,19 @@
     -fx-pref-height: 8;
 }
 
+.slider .bar {
+    -fx-background-color: -heatmap-low;
+    -fx-background-radius: 10;
+    -fx-pref-height: 8;
+}
+
 .slider .thumb {
     -fx-background-color: -color-menu;
     -fx-background-radius: 15;
     -fx-pref-width: 22;
     -fx-pref-height: 22;
 }
+
 
 .slider:hover .thumb {
     -fx-background-color: -color-hover;
@@ -149,94 +156,120 @@
     -fx-font-size: 16px;
 }
 
-/* --- stats table --- */
 
-/* Contenedor principal de la tabla */
-.table-view {
+.heatmap-container {
+    -fx-padding: 20 20 20 20;
+}
+
+.month-label-container {
+    -fx-pref-height: 15;
+    -fx-padding: 0 0 25 0;
+}
+
+.month-label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 12px;
+}
+
+.heatmap-scroll, .heatmap-scroll .viewport {
     -fx-background-color: transparent;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
-    -fx-padding: 0;
+    -fx-background: transparent;
 }
-
-/* Cabecera de la tabla */
-.table-view .column-header-background {
-    -fx-background-color: rgba(255, 255, 255, 0.05); /* Un brillo muy sutil */
-    -fx-background-radius: 10 10 0 0;
-}
-
-.table-view .column-header {
-    -fx-background-color: transparent;
-    -fx-size: 40; /* Más alta para que respire */
-    -fx-border-color: rgba(255, 255, 255, 0.05);
-    -fx-border-width: 0 1 1 0;
-}
-
-.table-view .column-header .label {
-    -fx-text-fill: #aaaaaa;
-    -fx-font-weight: bold;
-    -fx-font-size: 13px;
-    -fx-alignment: CENTER_LEFT;
-}
-
-/* Celdas y Filas */
-.table-row-cell {
-    -fx-background-color: transparent;
-    -fx-border-color: rgba(255, 255, 255, 0.03);
-    -fx-border-width: 0 0 1 0; /* Solo línea inferior */
-}
-
-.table-row-cell:odd {
-    -fx-background-color: rgba(255, 255, 255, 0.01);
-}
-
-.table-row-cell:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.05); /* Efecto al pasar el ratón */
-}
-
-.table-row-cell:selected {
-    -fx-background-color: rgba(255, 255, 255, 0.1); /* Selección sutil */
-}
-
-.table-cell {
-    -fx-text-fill: white;
-    -fx-padding: 12;
-    -fx-alignment: CENTER_LEFT;
-    -fx-font-size: 14px;
-}
-
-/* Quitar el scrollbar feo o hacerlo minimalista */
-.table-view .virtual-flow .scroll-bar:vertical,
-.table-view .virtual-flow .scroll-bar:horizontal {
-    -fx-background-color: transparent;
-}
-
-.table-view .virtual-flow .scroll-bar .thumb {
-    -fx-background-color: rgba(255, 255, 255, 0.2);
-    -fx-background-radius: 10;
-}
-
 
 .heatmap-cell {
-    -fx-cursor: hand;
-    -fx-stroke: rgba(0, 0, 0, 0.1);
-    -fx-stroke-type: inside;
-    -fx-stroke-width: 1;
+    -fx-arc-width: 6;
+    -fx-arc-height: 6;
+}
+.legend-text {
+    -fx-text-fill: #cacaca;
+    -fx-font-size: 15px;
 }
 
-.heatmap-cell:hover {
-    -fx-stroke: #58a6ff;
-    -fx-stroke-width: 2;
-    -fx-opacity: 0.8;
+.cell-empty  { -fx-fill: -heatmap-empty; }
+.cell-low    { -fx-fill: -heatmap-low; }
+.cell-medium { -fx-fill: -heatmap-medium; }
+.cell-high   { -fx-fill: -heatmap-high; }
+.cell-extreme { -fx-fill: -heatmap-extreme; }
+
+.modern-table {
+    -fx-min-height: 400;
 }
 
 .tooltip {
-    -fx-background-color: #1c2128;
-    -fx-text-fill: #adbac7;
-    -fx-font-size: 12px;
-    -fx-padding: 5 10 5 10;
-    -fx-background-radius: 4;
-    -fx-border-color: #444c56;
-    -fx-border-radius: 4;
+    -fx-background-color: rgba(15, 23, 42, 0.95);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 8;
+    -fx-padding: 8 12;
+    -fx-font-family: "Segoe UI", system-ui;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 15, 0, 0, 10);
+}
+
+/* --- stats --- */
+
+.stats-dashboard {
+    -fx-background-color: transparent;
+}
+
+.stats-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.stats-content-wrapper {
+    -fx-background-color: transparent;
+    -fx-max-width: 1200;
+    -fx-padding: 80 50 50 50;
+}
+
+.stat-card {
+    -fx-background-color: rgba(30, 41, 59, 0.7);
+    -fx-background-radius: 16;
+    -fx-padding: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 16;
+    -fx-max-width: Infinity;
+}
+
+.small-card-title {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.small-card-main-content {
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.small-card-main-content-description {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 11px;
+}
+
+.big-card-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20 0 20;
+}
+
+.big-card-description {
+    -fx-text-fill: #cacaca;
+    -fx-font-size: 15px;
+    -fx-padding: 5 20 10 20;
+}
+
+.big-card-separator .line {
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 1px;
+}
+
+.card-separator .line {
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 1px;
 }

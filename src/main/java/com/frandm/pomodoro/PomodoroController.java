@@ -1,47 +1,37 @@
 package com.frandm.pomodoro;
 
+//region Imports
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.collections.ObservableList;
-//region JavaFX Animation & Layout
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
-
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.util.Duration;
-//endregion
-
-//region JavaFX UI Controls & Application
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-
 import javafx.scene.media.AudioClip;
 import java.net.URL;
 //endregion
 
 public class PomodoroController {
 
-    public GridPane heatmapGrid;
-    public Pane monthLabelContainer;
+    //region @FXML Components
+    @FXML private VBox statsPlaceholder;
+    @FXML private VBox statsContainer;
     @FXML private Arc progressArc;
     @FXML private TableView<Session> sessionsTable;
-    @FXML private TableColumn<Session, String> colDate;
-    @FXML private TableColumn<Session, String> colSubject;
-    @FXML private TableColumn<Session, String> colTopic;
+    @FXML private TableColumn<Session, String> colDate, colSubject, colTopic;
     @FXML private TableColumn<Session, Integer> colDuration;
-
-    public VBox mainContainer;
-    public VBox statsContainer;
-    //region @FXML Components
     @FXML private StackPane rootPane;
-    @FXML private VBox settingsPane;
+    @FXML private VBox settingsPane, mainContainer;
     @FXML private Label timerLabel, stateLabel;
     @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel, alarmVolumeValLabel;
     @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider;
@@ -52,6 +42,7 @@ public class PomodoroController {
     //region Variables
     private boolean isSettingsOpen = false;
     private final PomodoroEngine engine = new PomodoroEngine();
+    private StatsDashboard statsDashboard;
     private TranslateTransition settingsAnim;
     //endregion
 
@@ -59,13 +50,20 @@ public class PomodoroController {
     @FXML
     public void initialize() {
         DatabaseHandler.initializeDatabase();
+        //DatabaseHandler.generateRandomPomodoros();
         ConfigManager.load(engine);
 
+        // config de la tabla
         colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
         colSubject.setCellValueFactory(new PropertyValueFactory<>("subject"));
         colTopic.setCellValueFactory(new PropertyValueFactory<>("topic"));
         colDuration.setCellValueFactory(new PropertyValueFactory<>("duration"));
         // ---------------------------------
+
+        // dashboard
+        statsDashboard = new StatsDashboard();
+        statsPlaceholder.getChildren().add(statsDashboard);
+
 
         settingsPane.setTranslateX(-600);
 
@@ -104,7 +102,6 @@ public class PomodoroController {
         engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
         engine.setOnTimerFinished(() -> Platform.runLater(this::playAlarmSound));
 
-        drawHeatmap();
         updateEngineFlags();
         updateUIFromEngine();
     }
@@ -150,7 +147,7 @@ public class PomodoroController {
         ObservableList<Session> datos = DatabaseHandler.getAllSessions();
         sessionsTable.setItems(datos);
 
-        drawHeatmap();
+        statsDashboard.updateHeatmap(DatabaseHandler.getMinutesPerDayLastYear());
 
         switchPanels(mainContainer, statsContainer);
     }
@@ -244,7 +241,6 @@ public class PomodoroController {
         PomodoroEngine.State logical = engine.getLogicalState();
 
         boolean isMenu = (current == PomodoroEngine.State.MENU);
-
         boolean isWaitingOrMenu = (current == PomodoroEngine.State.WAITING || isMenu);
         startPauseBtn.setText(isWaitingOrMenu ? "START" : "PAUSE");
 
@@ -310,7 +306,7 @@ public class PomodoroController {
         );
     }
 
-    private void switchPanels(VBox toHide, VBox toShow) {
+    private void switchPanels(Region toHide, Region toShow) {
         FadeTransition fadeOut = new FadeTransition(Duration.millis(150), toHide);
         fadeOut.setFromValue(1.0);
         fadeOut.setToValue(0.0);
@@ -345,7 +341,6 @@ public class PomodoroController {
 
     private void playAlarmSound() {
         try {
-            // buscamos el archivo en src/main/resources/com/frandm/pomodoro/sounds/
             URL soundUrl = getClass().getResource("sounds/birds.mp3");
 
             if (soundUrl != null) {
@@ -359,63 +354,4 @@ public class PomodoroController {
             e.printStackTrace();
         }
     }
-    
-    //region HeatMap
-
-    private void drawHeatmap() {
-        heatmapGrid.getChildren().clear();
-        monthLabelContainer.getChildren().clear();
-
-        java.util.Map<java.time.LocalDate, Integer> data = DatabaseHandler.getMinutesPerDayLastYear();
-        java.time.LocalDate today = java.time.LocalDate.now();
-        java.time.LocalDate startDate = today.minusWeeks(52).with(java.time.DayOfWeek.MONDAY);
-
-        String lastMonthName = "";
-        double cellWidth = 12 + 3;
-
-        for (int week = 0; week <= 52; week++) {
-            for (int day = 0; day < 7; day++) {
-                java.time.LocalDate date = startDate.plusWeeks(week).plusDays(day);
-                if (date.isAfter(today)) continue;
-
-                // heatmap month name
-                String currentMonthName = date.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()).toUpperCase();
-                if (!currentMonthName.equals(lastMonthName)) {
-                    Label monthLabel = new Label(currentMonthName);
-                    monthLabel.setStyle("-fx-text-fill: #8b949e; -fx-font-size: 9px; -fx-font-weight: bold;");
-
-                    monthLabel.setLayoutX(week * cellWidth + 10);
-                    monthLabel.setLayoutY(5);
-
-                    monthLabelContainer.getChildren().add(monthLabel);
-                    lastMonthName = currentMonthName;
-                }
-
-                // heatmap slot
-                javafx.scene.shape.Rectangle rect = new javafx.scene.shape.Rectangle(12, 12);
-                rect.setArcWidth(3);
-                rect.setArcHeight(3);
-                rect.getStyleClass().add("heatmap-cell");
-                rect.setFill(getHeatmapColor(data.getOrDefault(date, 0)));
-
-                // tooltip
-                String tooltipText = String.format("%s\n%.1f h", date.toString(), (float)data.getOrDefault(date, 0)/60);
-                javafx.scene.control.Tooltip tt = new javafx.scene.control.Tooltip(tooltipText);
-                tt.setShowDelay(javafx.util.Duration.millis(50));
-                javafx.scene.control.Tooltip.install(rect, tt);
-
-                heatmapGrid.add(rect, week, day);
-            }
-        }
-    }
-
-
-    private javafx.scene.paint.Color getHeatmapColor(int minutes) {
-        if (minutes == 0)   return javafx.scene.paint.Color.web("#ebedf0"); // Sin actividad
-        if (minutes < 30)  return javafx.scene.paint.Color.web("#9be9a8"); // Poca
-        if (minutes < 90)  return javafx.scene.paint.Color.web("#40c463"); // Media
-        if (minutes < 180) return javafx.scene.paint.Color.web("#30a14e"); // Alta
-        return javafx.scene.paint.Color.web("#216e39"); // Muy alta
-    }
-    //endregion
 }

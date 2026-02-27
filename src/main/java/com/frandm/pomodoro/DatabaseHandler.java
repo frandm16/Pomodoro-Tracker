@@ -101,4 +101,47 @@ public class DatabaseHandler {
         }
         return data;
     }
+
+    public static void generateRandomPomodoros() {
+        String sql = "INSERT INTO sessions(subject, topic, description, duration_minutes, timestamp) VALUES(?, ?, ?, ?, ?)";
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl())) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+                java.util.Random random = new java.util.Random();
+                java.time.LocalDate today = java.time.LocalDate.now();
+                String[] subjects = {"JavaFX", "Database", "UI Design", "Testing", "Spring Boot"};
+
+                for (int i = 0; i < 365; i++) {
+                    java.time.LocalDate date = today.minusDays(i);
+                    // 70% to fill that day
+                    if (random.nextDouble() < 0.7) {
+                        int sessionsToday = random.nextInt(8) + 1;
+
+                        for (int s = 0; s < sessionsToday; s++) {
+                            String subject = subjects[random.nextInt(subjects.length)];
+                            int minutes = 25;
+
+                            pstmt.setString(1, subject);
+                            pstmt.setString(2, "sesion diaria " + s);
+                            pstmt.setString(3, "testing the heatmap");
+                            pstmt.setInt(4, minutes);
+                            pstmt.setString(5, date.toString() + " 12:00:00");
+
+                            pstmt.addBatch();
+                        }
+                    }
+                }
+                pstmt.executeBatch();
+                conn.commit();
+
+            } catch (SQLException e) {
+                conn.rollback();
+                System.err.println("Error: " + e.getMessage());
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
 }
