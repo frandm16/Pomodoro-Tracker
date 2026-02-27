@@ -19,10 +19,15 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.media.AudioClip;
 import java.net.URL;
+import java.time.LocalDate;
 //endregion
 
 public class PomodoroController {
-
+    @FXML private Label streakLabel;
+    @FXML private Label timeThisWeekLabel;
+    @FXML private Label timeLastMonthLabel;
+    @FXML private Label tasksLabel;
+    @FXML private Label bestDayLabel;
     //region @FXML Components
     @FXML private VBox statsPlaceholder;
     @FXML private VBox statsContainer;
@@ -148,6 +153,7 @@ public class PomodoroController {
         sessionsTable.setItems(datos);
 
         statsDashboard.updateHeatmap(DatabaseHandler.getMinutesPerDayLastYear());
+        updateStatsCards(datos);
 
         switchPanels(mainContainer, statsContainer);
     }
@@ -338,6 +344,93 @@ public class PomodoroController {
     }
 
     //endregion
+
+    //region Stats Logic
+    private static final java.time.format.DateTimeFormatter DATE_FORMATTER =
+            new java.time.format.DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM-dd")
+                    .optionalStart()
+                    .appendPattern(" HH:mm:ss")
+                    .optionalEnd()
+                    .toFormatter();
+
+    private void updateStatsCards(ObservableList<Session> sessions) {
+        if (sessions == null) return;
+        java.time.LocalDate today = java.time.LocalDate.now();
+
+        updateTimeThisWeek(sessions, today);
+        updateTimeLastMonth(sessions, today);
+        calculateStreak(sessions);
+        updateBestDay(sessions);
+        tasksLabel.setText(String.valueOf(sessions.size()));
+    }
+
+    private void updateTimeLastMonth(ObservableList<Session> sessions, LocalDate today) {
+        LocalDate firstDayLastMonth = today.minusMonths(1).withDayOfMonth(1);
+        LocalDate lastDayLastMonth = today.minusMonths(1).with(java.time.temporal.TemporalAdjusters.lastDayOfMonth());
+
+        double minsLastMonth = sessions.stream()
+                .filter(s -> {
+                    LocalDate d = LocalDate.parse(s.getDate(), DATE_FORMATTER);
+                    return !d.isBefore(firstDayLastMonth) && !d.isAfter(lastDayLastMonth);
+                })
+                .mapToDouble(Session::getDuration)
+                .sum();
+        timeLastMonthLabel.setText(String.format("%.1fh", minsLastMonth / 60));
+    }
+
+    private void updateTimeThisWeek(ObservableList<Session> sessions, LocalDate today) {
+        java.time.LocalDate startOfWeek = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+        double minsThisWeek = sessions.stream()
+                .filter(s -> {
+                    LocalDate d = LocalDate.parse(s.getDate(), DATE_FORMATTER);
+                    return !d.isBefore(startOfWeek);
+                })
+                .mapToDouble(Session::getDuration)
+                .sum();
+        timeThisWeekLabel.setText(String.format("%.1fh", minsThisWeek / 60));
+    }
+
+    private void updateBestDay(ObservableList<Session> sessions) {
+        if (sessions == null || sessions.isEmpty()) {
+            bestDayLabel.setText("-");
+            return;
+        }
+
+        String bestDay = sessions.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        s -> java.time.LocalDate.parse(s.getDate().substring(0, 10), DATE_FORMATTER).getDayOfWeek(),
+                        java.util.stream.Collectors.summingInt(Session::getDuration)
+                ))
+                .entrySet().stream()
+                .max((entry1, entry2) -> Integer.compare(entry1.getValue(), entry2.getValue()))
+                .map(entry -> {
+                    String dayName = entry.getKey().getDisplayName(
+                            java.time.format.TextStyle.FULL,
+                             java.util.Locale.getDefault()
+                    );
+                    return dayName.substring(0, 1).toUpperCase() + dayName.substring(1);
+                })
+                .orElse("-");
+        bestDayLabel.setText(bestDay);
+    }
+
+    private void calculateStreak(ObservableList<Session> sessions) {
+        java.util.Set<java.time.LocalDate> dates = sessions.stream()
+                .map(s -> java.time.LocalDate.parse(s.getDate(), DATE_FORMATTER))
+                .collect(java.util.stream.Collectors.toSet());
+
+        int streak = 0;
+        java.time.LocalDate check = java.time.LocalDate.now();
+        if (!dates.contains(check)) check = check.minusDays(1);
+
+        while (dates.contains(check)) {
+            streak++;
+            check = check.minusDays(1);
+        }
+        streakLabel.setText(streak + " Days");
+    }
+//endregion
 
     private void playAlarmSound() {
         try {

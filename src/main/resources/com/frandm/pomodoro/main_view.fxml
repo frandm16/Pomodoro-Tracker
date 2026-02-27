@@ -50,8 +50,8 @@
                     </VBox>
 
                     <VBox styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
-                        <Label text="This Month" styleClass="small-card-title" />
-                        <Label text="42.5h" styleClass="small-card-main-content" />
+                        <Label text="Last Month" styleClass="small-card-title" />
+                        <Label fx:id="timeLastMonthLabel" text="0.0h" styleClass="small-card-main-content" />
                         <Label text="Total study time" styleClass="small-card-main-content-description" />
                     </VBox>
 
@@ -60,27 +60,27 @@
                     </VBox>
 
                     <VBox styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="2">
-                        <Label text="Today" styleClass="small-card-title" />
-                        <Label text="2.1h" styleClass="small-card-main-content" />
+                        <Label text="This Week" styleClass="small-card-title" />
+                        <Label fx:id="timeThisWeekLabel" text="0.0h" styleClass="small-card-main-content" />
                         <Label text="Focus time" styleClass="small-card-main-content-description" />
                     </VBox>
 
                     <VBox styleClass="stat-card" GridPane.columnIndex="1" GridPane.rowIndex="2">
                         <Label text="Streak" styleClass="small-card-title" />
-                        <Label text="5 Days" styleClass="small-card-main-content" />
+                        <Label fx:id="streakLabel" text="0 Days" styleClass="small-card-main-content" />
                         <Label text="Current streak" styleClass="small-card-main-content-description" />
                     </VBox>
 
                     <VBox styleClass="stat-card" GridPane.columnIndex="2" GridPane.rowIndex="2">
                         <Label text="Best Day" styleClass="small-card-title" />
-                        <Label text="Mon" styleClass="small-card-main-content" />
+                        <Label fx:id="bestDayLabel" text="Null" styleClass="small-card-main-content" />
                         <Label text="Most productive day" styleClass="small-card-main-content-description" />
                     </VBox>
 
                     <VBox styleClass="stat-card" GridPane.columnIndex="3" GridPane.rowIndex="2">
                         <Label text="Tasks" styleClass="small-card-title" />
-                        <Label text="12" styleClass="small-card-main-content" />
-                        <Label text="Completed this week" styleClass="small-card-main-content-description" />
+                        <Label fx:id="tasksLabel" text="0" styleClass="small-card-main-content" />
+                        <Label text="Completed all-time" styleClass="small-card-main-content-description" />
                     </VBox>
                 </GridPane>
 
