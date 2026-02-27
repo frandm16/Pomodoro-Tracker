@@ -13,7 +13,7 @@ public class DatabaseViewer {
         return "jdbc:sqlite:" + dbFile.getAbsolutePath();
     }
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         String url = getDatabaseUrl();
         String sql = "SELECT id, subject, topic, description, duration_seconds, timestamp FROM sessions";
 
@@ -31,7 +31,7 @@ public class DatabaseViewer {
                         rs.getString("subject"),
                         rs.getString("topic"),
                         rs.getString("description"),
-                        rs.getInt("duration_seconds"),
+                        rs.getInt("duration_minutes"),
                         rs.getString("timestamp")
                 );
             }

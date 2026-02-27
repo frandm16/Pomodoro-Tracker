@@ -14,11 +14,14 @@ public class DatabaseHandler {
         File configDir = new File(userHome, FOLDER_NAME);
 
         if (!configDir.exists()) {
-            configDir.mkdirs();
+            boolean success = configDir.mkdirs();
+            if(!success){
+                System.err.println("Error creating config folder");
+            }
         }
 
         File dbFile = new File(configDir, DB_NAME);
-        return "jdbc:sqlite:" + dbFile.getAbsolutePath();
+        return "jdbc:sqlite:" + dbFile.toPath().toAbsolutePath();
     }
 
     public static void initializeDatabase() {
@@ -107,11 +110,11 @@ public class DatabaseHandler {
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl())) {
             conn.setAutoCommit(false);
-            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
 
                 java.util.Random random = new java.util.Random();
                 java.time.LocalDate today = java.time.LocalDate.now();
-                String[] subjects = {"JavaFX", "Database", "UI Design", "Testing", "Spring Boot"};
+                String[] subjects = {"subject1", "subject2", "subject3", "subject4", "subject5"};
 
                 for (int i = 0; i < 365; i++) {
                     java.time.LocalDate date = today.minusDays(i);
@@ -123,17 +126,17 @@ public class DatabaseHandler {
                             String subject = subjects[random.nextInt(subjects.length)];
                             int minutes = 25;
 
-                            pstmt.setString(1, subject);
-                            pstmt.setString(2, "sesion diaria " + s);
-                            pstmt.setString(3, "testing the heatmap");
-                            pstmt.setInt(4, minutes);
-                            pstmt.setString(5, date.toString() + " 12:00:00");
+                            preparedStatement.setString(1, subject);
+                            preparedStatement.setString(2, "session " + s);
+                            preparedStatement.setString(3, "testing the heatmap");
+                            preparedStatement.setInt(4, minutes);
+                            preparedStatement.setString(5, date + " 12:00:00");
 
-                            pstmt.addBatch();
+                            preparedStatement.addBatch();
                         }
                     }
                 }
-                pstmt.executeBatch();
+                preparedStatement.executeBatch();
                 conn.commit();
 
             } catch (SQLException e) {

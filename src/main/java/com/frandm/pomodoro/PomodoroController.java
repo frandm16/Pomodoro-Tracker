@@ -21,6 +21,8 @@ import javafx.scene.control.*;
 import javafx.scene.media.AudioClip;
 import java.net.URL;
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.Map;
 //endregion
 
 public class PomodoroController {
@@ -155,9 +157,9 @@ public class PomodoroController {
     private void showStatsView() {
         if (statsContainer.isVisible()) return;
 
-        ObservableList<Session> datos = DatabaseHandler.getAllSessions();
+        ObservableList<Session> data = DatabaseHandler.getAllSessions();
         statsDashboard.updateHeatmap(DatabaseHandler.getMinutesPerDayLastYear());
-        updateStatsCards(datos);
+        updateStatsCards(data);
 
         Region currentVisible = mainContainer.isVisible() ? mainContainer : historyContainer;
         switchPanels(currentVisible, statsContainer);
@@ -166,8 +168,8 @@ public class PomodoroController {
     private void showHistoryView() {
         if (historyContainer.isVisible()) return;
 
-        ObservableList<Session> datos = DatabaseHandler.getAllSessions();
-        sessionsTable.setItems(datos);
+        ObservableList<Session> data = DatabaseHandler.getAllSessions();
+        sessionsTable.setItems(data);
 
         Region currentVisible = mainContainer.isVisible() ? mainContainer : statsContainer;
         switchPanels(currentVisible, historyContainer);
@@ -213,7 +215,7 @@ public class PomodoroController {
     @FXML
     private void handleFinish() {
         int minutes = engine.getRealMinutesElapsed();
-        DatabaseHandler.saveSession("test", "tema1", "esto es una descripcion test", minutes);
+        DatabaseHandler.saveSession("test", "topic1", "description test", minutes);
 
         engine.fullReset();
         engine.stop();
@@ -355,9 +357,7 @@ public class PomodoroController {
         double ratio = (total > 0) ? (elapsed/total) : 0;
         double angle = ratio * -360;
 
-        Platform.runLater(() -> {
-            progressArc.setLength(angle);
-        });
+        Platform.runLater(() -> progressArc.setLength(angle));
     }
 
     //endregion
@@ -421,7 +421,7 @@ public class PomodoroController {
                         java.util.stream.Collectors.summingInt(Session::getDuration)
                 ))
                 .entrySet().stream()
-                .max((entry1, entry2) -> Integer.compare(entry1.getValue(), entry2.getValue()))
+                .max(Comparator.comparingInt(Map.Entry::getValue))
                 .map(entry -> {
                     String dayName = entry.getKey().getDisplayName(
                             java.time.format.TextStyle.FULL,
@@ -461,13 +461,10 @@ public class PomodoroController {
                         java.util.stream.Collectors.summingInt(Session::getDuration)
                 ));
 
-        double totalMinsAll = timeBySubject.values().stream().mapToDouble(Integer::doubleValue).sum();
-
         javafx.collections.ObservableList<PieChart.Data> pieData = javafx.collections.FXCollections.observableArrayList();
 
         timeBySubject.forEach((subject, totalMinutes) -> {
             float hours = (float) totalMinutes / 60;
-            double percentage = (totalMinutes / totalMinsAll) * 100;
 
             String label = String.format("%s (%.1fh)", subject, hours);
 
@@ -488,12 +485,8 @@ public class PomodoroController {
 
             Tooltip.install(data.getNode(), tt);
 
-            data.getNode().setOnMouseEntered(_ -> {
-                data.getNode().setStyle("-fx-opacity: 0.75; -fx-cursor: hand;");
-            });
-            data.getNode().setOnMouseExited(_ -> {
-                data.getNode().setStyle("-fx-opacity: 1.0;");
-            });
+            data.getNode().setOnMouseEntered(_ -> data.getNode().setStyle("-fx-opacity: 0.75; -fx-cursor: hand;"));
+            data.getNode().setOnMouseExited(_ -> data.getNode().setStyle("-fx-opacity: 1.0;"));
         }
     }
 //endregion
@@ -504,13 +497,13 @@ public class PomodoroController {
 
             if (soundUrl != null) {
                 AudioClip alarm = new AudioClip(soundUrl.toExternalForm());
-                alarm.setVolume((double) engine.getAlarmSoundVolume() /100); // Volumen de 0.0 a 1.0
+                alarm.setVolume((double) engine.getAlarmSoundVolume() /100); // 0.0 a 1.0
                 alarm.play();
             } else {
                 System.err.println("No se encontró el archivo de sonido.");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error :" + e.getMessage());
         }
     }
 }

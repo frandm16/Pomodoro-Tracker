@@ -13,7 +13,10 @@ public class ConfigManager {
         File configDir = new File(userHome, FOLDER_NAME);
 
         if (!configDir.exists()) {
-            configDir.mkdirs();
+            boolean success = configDir.mkdirs();
+            if(!success){
+                System.err.println("Error creating config folder");
+            }
         }
 
         return new File(configDir, FILE_NAME);

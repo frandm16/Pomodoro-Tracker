@@ -36,7 +36,7 @@ public class PomodoroEngine {
     }
 
     private void setupTimeline() {
-        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), _ -> {
             if (secondsRemaining > 0) {
                 secondsRemaining-=60;
                 if (currentState == State.WORK || countBreakTime) {
@@ -148,9 +148,9 @@ public class PomodoroEngine {
     public void setShortMins(int mins) { this.shortMins = mins; }
     public void setLongMins(int mins) { this.longMins = mins; }
     public void setInterval(int interval) { this.interval = interval; }
-    public void setAutoStartBreaks(boolean value) { this.autoStartBreaks = value; }
-    public void setAutoStartPomo(boolean value) { this.autoStartPomodoros = value; }
-    public void setCountBreakTime(boolean value) { this.countBreakTime = value; }
+    //public void setAutoStartBreaks(boolean value) { this.autoStartBreaks = value; }
+    //public void setAutoStartPomo(boolean value) { this.autoStartPomodoros = value; }
+    //public void setCountBreakTime(boolean value) { this.countBreakTime = value; }
     public void setOnTick(Runnable r) { this.onTick = r; }
     public void setOnStateChange(Runnable r) { this.onStateChange = r; }
     public void setOnTimerFinished(Runnable r) {this.onTimerFinished = r;}
@@ -162,7 +162,7 @@ public class PomodoroEngine {
         return String.format("%02d:%02d", secondsRemaining / 60, secondsRemaining % 60);
     }
     public State getCurrentState() { return currentState; }
-    public State getLastActiveState() { return lastActiveState; }
+    //public State getLastActiveState() { return lastActiveState; }
     public int getSessionCounter() {return sessionCounter;}
     public State getLogicalState() {
         if (currentState == State.WAITING) {
@@ -184,7 +184,6 @@ public class PomodoroEngine {
     public int getTotalSecondsForCurrentState() {
         State logical = getLogicalState();
         return switch (logical) {
-            case WORK, MENU -> workMins * 60;
             case SHORT_BREAK -> shortMins * 60;
             case LONG_BREAK -> longMins * 60;
             default -> workMins * 60;
