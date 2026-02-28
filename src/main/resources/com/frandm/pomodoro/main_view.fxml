@@ -175,7 +175,6 @@
                         <Button fx:id="finishBtn" onAction="#handleFinish" prefHeight="60" prefWidth="120" text="FINISH" styleClass="button-secondary" />
                     </HBox>
                 </VBox>
-
                 <VBox fx:id="historyContainer" visible="false" managed="false" alignment="TOP_CENTER" spacing="30" maxHeight="-Infinity" maxWidth="Infinity" styleClass="stats-content-wrapper">
                     <padding><Insets top="20" right="40" bottom="20" left="40"/></padding>
                     <TableView fx:id="sessionsTable" maxWidth="1200" styleClass="modern-table" VBox.vgrow="ALWAYS">
@@ -190,7 +189,6 @@
                         </columns>
                     </TableView>
                 </VBox>
-
 
             </StackPane>
 

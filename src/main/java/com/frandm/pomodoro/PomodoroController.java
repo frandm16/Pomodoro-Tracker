@@ -32,6 +32,7 @@ public class PomodoroController {
     public Slider widthSlider;
     public Label widthSliderValLabel;
     public ColumnConstraints colRightStats, colCenterStats, colLeftStats;
+    public ComboBox subjectComboBox;
     @FXML private AreaChart<String, Number> weeklyLineChart;
     @FXML private CategoryAxis weeksXAxis;
     public PieChart subjectsPieChart;
@@ -126,6 +127,7 @@ public class PomodoroController {
         }));
         engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
         engine.setOnTimerFinished(() -> Platform.runLater(this::playAlarmSound));
+
 
         updateEngineFlags();
         updateUIFromEngine();
@@ -223,6 +225,7 @@ public class PomodoroController {
     @FXML
     private void handleFinish() {
         int minutes = engine.getRealMinutesElapsed();
+
         DatabaseHandler.saveSession("test", "topic1", "description test", minutes);
 
         engine.fullReset();

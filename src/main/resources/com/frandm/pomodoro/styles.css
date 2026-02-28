@@ -447,3 +447,62 @@
     -fx-stroke: transparent;
     -fx-opacity: 0;
 }
+
+
+/* --- subject selector --- */
+.subject-selector {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 5;
+}
+.subject-selector .arrow {
+    -fx-background-color: white;
+}
+
+.subject-selector .list-cell {
+    -fx-text-fill: white;
+    -fx-background-color: transparent;
+}
+.subject-selector .list-view {
+    -fx-background-color: -color-menu;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 5;
+    /* Añade una pequeña sombra para que flote sobre la interfaz */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 5);
+}
+
+
+/* Cada opción individual (celda) */
+.subject-selector .list-cell {
+    -fx-text-fill: white;
+    -fx-background-color: transparent;
+    -fx-padding: 8 12;
+    -fx-background-radius: 5;
+}
+
+/* Cuando pasas el ratón por encima de una opción */
+.subject-selector .list-cell:hover {
+    -fx-background-color: -color-hover;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
+/* La opción que está seleccionada actualmente en la lista */
+.subject-selector .list-cell:selected {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-text-fill: white;
+}
+
+/* Quitar la línea horizontal que a veces aparece entre celdas */
+.subject-selector .list-view .cell {
+    -fx-border-width: 0;
+}
+.subject-selector > .list-cell {
+    -fx-background-color: transparent;
+}
