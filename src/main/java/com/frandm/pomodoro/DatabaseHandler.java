@@ -38,7 +38,7 @@ public class DatabaseHandler {
             test.execute(sql);
             System.out.println("[DEBUG] Database initialized correctly");
         } catch (SQLException e) {
-            System.err.println("DB Init Error: " + e.getMessage());
+            System.err.println("Error initializing database: " + e.getMessage());
         }
     }
 
@@ -55,7 +55,7 @@ public class DatabaseHandler {
                 test.setInt(4, minutes);
 
                 test.executeUpdate();
-                System.out.println("[DEBUG] Session saved: " + subject + " - " + topic + " - " + minutes + " sec");
+                System.out.println("[DEBUG] Session saved: " + subject + " - " + topic + " - " + description + " - " + minutes + " min");
 
             } catch (SQLException e) {
                 System.err.println("Error saving session: " + e.getMessage());
@@ -65,7 +65,7 @@ public class DatabaseHandler {
 
     public static ObservableList<Session> getAllSessions() {
         ObservableList<Session> sessions = FXCollections.observableArrayList();
-        String sql = "SELECT subject, topic, duration_minutes, timestamp FROM sessions ORDER BY timestamp DESC";
+        String sql = "SELECT subject, topic, description, duration_minutes, timestamp FROM sessions ORDER BY timestamp DESC";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
              Statement stmt = conn.createStatement();
@@ -76,6 +76,7 @@ public class DatabaseHandler {
                         rs.getString("timestamp"),
                         rs.getString("subject"),
                         rs.getString("topic"),
+                        rs.getString("description"),
                         rs.getInt("duration_minutes")
                 ));
             }
@@ -114,7 +115,7 @@ public class DatabaseHandler {
 
                 java.util.Random random = new java.util.Random();
                 java.time.LocalDate today = java.time.LocalDate.now();
-                String[] subjects = {"subject1", "subject2", "subject3", "subject4", "subject5"};
+                String[] subjects = {"subject1", "subject2", "subject3", "subject4", "subject5", "subject6", "subject7", "subject8", "subject9", "subject10"};
 
                 for (int i = 0; i < 365; i++) {
                     java.time.LocalDate date = today.minusDays(i);

@@ -1,6 +1,7 @@
 package com.frandm.pomodoro;
 
 //region Imports
+import javafx.collections.FXCollections;
 import javafx.scene.chart.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.collections.ObservableList;
@@ -20,50 +21,71 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.media.AudioClip;
 import java.net.URL;
-import java.text.DecimalFormat;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
-import java.util.Locale;
 import java.util.Map;
 //endregion
 
 public class PomodoroController {
-    public Slider widthSlider;
-    public Label widthSliderValLabel;
-    public ColumnConstraints colRightStats, colCenterStats, colLeftStats;
-    public ComboBox subjectComboBox;
+
+    //region @FXML
+    @FXML private StackPane rootPane;
+
+    // main view
+    @FXML private VBox mainContainer;
+    @FXML private Label timerLabel, stateLabel;
+    @FXML private Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn, changeSubjectBtn;
+    @FXML private Arc progressArc;
+
+    // settings sidebar
+    @FXML private VBox settingsPane;
+    @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider;
+    @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel, alarmVolumeValLabel;
+    @FXML private ToggleButton autoBreakToggle, autoPomoToggle, countBreakTime;
+
+    // setup sidebar
+    @FXML private VBox setupPane;
+    @FXML private ListView<String> subjectListView;
+    @FXML private ListView<String> taskListView;
+    @FXML private TextField newSubjectField, newTaskField;
+    @FXML private Label selectedSubjectLabel;
+    @FXML private Button startSessionBtn;
+
+    // statistics
+    @FXML private VBox statsContainer;
+    @FXML private VBox statsPlaceholder;
     @FXML private AreaChart<String, Number> weeklyLineChart;
     @FXML private CategoryAxis weeksXAxis;
-    public PieChart subjectsPieChart;
-    public Button historyBtn;
-    public VBox historyContainer;
-    @FXML private Label streakLabel;
-    @FXML private Label timeThisWeekLabel;
-    @FXML private Label timeLastMonthLabel;
-    @FXML private Label tasksLabel;
-    @FXML private Label bestDayLabel;
-    //region @FXML Components
-    @FXML private VBox statsPlaceholder;
-    @FXML private VBox statsContainer;
-    @FXML private Arc progressArc;
+    @FXML private PieChart subjectsPieChart;
+    @FXML private Label streakLabel, timeThisWeekLabel, timeLastMonthLabel, tasksLabel, bestDayLabel;
+    @FXML private Slider widthSlider;
+    @FXML private Label widthSliderValLabel;
+    @FXML private ColumnConstraints colRightStats, colCenterStats, colLeftStats;
+
+    // history
+    @FXML private VBox historyContainer;
+    @FXML private Button historyBtn;
     @FXML private TableView<Session> sessionsTable;
-    @FXML private TableColumn<Session, String> colDate, colSubject, colTopic;
+    @FXML private TableColumn<Session, String> colDate, colSubject, colTopic, colDescription;
     @FXML private TableColumn<Session, Integer> colDuration;
-    @FXML private StackPane rootPane;
-    @FXML private VBox settingsPane, mainContainer;
-    @FXML private Label timerLabel, stateLabel;
-    @FXML private Label workValLabel, shortValLabel, longValLabel, intervalValLabel, alarmVolumeValLabel;
-    @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider;
-    @FXML private ToggleButton autoBreakToggle, autoPomoToggle, countBreakTime;
-    @FXML private Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn;
     //endregion
 
     //region Variables
-    private boolean isSettingsOpen = false;
     private final PomodoroEngine engine = new PomodoroEngine();
+
+    private boolean isSettingsOpen = false;
+    private boolean isSetupOpen = false;
+
     private StatsDashboard statsDashboard;
+
     private TranslateTransition settingsAnim;
+    private TranslateTransition setupAnim;
+
+    private String selectedSubject = null;
+    private String selectedTask = null;
+    private static final String DEFAULT_SUBJECT = "General";
+    private final ObservableList<String> subjectsList = FXCollections.observableArrayList();
+    private final ObservableList<String> tasksList = FXCollections.observableArrayList();
     //endregion
 
     //region Initializer
@@ -73,28 +95,38 @@ public class PomodoroController {
         //DatabaseHandler.generateRandomPomodoros();
         ConfigManager.load(engine);
 
-        // config de la tabla
+        //region config de la tabla
         colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
         colSubject.setCellValueFactory(new PropertyValueFactory<>("subject"));
         colTopic.setCellValueFactory(new PropertyValueFactory<>("topic"));
+        colDescription.setCellValueFactory(new PropertyValueFactory<>("description"));
         colDuration.setCellValueFactory(new PropertyValueFactory<>("duration"));
-        // ---------------------------------
+        //endregion
 
-        // dashboard
+        //region dashboard
         statsDashboard = new StatsDashboard();
         statsPlaceholder.getChildren().add(statsDashboard);
+        //endregion
 
-
+        //region paneles
         settingsPane.setTranslateX(-600);
+        setupPane.setTranslateX(600);
+        //endregion
 
+        //region setup panel
+        subjectListView.setItems(subjectsList);
+        taskListView.setItems(tasksList);
+        subjectsList.addAll("Programación", "Matemáticas");
+        tasksList.addAll("UI FXML", "Ejercicios");
+        //endregion
+
+        //region settings panel
         setupSlider(workSlider, workValLabel, engine.getWorkMins(), engine::setWorkMins, "");
         setupSlider(shortSlider, shortValLabel, engine.getShortMins(), engine::setShortMins, "");
         setupSlider(longSlider, longValLabel, engine.getLongMins(), engine::setLongMins, "");
         setupSlider(intervalSlider, intervalValLabel, engine.getInterval(), engine::setInterval, "");
         setupSlider(alarmVolumeSlider, alarmVolumeValLabel, engine.getAlarmSoundVolume(), engine::setAlarmSoundVolume, "%");
         setupSlider(widthSlider,widthSliderValLabel,engine.getWidthStats(), engine::setWidthStats, "%");
-
-
         colCenterStats.percentWidthProperty().bind(widthSlider.valueProperty());
         colLeftStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
         colRightStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
@@ -103,23 +135,23 @@ public class PomodoroController {
         autoBreakToggle.setText(autoBreakToggle.isSelected() ? "ON" : "OFF");
         autoBreakToggle.selectedProperty().addListener((_, _, isSelected) -> {
             autoBreakToggle.setText(isSelected ? "ON" : "OFF");
-            updateEngineFlags();
+            updateEngineSettings();
         });
 
         autoPomoToggle.setSelected(engine.isAutoStartPomo());
         autoPomoToggle.setText(autoPomoToggle.isSelected() ? "ON" : "OFF");
         autoPomoToggle.selectedProperty().addListener((_, _, isSelected) -> {
             autoPomoToggle.setText(isSelected ? "ON" : "OFF");
-            updateEngineFlags();
+            updateEngineSettings();
         });
 
         countBreakTime.setSelected(engine.isCountBreakTime());
         countBreakTime.setText(countBreakTime.isSelected() ? "ON" : "OFF");
         countBreakTime.selectedProperty().addListener((_, _, isSelected) -> {
             countBreakTime.setText(isSelected ? "ON" : "OFF");
-            updateEngineFlags();
+            updateEngineSettings();
         });
-
+        //endregion
 
         engine.setOnTick(() -> Platform.runLater(() -> {
             timerLabel.setText(engine.getFormattedTime());
@@ -128,8 +160,7 @@ public class PomodoroController {
         engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
         engine.setOnTimerFinished(() -> Platform.runLater(this::playAlarmSound));
 
-
-        updateEngineFlags();
+        updateEngineSettings();
         updateUIFromEngine();
     }
     //endregion
@@ -137,11 +168,11 @@ public class PomodoroController {
     //region Setup Helpers
     private void setupSlider(Slider slider, Label label, int initialValue, java.util.function.Consumer<Integer> updateAction, String text) {
         slider.setValue(initialValue);
-        label.setText(String.valueOf(initialValue) + text);
+        label.setText(initialValue + text);
 
         slider.valueProperty().addListener((_, _, newVal) -> {
             int val = newVal.intValue();
-            label.setText(String.valueOf(val) + text);
+            label.setText(val + text);
             updateAction.accept(val);
 
             if (engine.getCurrentState() == PomodoroEngine.State.MENU) {
@@ -149,7 +180,7 @@ public class PomodoroController {
             }
         });
     }
-    private void updateEngineFlags() {
+    private void updateEngineSettings() {
         engine.updateSettings(
                 (int)workSlider.getValue(),
                 (int)shortSlider.getValue(),
@@ -161,7 +192,6 @@ public class PomodoroController {
                 (int)alarmVolumeSlider.getValue(),
                 (int)widthSlider.getValue()
         );
-
     }
     private void showMainView() {
         Region currentVisible = statsContainer.isVisible() ? statsContainer : historyContainer;
@@ -198,9 +228,9 @@ public class PomodoroController {
         settingsAnim.setInterpolator(Interpolator.EASE_BOTH);
 
         if (isSettingsOpen) {
-            updateEngineFlags();
+            updateEngineSettings();
             ConfigManager.save(engine);
-            settingsAnim.setToX(-600); // hide settings
+            settingsAnim.setToX(-settingsPane.getWidth()); // hide settings
         } else {
             settingsAnim.setToX(0);    // show settings
         }
@@ -209,12 +239,21 @@ public class PomodoroController {
         isSettingsOpen = !isSettingsOpen;
     }
     @FXML
-    private void handleStartPause() {
+    private void handleMainAction() {
         PomodoroEngine.State current = engine.getCurrentState();
-        if (current == PomodoroEngine.State.WAITING || current == PomodoroEngine.State.MENU) {
-            engine.start();
+
+        if (current == PomodoroEngine.State.MENU) {
+            if (selectedSubject == null) {
+                toggleSetup();
+            } else {
+                engine.start();
+            }
         } else {
-            engine.pause();
+            if (current == PomodoroEngine.State.WAITING) {
+                engine.start();
+            } else {
+                engine.pause();
+            }
         }
         updateUIFromEngine();
     }
@@ -224,13 +263,20 @@ public class PomodoroController {
     }
     @FXML
     private void handleFinish() {
+        String subjectToSave = (selectedSubject == null) ? DEFAULT_SUBJECT : selectedSubject;
+        String taskToSave = (selectedTask == null) ? null : selectedTask;
         int minutes = engine.getRealMinutesElapsed();
 
-        DatabaseHandler.saveSession("test", "topic1", "description test", minutes);
+        DatabaseHandler.saveSession(subjectToSave, taskToSave, null, minutes);
 
         engine.fullReset();
         engine.stop();
         engine.resetTimeForState(PomodoroEngine.State.MENU);
+
+        this.selectedSubject = null;
+        selectedSubjectLabel.setVisible(false);
+        selectedSubjectLabel.setManaged(false);
+
         updateUIFromEngine();
     }
     @FXML
@@ -246,7 +292,7 @@ public class PomodoroController {
         autoPomoToggle.setSelected(engine.isAutoStartPomo());
         countBreakTime.setSelected(engine.isCountBreakTime());
 
-        updateEngineFlags();
+        updateEngineSettings();
         updateUIFromEngine();
         ConfigManager.save(engine);
     }
@@ -274,13 +320,29 @@ public class PomodoroController {
         PomodoroEngine.State current = engine.getCurrentState();
         PomodoroEngine.State logical = engine.getLogicalState();
 
+        if (current == PomodoroEngine.State.MENU) {
+            if (selectedSubject == null) {
+                startPauseBtn.setText("SETUP");
+                selectedSubjectLabel.setVisible(false);
+            } else {
+                startPauseBtn.setText("START");
+                selectedSubjectLabel.setText(selectedSubject);
+                selectedSubjectLabel.setVisible(true);
+                selectedSubjectLabel.setManaged(true);
+            }
+            setupPane.setTranslateX(600);
+        } else {
+            startPauseBtn.setText(current == PomodoroEngine.State.WAITING ? "RESUME" : "PAUSE");
+        }
+
         boolean isMenu = (current == PomodoroEngine.State.MENU);
         boolean isWaitingOrMenu = (current == PomodoroEngine.State.WAITING || isMenu);
-        startPauseBtn.setText(isWaitingOrMenu ? "START" : "PAUSE");
 
         boolean isRunning = (current != PomodoroEngine.State.WAITING && !isMenu);
         skipBtn.setVisible(isRunning);
         skipBtn.setManaged(isRunning);
+        changeSubjectBtn.setVisible(isMenu);
+        changeSubjectBtn.setManaged(isMenu);
 
         boolean hasStarted = (!isMenu);
         finishBtn.setVisible(hasStarted);
@@ -370,7 +432,6 @@ public class PomodoroController {
 
         Platform.runLater(() -> progressArc.setLength(angle));
     }
-
     //endregion
 
     //region Stats Logic
@@ -572,4 +633,48 @@ public class PomodoroController {
             System.err.println("Error :" + e.getMessage());
         }
     }
+
+    //region Setup Handlers
+    @FXML
+    private void handleApplySetup() {
+        String subjectSelected = subjectListView.getSelectionModel().getSelectedItem();
+        String taskSelected = taskListView.getSelectionModel().getSelectedItem();
+        if (subjectSelected == null) return;
+
+        this.selectedSubject = subjectSelected;
+        this.selectedTask = taskSelected;
+        toggleSetup();
+        updateUIFromEngine();
+    }
+    @FXML
+    private void handleAddSubject() {
+        String newSub = newSubjectField.getText().trim();
+        if (!newSub.isEmpty()) {
+            subjectsList.add(newSub);
+            newSubjectField.clear();
+        }
+    }
+    @FXML
+    private void handleAddTask() {
+        String newTask = newTaskField.getText().trim();
+        if (!newTask.isEmpty()) {
+            tasksList.add(newTask);
+            newTaskField.clear();
+        }
+    }
+    @FXML
+    private void toggleSetup() {
+        if (settingsAnim != null) settingsAnim.stop();
+        TranslateTransition anim = new TranslateTransition(Duration.millis(400), setupPane);
+        anim.setInterpolator(Interpolator.EASE_BOTH);
+
+        if (isSetupOpen) {
+            anim.setToX(setupPane.getWidth()); // hide
+        } else {
+            anim.setToX(0); // show
+        }
+        anim.play();
+        isSetupOpen = !isSetupOpen;
+    }
+//endregion
 }
