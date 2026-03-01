@@ -4,12 +4,14 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import java.io.File;
 import java.sql.*;
+import java.time.LocalDate;
+import java.util.List;
 
 public class DatabaseHandler {
     private static final String FOLDER_NAME = ".pomodoro_app";
     private static final String DB_NAME = "pomodoro.db";
 
-    private static String getDatabaseUrl() {
+    public static String getDatabaseUrl() {
         String userHome = System.getProperty("user.home");
         File configDir = new File(userHome, FOLDER_NAME);
 
@@ -25,7 +27,7 @@ public class DatabaseHandler {
     }
 
     public static void initializeDatabase() {
-        String sql = "CREATE TABLE IF NOT EXISTS sessions (" +
+        String sqlSessions = "CREATE TABLE IF NOT EXISTS sessions (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "subject TEXT NOT NULL, " +
                 "topic TEXT, " +
@@ -33,9 +35,17 @@ public class DatabaseHandler {
                 "duration_minutes INTEGER NOT NULL, " +
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
 
+        String sqlEvents = "CREATE TABLE IF NOT EXISTS session_events (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "session_id INTEGER, " +
+                "event_timestamp DATETIME, " +
+                "event_type TEXT NOT NULL, " +
+                "FOREIGN KEY (session_id) REFERENCES sessions(id))";
+
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             Statement test = conn.createStatement()) {
-            test.execute(sql);
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(sqlSessions);
+            stmt.execute(sqlEvents);
             System.out.println("[DEBUG] Database initialized correctly");
         } catch (SQLException e) {
             System.err.println("Error initializing database: " + e.getMessage());
@@ -63,9 +73,50 @@ public class DatabaseHandler {
         }
     }
 
+    public static void saveSessionWithEvents(String subject, String topic, String description, int minutes, java.util.Map<java.time.LocalDateTime, String> events) {
+        if (minutes < 0) return;
+
+        String sqlSession = "INSERT INTO sessions(subject, topic, description, duration_minutes) VALUES(?, ?, ?, ?)";
+        String sqlEvent = "INSERT INTO session_events(session_id, event_timestamp, event_type) VALUES(?, ?, ?)";
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl())) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement pstmtSession = conn.prepareStatement(sqlSession, Statement.RETURN_GENERATED_KEYS)) {
+                pstmtSession.setString(1, subject);
+                pstmtSession.setString(2, topic);
+                pstmtSession.setString(3, description);
+                pstmtSession.setInt(4, minutes);
+                pstmtSession.executeUpdate();
+
+                ResultSet rs = pstmtSession.getGeneratedKeys();
+                if (rs.next()) {
+                    int sessionId = rs.getInt(1);
+
+                    try (PreparedStatement pstmtEvent = conn.prepareStatement(sqlEvent)) {
+                        for (java.util.Map.Entry<java.time.LocalDateTime, String> entry : events.entrySet()) {
+                            pstmtEvent.setInt(1, sessionId);
+                            pstmtEvent.setObject(2, entry.getKey());
+                            pstmtEvent.setString(3, entry.getValue());
+                            pstmtEvent.addBatch();
+                        }
+                        pstmtEvent.executeBatch();
+                    }
+                }
+                conn.commit();
+                System.out.println("[DEBUG] Session and events saved.");
+            } catch (SQLException e) {
+                conn.rollback();
+                System.err.println("Error saving session and events: " + e.getMessage());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static ObservableList<Session> getAllSessions() {
         ObservableList<Session> sessions = FXCollections.observableArrayList();
-        String sql = "SELECT subject, topic, description, duration_minutes, timestamp FROM sessions ORDER BY timestamp DESC";
+        String sql = "SELECT id, subject, topic, description, duration_minutes, timestamp FROM sessions ORDER BY timestamp DESC";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
              Statement stmt = conn.createStatement();
@@ -73,6 +124,8 @@ public class DatabaseHandler {
 
             while (rs.next()) {
                 sessions.add(new Session(
+                        rs.getInt("id"),
+                        rs.getString("timestamp"),
                         rs.getString("timestamp"),
                         rs.getString("subject"),
                         rs.getString("topic"),
@@ -107,45 +160,112 @@ public class DatabaseHandler {
     }
 
     public static void generateRandomPomodoros() {
-        String sql = "INSERT INTO sessions(subject, topic, description, duration_minutes, timestamp) VALUES(?, ?, ?, ?, ?)";
+        String sqlSession = "INSERT INTO sessions(subject, topic, description, duration_minutes, timestamp) VALUES(?, ?, ?, ?, ?)";
+        String sqlEvent = "INSERT INTO session_events(session_id, event_timestamp, event_type) VALUES(?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl())) {
             conn.setAutoCommit(false);
-            try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+
+            try (PreparedStatement psSession = conn.prepareStatement(sqlSession, Statement.RETURN_GENERATED_KEYS);
+                 PreparedStatement psEvent = conn.prepareStatement(sqlEvent)) {
 
                 java.util.Random random = new java.util.Random();
                 java.time.LocalDate today = java.time.LocalDate.now();
-                String[] subjects = {"subject1", "subject2", "subject3", "subject4", "subject5", "subject6", "subject7", "subject8", "subject9", "subject10"};
+                String[] subjects = {"Programación", "Matemáticas", "Diseño", "Inglés"};
 
                 for (int i = 0; i < 365; i++) {
                     java.time.LocalDate date = today.minusDays(i);
-                    // 70% to fill that day
-                    if (random.nextDouble() < 0.7) {
-                        int sessionsToday = random.nextInt(8) + 1;
+
+                    if (random.nextDouble() < 0.65) {
+
+                        java.time.LocalDateTime currentTime = date.atTime(6, 0);
+                        int sessionsToday = random.nextInt(4) + 1;
 
                         for (int s = 0; s < sessionsToday; s++) {
                             String subject = subjects[random.nextInt(subjects.length)];
-                            int minutes = 25;
 
-                            preparedStatement.setString(1, subject);
-                            preparedStatement.setString(2, "session " + s);
-                            preparedStatement.setString(3, "testing the heatmap");
-                            preparedStatement.setInt(4, minutes);
-                            preparedStatement.setString(5, date + " 12:00:00");
+                            int duration = 40 + random.nextInt(51);
 
-                            preparedStatement.addBatch();
+                            java.time.LocalDateTime sessionStart = currentTime;
+                            java.time.LocalDateTime sessionEnd = sessionStart.plusMinutes(duration);
+
+                            psSession.setString(1, subject);
+                            psSession.setString(2, "Tema " + (i+s));
+                            psSession.setString(3, "Generado automáticamente");
+                            psSession.setInt(4, duration);
+                            psSession.setString(5, sessionStart.toString());
+                            psSession.executeUpdate();
+
+                            ResultSet rs = psSession.getGeneratedKeys();
+                            int sessionId = -1;
+                            if (rs.next()) {
+                                sessionId = rs.getInt(1);
+                            }
+
+                            psEvent.setInt(1, sessionId);
+
+                            psEvent.setString(2, sessionStart.toString());
+                            psEvent.setString(3, "started");
+                            psEvent.addBatch();
+
+                            if (random.nextDouble() < 0.4) {
+                                java.time.LocalDateTime pauseTime = sessionStart.plusMinutes(duration / 2);
+                                java.time.LocalDateTime resumeTime = pauseTime.plusMinutes(5);
+
+                                psEvent.setString(2, pauseTime.toString());
+                                psEvent.setString(3, "paused");
+                                psEvent.addBatch();
+
+                                psEvent.setString(2, resumeTime.toString());
+                                psEvent.setString(3, "resumed");
+                                psEvent.addBatch();
+                            }
+
+                            psEvent.setString(2, sessionEnd.toString());
+                            psEvent.setString(3, "finalized");
+                            currentTime = sessionEnd.plusMinutes(15);
+
+                            if (currentTime.getHour() >= 22) break;
                         }
                     }
                 }
-                preparedStatement.executeBatch();
+                psEvent.executeBatch();
                 conn.commit();
+                System.out.println("[DEBUG] 365 días de datos generados secuencialmente.");
 
             } catch (SQLException e) {
                 conn.rollback();
                 System.err.println("Error: " + e.getMessage());
             }
         } catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error conexión: " + e.getMessage());
         }
+    }
+
+    public static List<Session> getSessionsByDate(LocalDate date) {
+        List<Session> sessions = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM sessions WHERE date(timestamp) = ? ORDER BY timestamp ASC";
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, date.toString());
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                sessions.add(new Session(
+                        rs.getInt("id"),
+                        rs.getString("timestamp"),
+                        rs.getString("timestamp"),
+                        rs.getString("subject"),
+                        rs.getString("topic"),
+                        rs.getString("description"),
+                        rs.getInt("duration_minutes")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return sessions;
     }
 }

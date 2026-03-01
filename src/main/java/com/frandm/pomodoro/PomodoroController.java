@@ -1,7 +1,9 @@
 package com.frandm.pomodoro;
 
 //region Imports
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
 import javafx.scene.chart.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.collections.ObservableList;
@@ -21,13 +23,24 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.media.AudioClip;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeMap;
 //endregion
 
 public class PomodoroController {
 
+    public VBox streakVBox;
+    public VBox streakImage;
     //region @FXML
     @FXML private StackPane rootPane;
 
@@ -66,7 +79,7 @@ public class PomodoroController {
     @FXML private VBox historyContainer;
     @FXML private Button historyBtn;
     @FXML private TableView<Session> sessionsTable;
-    @FXML private TableColumn<Session, String> colDate, colSubject, colTopic, colDescription;
+    @FXML private TableColumn<Session, String> colDate, colSubject, colTopic, colDescription, colTimeline;
     @FXML private TableColumn<Session, Integer> colDuration;
     //endregion
 
@@ -83,6 +96,7 @@ public class PomodoroController {
 
     private String selectedSubject = null;
     private String selectedTask = null;
+    Map<LocalDateTime, String> eventosMap = new TreeMap<>();
     private static final String DEFAULT_SUBJECT = "General";
     private final ObservableList<String> subjectsList = FXCollections.observableArrayList();
     private final ObservableList<String> tasksList = FXCollections.observableArrayList();
@@ -95,12 +109,25 @@ public class PomodoroController {
         //DatabaseHandler.generateRandomPomodoros();
         ConfigManager.load(engine);
 
+
         //region config de la tabla
         colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
         colSubject.setCellValueFactory(new PropertyValueFactory<>("subject"));
         colTopic.setCellValueFactory(new PropertyValueFactory<>("topic"));
         colDescription.setCellValueFactory(new PropertyValueFactory<>("description"));
         colDuration.setCellValueFactory(new PropertyValueFactory<>("duration"));
+        colTimeline.setCellFactory(param -> new TableCell<Session, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableView() == null) {
+                    setGraphic(null);
+                } else {
+                    Session session = getTableView().getItems().get(getIndex());
+                    setGraphic(createTimelineGraphic(session.getId()));
+                }
+            }
+        });
         //endregion
 
         //region dashboard
@@ -116,8 +143,9 @@ public class PomodoroController {
         //region setup panel
         subjectListView.setItems(subjectsList);
         taskListView.setItems(tasksList);
-        subjectsList.addAll("Programación", "Matemáticas");
+        subjectsList.addAll("Programación", "Matemáticas", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test", "test");
         tasksList.addAll("UI FXML", "Ejercicios");
+
         //endregion
 
         //region settings panel
@@ -214,6 +242,9 @@ public class PomodoroController {
         ObservableList<Session> data = DatabaseHandler.getAllSessions();
         sessionsTable.setItems(data);
 
+        historyContainer.getChildren().clear();
+        historyContainer.getChildren().add(new StudyTimelineDashboard());
+
         Region currentVisible = mainContainer.isVisible() ? mainContainer : statsContainer;
         switchPanels(currentVisible, historyContainer);
     }
@@ -247,12 +278,15 @@ public class PomodoroController {
                 toggleSetup();
             } else {
                 engine.start();
+                eventosMap.put(LocalDateTime.now(), "started");
             }
         } else {
             if (current == PomodoroEngine.State.WAITING) {
                 engine.start();
+                eventosMap.put(LocalDateTime.now(), "resumed");
             } else {
                 engine.pause();
+                eventosMap.put(LocalDateTime.now(), "paused");
             }
         }
         updateUIFromEngine();
@@ -266,16 +300,20 @@ public class PomodoroController {
         String subjectToSave = (selectedSubject == null) ? DEFAULT_SUBJECT : selectedSubject;
         String taskToSave = (selectedTask == null) ? null : selectedTask;
         int minutes = engine.getRealMinutesElapsed();
+        if(minutes > 1) {
+            eventosMap.put(LocalDateTime.now(), "finalized");
+            DatabaseHandler.saveSessionWithEvents(subjectToSave, taskToSave, null, minutes, eventosMap);
+            eventosMap.clear();
+        }
 
-        DatabaseHandler.saveSession(subjectToSave, taskToSave, null, minutes);
 
         engine.fullReset();
         engine.stop();
         engine.resetTimeForState(PomodoroEngine.State.MENU);
 
-        this.selectedSubject = null;
-        selectedSubjectLabel.setVisible(false);
-        selectedSubjectLabel.setManaged(false);
+        //this.selectedSubject = null;
+        //selectedSubjectLabel.setVisible(false);
+        //selectedSubjectLabel.setManaged(false);
 
         updateUIFromEngine();
     }
@@ -435,13 +473,10 @@ public class PomodoroController {
     //endregion
 
     //region Stats Logic
-    private static final java.time.format.DateTimeFormatter DATE_FORMATTER =
-            new java.time.format.DateTimeFormatterBuilder()
-                    .appendPattern("yyyy-MM-dd")
-                    .optionalStart()
-                    .appendPattern(" HH:mm:ss")
-                    .optionalEnd()
-                    .toFormatter();
+    private final DateTimeFormatter DATE_FORMATTER = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd") // <--- Añade esto explícitamente
+            .appendPattern(" HH:mm:ss")
+            .toFormatter();
 
     private void updateStatsCards(ObservableList<Session> sessions) {
         if (sessions == null) return;
@@ -490,7 +525,7 @@ public class PomodoroController {
 
         String bestDay = sessions.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
-                        s -> java.time.LocalDate.parse(s.getDate().substring(0, 10), DATE_FORMATTER).getDayOfWeek(),
+                        s -> java.time.LocalDate.parse(s.getDate(), DATE_FORMATTER).getDayOfWeek(),
                         java.util.stream.Collectors.summingInt(Session::getDuration)
                 ))
                 .entrySet().stream()
@@ -519,6 +554,13 @@ public class PomodoroController {
             streak++;
             check = check.minusDays(1);
         }
+        if(streak>0){
+            streakVBox.getStyleClass().add("stat-cardred");
+        } else {
+            streakVBox.getStyleClass().add("stat-cardbasic");
+        }
+        streakImage.setVisible(streak>0);
+        streakImage.setManaged(streak>0);
         streakLabel.setText(streak + " Days");
     }
 
@@ -577,7 +619,7 @@ public class PomodoroController {
 
             double totalHours = sessions.stream()
                     .filter(s -> {
-                        LocalDate d = LocalDate.parse(s.getDate().substring(0, 10), DATE_FORMATTER);
+                        LocalDate d = LocalDate.parse(s.getDate(), DATE_FORMATTER);
                         return !d.isBefore(startOfWeek) && !d.isAfter(endOfWeek);
                     })
                     .mapToDouble(Session::getDuration)
@@ -669,12 +711,47 @@ public class PomodoroController {
         anim.setInterpolator(Interpolator.EASE_BOTH);
 
         if (isSetupOpen) {
-            anim.setToX(setupPane.getWidth()); // hide
+            anim.setToX(setupPane.getWidth()); // hide setup panel
         } else {
-            anim.setToX(0); // show
+            anim.setToX(0); // show setup panel
         }
         anim.play();
         isSetupOpen = !isSetupOpen;
     }
 //endregion
+//region timeline
+private HBox createTimelineGraphic(int sessionId) {
+    HBox timelineBar = new HBox(2);
+    timelineBar.setAlignment(Pos.CENTER_LEFT);
+
+    String sql = "SELECT event_type FROM session_events WHERE session_id = ? ORDER BY event_timestamp ASC";
+
+    try (Connection conn = DriverManager.getConnection(DatabaseHandler.getDatabaseUrl());
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setInt(1, sessionId);
+        ResultSet rs = pstmt.executeQuery();
+
+        while (rs.next()) {
+            String type = rs.getString("event_type");
+            Region marker = new Region();
+            marker.setPrefSize(10, 10);
+
+            switch (type) {
+                case "started" -> marker.setStyle("-fx-background-color: #2ECC71; -fx-background-radius: 5;"); // verde
+                case "paused" -> marker.setStyle("-fx-background-color: #E74C3C; -fx-background-radius: 5;");  // rojo
+                case "resumed" -> marker.setStyle("-fx-background-color: #F1C40F; -fx-background-radius: 5;"); // amarillo
+                case "finalized" -> marker.setStyle("-fx-background-color: #3498DB; -fx-background-radius: 5;"); // azul
+            }
+
+            Tooltip.install(marker, new Tooltip(type.toUpperCase()));
+            timelineBar.getChildren().add(marker);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return timelineBar;
+}
+    //endregion
 }

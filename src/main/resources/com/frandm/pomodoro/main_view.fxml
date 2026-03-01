@@ -9,6 +9,13 @@
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.chart.AreaChart?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.effect.ColorAdjust?>
+<?import javafx.scene.effect.Blend?>
+<?import javafx.scene.effect.ColorInput?>
+<?import javafx.scene.effect.Glow?>
 <StackPane fx:id="rootPane" prefHeight="600.0" prefWidth="800.0"
            stylesheets="@styles.css" styleClass="root-pane"
            xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
@@ -68,34 +75,105 @@
                                         <RowConstraints vgrow="ALWAYS" />
                                     </rowConstraints>
 
-                                    <VBox styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                                        <Label text="This Week" styleClass="small-card-title" />
-                                        <Label fx:id="timeThisWeekLabel" text="0.0h" styleClass="small-card-main-content" />
-                                        <Label text="Focus time" styleClass="small-card-main-content-description" />
+                                    <VBox styleClass="stat-cardbasic" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                            <HBox>
+                                                <VBox HBox.hgrow="ALWAYS">
+                                                    <Label text="This Week" styleClass="small-card-title" />
+                                                    <Label fx:id="timeThisWeekLabel" text="0.0h" styleClass="small-card-main-content" />
+                                                    <Label text="Focus time" styleClass="small-card-main-content-description" />
+                                                </VBox>
+                                                <VBox styleClass="icon-cardbasic" maxHeight="-Infinity" >
+                                                    <VBox alignment="CENTER"
+                                                          minWidth="25" maxWidth="25"
+                                                          minHeight="25" maxHeight="25">
+                                                        <SVGPath
+                                                                content="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"
+                                                                fill="#a855f7">
+                                                            <effect>
+                                                                <Glow level="0.2" />
+                                                            </effect>
+                                                        </SVGPath>
+                                                    </VBox>
+                                                </VBox>
+                                            </HBox>
+                                    </VBox>
+
+                                    <VBox fx:id="streakVBox" styleClass="stat-cardbasic" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                        <HBox>
+                                            <VBox HBox.hgrow="ALWAYS">
+                                                <Label text="Streak" styleClass="small-card-title" />
+                                                <Label fx:id="streakLabel" text="0 Days" styleClass="small-card-main-content" />
+                                                <Label text="Current streak" styleClass="small-card-main-content-description" />
+                                            </VBox>
+
+                                            <VBox fx:id="streakImage" visible="false" managed="false" styleClass="icon-cardred" maxHeight="-Infinity" >
+                                                <VBox alignment="CENTER"
+                                                      minWidth="25" maxWidth="25"
+                                                      minHeight="25" maxHeight="25">
+                                                    <SVGPath content="M 16.798828 4.390625 L 13.802734 9.3867188 L 11.953125 7.5390625 L 11.25 8.3378906 C 7.767 12.285891 6 15.873 6 19 C 6 23.962 10.486 28 16 28 C 21.514 28 26 23.962 26 19 C 26 14.238 20.803078 8.3660625 17.705078 5.2890625 L 16.798828 4.390625 z M 17.191406 7.6230469 C 19.767406 10.309047 24 15.288 24 19 C 24 21.391212 22.620267 23.5043 20.523438 24.767578 C 20.822014 24.054088 21 23.267477 21 22.429688 C 21 20.048687 19.315344 17.224391 17.902344 15.275391 L 17.058594 14.109375 L 14.84375 17.431641 L 13.4375 16.025391 L 12.777344 17.115234 C 11.598344 19.061234 11 20.848688 11 22.429688 C 11 23.267477 11.177986 24.054088 11.476562 24.767578 C 9.3797333 23.5043 8 21.391212 8 19 C 8 16.611 9.3976406 13.676703 12.056641 10.470703 L 14.197266 12.613281 L 17.191406 7.6230469 z M 17.103516 17.648438 C 18.333516 19.565437 19 21.233687 19 22.429688 C 19 24.398688 17.654 26 16 26 C 14.346 26 13 24.398688 13 22.429688 C 13 21.507688 13.290234 20.45225 13.865234 19.28125 L 15.15625 20.570312 L 17.103516 17.648438 z"
+                                                             fill="#ff7a00"
+                                                             scaleX="1.2" scaleY="1.2" />
+                                                </VBox>
+                                            </VBox>
+
+                                        </HBox>
+
+
 
                                     </VBox>
 
-                                    <VBox styleClass="stat-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                        <Label text="Streak" styleClass="small-card-title" />
-                                        <Label fx:id="streakLabel" text="0 Days" styleClass="small-card-main-content" />
-                                        <Label text="Current streak" styleClass="small-card-main-content-description" />
+                                    <VBox styleClass="stat-cardbasic" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                        <HBox>
+                                            <VBox HBox.hgrow="ALWAYS">
+                                                <Label text="Best Day" styleClass="small-card-title" />
+                                                <Label fx:id="bestDayLabel" text="Null" styleClass="small-card-main-content" />
+                                                <Label text="Most productive day" styleClass="small-card-main-content-description" />
+                                            </VBox>
+                                            <VBox styleClass="icon-cardbasic" maxHeight="-Infinity" >
+                                                <VBox alignment="CENTER"
+                                                      minWidth="25" maxWidth="25"
+                                                      minHeight="25" maxHeight="25">
+                                                    <SVGPath
+                                                            content="M7 1.75C7.41421 1.75 7.75 2.08579 7.75 2.5V3.26272C8.41203 3.24999 9.1414 3.24999 9.94358 3.25H14.0564C14.8586 3.24999 15.588 3.24999 16.25 3.26272V2.5C16.25 2.08579 16.5858 1.75 17 1.75C17.4142 1.75 17.75 2.08579 17.75 2.5V3.32709C18.0099 3.34691 18.2561 3.37182 18.489 3.40313C19.6614 3.56076 20.6104 3.89288 21.3588 4.64124C22.1071 5.38961 22.4392 6.33855 22.5969 7.51098C22.6472 7.88567 22.681 8.29459 22.7037 8.74007C22.7337 8.82106 22.75 8.90861 22.75 9C22.75 9.06932 22.7406 9.13644 22.723 9.20016C22.75 10.0021 22.75 10.9128 22.75 11.9436V14.0564C22.75 15.8942 22.75 17.3498 22.5969 18.489C22.4392 19.6614 22.1071 20.6104 21.3588 21.3588C20.6104 22.1071 19.6614 22.4392 18.489 22.5969C17.3498 22.75 15.8942 22.75 14.0564 22.75H9.94359C8.10583 22.75 6.65019 22.75 5.51098 22.5969C4.33856 22.4392 3.38961 22.1071 2.64124 21.3588C1.89288 20.6104 1.56076 19.6614 1.40314 18.489C1.24997 17.3498 1.24998 15.8942 1.25 14.0564V11.9436C1.24999 10.9127 1.24998 10.0021 1.27701 9.20017C1.25941 9.13645 1.25 9.06932 1.25 9C1.25 8.90862 1.26634 8.82105 1.29627 8.74006C1.31895 8.29458 1.35276 7.88566 1.40314 7.51098C1.56076 6.33856 1.89288 5.38961 2.64124 4.64124C3.38961 3.89288 4.33856 3.56076 5.51098 3.40313C5.7439 3.37182 5.99006 3.34691 6.25 3.32709V2.5C6.25 2.08579 6.58579 1.75 7 1.75ZM2.76309 9.75C2.75032 10.4027 2.75 11.146 2.75 12V14C2.75 15.9068 2.75159 17.2615 2.88976 18.2892C3.02502 19.2952 3.27869 19.8749 3.7019 20.2981C4.12511 20.7213 4.70476 20.975 5.71085 21.1102C6.73851 21.2484 8.09318 21.25 10 21.25H14C15.9068 21.25 17.2615 21.2484 18.2892 21.1102C19.2952 20.975 19.8749 20.7213 20.2981 20.2981C20.7213 19.8749 20.975 19.2952 21.1102 18.2892C21.2484 17.2615 21.25 15.9068 21.25 14V12C21.25 11.146 21.2497 10.4027 21.2369 9.75H2.76309ZM21.1683 8.25H2.83168C2.8477 8.06061 2.86685 7.88123 2.88976 7.71085C3.02502 6.70476 3.27869 6.12511 3.7019 5.7019C4.12511 5.27869 4.70476 5.02502 5.71085 4.88976C6.73851 4.75159 8.09318 4.75 10 4.75H14C15.9068 4.75 17.2615 4.75159 18.2892 4.88976C19.2952 5.02502 19.8749 5.27869 20.2981 5.7019C20.7213 6.12511 20.975 6.70476 21.1102 7.71085C21.1331 7.88123 21.1523 8.06061 21.1683 8.25Z"
+                                                            fill="#a855f7">
+                                                        <effect>
+                                                            <Glow level="0.2" />
+                                                        </effect>
+                                                    </SVGPath>
+                                                </VBox>
+                                            </VBox>
+
+                                        </HBox>
+
                                     </VBox>
 
-                                    <VBox styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                                        <Label text="Best Day" styleClass="small-card-title" />
-                                        <Label fx:id="bestDayLabel" text="Null" styleClass="small-card-main-content" />
-                                        <Label text="Most productive day" styleClass="small-card-main-content-description" />
-                                    </VBox>
+                                    <VBox styleClass="stat-cardbasic" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                        <HBox>
+                                            <VBox HBox.hgrow="ALWAYS">
+                                                <Label text="Tasks" styleClass="small-card-title" />
+                                                <Label fx:id="tasksLabel" text="0" styleClass="small-card-main-content" />
+                                                <Label text="Completed all-time" styleClass="small-card-main-content-description" />
+                                            </VBox>
 
-                                    <VBox styleClass="stat-card" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                        <Label text="Tasks" styleClass="small-card-title" />
-                                        <Label fx:id="tasksLabel" text="0" styleClass="small-card-main-content" />
-                                        <Label text="Completed all-time" styleClass="small-card-main-content-description" />
+                                            <VBox styleClass="icon-cardbasic" maxHeight="-Infinity" >
+                                                <VBox alignment="CENTER"
+                                                      minWidth="25" maxWidth="25"
+                                                      minHeight="25" maxHeight="25">
+                                                    <SVGPath
+                                                            content="M1.70711 18.7071C1.31658 19.0976 0.683417 19.0976 0.292893 18.7071C-0.0976311 18.3166 -0.0976311 17.6834 0.292893 17.2929L7.79289 9.79289C8.18342 9.40237 8.81658 9.40237 9.20711 9.79289L13.5 14.0858L20.5858 7H17C16.4477 7 16 6.55228 16 6C16 5.44772 16.4477 5 17 5H22.9993C23.0003 5 23.002 5 23.003 5C23.1375 5.0004 23.2657 5.02735 23.3828 5.07588C23.5007 5.12468 23.6112 5.19702 23.7071 5.29289C23.8902 5.47595 23.9874 5.71232 23.9989 5.95203C23.9996 5.96801 24 5.984 24 6C24 6.00033 24 5.99967 24 6V12C24 12.5523 23.5523 13 23 13C22.4477 13 22 12.5523 22 12V8.41421L14.2071 16.2071C13.8166 16.5976 13.1834 16.5976 12.7929 16.2071L8.5 11.9142L1.70711 18.7071Z"                                                            fill="#a855f7">
+                                                        <effect>
+                                                            <Glow level="0.2" />
+                                                        </effect>
+                                                    </SVGPath>
+                                                </VBox>
+
+                                            </VBox>
+                                        </HBox>
                                     </VBox>
                                 </GridPane>
                             </VBox>
 
-                            <VBox styleClass="stat-card" GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.columnSpan="2" GridPane.rowSpan="2">
+                            <VBox styleClass="stat-cardbasic" GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.columnSpan="2" GridPane.rowSpan="2">
                                 <Label text="Weekly Progress" styleClass="big-card-title" />
                                 <Label text="Hours studied in the last 12 weeks" styleClass="big-card-description" />
                                 <AreaChart fx:id="weeklyLineChart" prefHeight="300" maxWidth="Infinity" legendVisible="false" animated="false">
@@ -108,14 +186,14 @@
                                 </AreaChart>
                             </VBox>
 
-                            <VBox fx:id="statsPlaceholder" styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="4" >
+                            <VBox fx:id="statsPlaceholder" styleClass="stat-cardbasic" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="4" >
                                 <Label text="Activity Heatmap" styleClass="big-card-title" />
                                 <Label text="Last year of study sessions" styleClass="big-card-description" />
                                 <Separator styleClass="big-card-separator" />
 
                             </VBox>
 
-                            <VBox styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2">
+                            <VBox styleClass="stat-cardbasic" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2">
                                 <Label text="Last Month" styleClass="small-card-title" />
                                 <Label fx:id="timeLastMonthLabel" text="0.0h" styleClass="small-card-main-content" />
                                 <Label text="Total study time" styleClass="small-card-main-content-description" />
@@ -123,7 +201,7 @@
 
 
 
-                            <VBox styleClass="stat-card" GridPane.columnIndex="2" GridPane.rowIndex="3" GridPane.rowSpan="2" GridPane.columnSpan="2">
+                            <VBox styleClass="stat-cardbasic" GridPane.columnIndex="2" GridPane.rowIndex="3" GridPane.rowSpan="2" GridPane.columnSpan="2">
                                 <Label text="Project Distribution" styleClass="big-card-title" />
                                 <Label text="Distribution by Projects" styleClass="big-card-description" />
                                 <Separator styleClass="big-card-separator" />
@@ -142,7 +220,7 @@
                     <VBox alignment="CENTER" spacing="15">
                         <HBox alignment="CENTER" spacing="25">
                             <Label fx:id="stateLabel" text="READY TO START" styleClass="state-label" />
-                            <Button fx:id="changeSubjectBtn" text="⚙" onAction="#toggleSetup" styleClass="button-secondary" />
+                            <Button fx:id="changeSubjectBtn" text="⚙" onAction="#toggleSetup" styleClass="button-secondary, settings-text" />
                         </HBox>
                         <Label fx:id="selectedSubjectLabel" visible="false" managed="false"/>
                     </VBox>
@@ -184,6 +262,7 @@
                             <TableColumn fx:id="colTopic" text="Topic" prefWidth="150"/>
                             <TableColumn fx:id="colDescription" text="Description" prefWidth="150"/>
                             <TableColumn fx:id="colDuration" text="Min"/>
+                            <TableColumn fx:id="colTimeline" text="timeStamp"/>
                         </columns>
                     </TableView>
                 </VBox>
@@ -293,7 +372,7 @@
         <VBox fx:id="setupPane" styleClass="setup-sidebar" maxWidth="600" minWidth="600" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.rightAnchor="0"
               translateX="600">
         <padding>
-            <Insets top="20" right="20" bottom="20" left="20"/>
+            <Insets top="20" right="5" bottom="20" left="20"/>
         </padding>
 
         <HBox alignment="CENTER_LEFT" spacing="10">
@@ -303,26 +382,33 @@
         </HBox>
 
         <Separator/>
+            <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" styleClass="heatmap-scroll" >
+                <VBox spacing="10">
+                    <padding>
+                        <Insets top="10" bottom="10"/>
+                    </padding>
 
-        <Label text="Subject" styleClass="section-label"/>
-        <ListView fx:id="subjectListView" prefHeight="150" styleClass="setup-listview"/>
-        <HBox spacing="10">
-            <TextField fx:id="newSubjectField" promptText="New subject..." HBox.hgrow="ALWAYS" styleClass="modern-textfield"/>
-            <Button text="+" onAction="#handleAddSubject" styleClass="button-secondary"/>
-        </HBox>
+                    <Label text="Subject" styleClass="section-label"/>
+                    <ListView fx:id="subjectListView" styleClass="setup-listview" VBox.vgrow="NEVER"/>
 
-        <Separator/>
+                    <HBox spacing="10">
+                        <TextField fx:id="newSubjectField" promptText="New subject..."  HBox.hgrow="ALWAYS"  styleClass="modern-textfield"/>
+                        <Button text="Apply" onAction="#handleAddSubject" styleClass="button-main"/>
+                    </HBox>
 
-        <Label text="Task" styleClass="section-label"/>
-        <ListView fx:id="taskListView" prefHeight="150" styleClass="setup-listview"/>
-        <HBox spacing="10">
-            <TextField fx:id="newTaskField" promptText="New task..." HBox.hgrow="ALWAYS" styleClass="modern-textfield"/>
-            <Button text="+" onAction="#handleAddTask" styleClass="button-secondary"/>
-        </HBox>
+                    <Separator/>
 
-        <Region VBox.vgrow="ALWAYS"/>
+                    <Label text="Task" styleClass="section-label"/>
+                    <ListView fx:id="taskListView" styleClass="setup-listview" VBox.vgrow="NEVER"/>
 
-        <Button fx:id="startSessionBtn" text="Apply Topic" onAction="#handleApplySetup" styleClass="button-main" maxWidth="Infinity" prefHeight="50"/>
+                    <HBox spacing="10">
+                        <TextField fx:id="newTaskField" promptText="New task..." HBox.hgrow="ALWAYS" styleClass="modern-textfield"/>
+                        <Button text="+" onAction="#handleAddTask" styleClass="button-secondary"/>
+                    </HBox>
+
+                    <Region VBox.vgrow="ALWAYS"/> <Button fx:id="startSessionBtn" text="Apply Topic" onAction="#handleApplySetup" styleClass="button-main" maxWidth="Infinity" prefHeight="50"/>
+                </VBox>
+            </ScrollPane>
     </VBox>
     </AnchorPane>
 </StackPane>
