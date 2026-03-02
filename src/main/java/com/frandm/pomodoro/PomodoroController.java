@@ -1,6 +1,9 @@
 package com.frandm.pomodoro;
 
 //region Imports
+import atlantafx.base.theme.PrimerDark;
+import atlantafx.base.theme.PrimerLight;
+import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.scene.chart.*;
 import javafx.collections.ObservableList;
@@ -93,6 +96,7 @@ public class PomodoroController {
     private static final String DEFAULT_SUBJECT = "General";
     private final ObservableList<String> subjectsList = FXCollections.observableArrayList();
     private final ObservableList<String> tasksList = FXCollections.observableArrayList();
+    private boolean isDarkMode = true;
     //endregion
 
     //region Initializer
@@ -101,6 +105,16 @@ public class PomodoroController {
         DatabaseHandler.initializeDatabase();
         //DatabaseHandler.generateRandomPomodoros();
         ConfigManager.load(engine);
+
+        if (isDarkMode) {
+            Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
+            rootPane.getStyleClass().add("primer-dark");
+            rootPane.getStyleClass().remove("primer-light");
+        } else {
+            Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
+            rootPane.getStyleClass().add("primer-light");
+            rootPane.getStyleClass().remove("primer-dark");
+        }
 
         //region config de la tabla
         colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
@@ -454,7 +468,7 @@ public class PomodoroController {
 
     //region Stats Logic
     private final DateTimeFormatter DATE_FORMATTER = new DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd") // <--- Añade esto explícitamente
+            .appendPattern("yyyy-MM-dd")
             .appendPattern(" HH:mm:ss")
             .toFormatter();
 
@@ -709,5 +723,20 @@ public class PomodoroController {
         isSetupOpen = !isSetupOpen;
     }
 //endregion
+
+    @FXML
+    private void toggleTheme() {
+        rootPane.setStyle("");
+        if (isDarkMode) {
+            Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
+            rootPane.getStyleClass().remove("primer-dark");
+            rootPane.getStyleClass().add("primer-light");
+        } else {
+            Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
+            rootPane.getStyleClass().remove("primer-light");
+            rootPane.getStyleClass().add("primer-dark");
+        }
+        isDarkMode = !isDarkMode;
+    }
 
 }

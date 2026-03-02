@@ -294,6 +294,7 @@
                     <HBox alignment="CENTER_LEFT">
                         <Label text="Time (minutes)" styleClass="section-label" />
                         <Region HBox.hgrow="ALWAYS" />
+                        <Button  onAction="#toggleTheme" text="Reset" styleClass="reset-button" />
                         <Button  onAction="#handleResetTimeSettings" text="Reset" styleClass="reset-button" />
                     </HBox>
 
