@@ -8,7 +8,8 @@
     -color-fg-default: #eaeaea;
     -color-fg-muted: #94a3b8;
     -color-bg-subtle: #161b22;
-    -color-accent: #a855f7;
+    -color-accent: -heatmap-high;
+    -color-accent-light: -heatmap-low;
 
     -color-menu: -color-bg-default;
     -color-hover: -color-bg-subtle;
@@ -16,17 +17,17 @@
     -text-main: -color-fg-default;
     -text-dark: #e6edf3;
     -text-muted: -color-fg-muted;
-    -stat-card-normal-bg: rgba(46, 74, 255, 0.1);
+    -stat-card-normal-bg: rgba(255, 183, 0, 0.1);
     -stat-card-red-bg: rgba(255, 57, 22, 0.1);
     -stat-card-secundary-bg: rgba(32, 38, 58, 0.1);
 
-    -heatmap-empty: rgba(48, 54, 61, 0.5);
-    -heatmap-very-low: rgba(168, 85, 247, 0.2);
-    -heatmap-low: rgba(168, 85, 247, 0.4);
-    -heatmap-medium: rgba(124, 58, 237, 0.82);
-    -heatmap-high: #a855f7;
-    -heatmap-very-high: #bc7af9;
-    -heatmap-extreme: #d8b4fe;
+    -heatmap-empty: -stat-card-secundary-bg;
+    -heatmap-very-low: rgba(255, 183, 0, 0.15);
+    -heatmap-low:      rgba(255, 183, 0, 0.35);
+    -heatmap-medium:   rgba(255, 183, 0, 0.60);
+    -heatmap-high:     rgba(255, 183, 0);
+    -heatmap-very-high: #ffc933;
+    -heatmap-extreme:   #ffd976;
 
     -color-work: #0f2a29;
     -color-work-secundary: #7aefa7;
@@ -42,7 +43,8 @@
     -color-fg-default: #1e293b;
     -color-fg-muted: #64748b;
     -color-bg-subtle: #ffffff;
-    -color-accent: #8250df;
+    -color-accent: -heatmap-high;
+    -color-accent-light: -heatmap-low;
 
     -color-menu: -color-bg-default;
     -color-hover: #f1f5f9;
@@ -50,17 +52,17 @@
     -text-main: -color-fg-default;
     -text-dark: #0f172a;
     -text-muted: -color-fg-muted;
-    -stat-card-normal-bg: rgba(52, 152, 219, 0.08);
-    -stat-card-red-bg: rgba(231, 76, 60, 0.08);
-    -stat-card-secundary-bg: #ffffff;
+    -stat-card-normal-bg: rgba(52, 152, 219, 0.1);
+    -stat-card-red-bg: rgba(231, 76, 60, 0.1);
+    -stat-card-secundary-bg: rgba(255, 255, 255, 0.1);
 
-    -heatmap-empty: #e2e8f0;
-    -heatmap-very-low: #f5f3ff;
-    -heatmap-low: #ede9fe;
-    -heatmap-medium: #ddd6fe;
-    -heatmap-high: #c4b5fd;
-    -heatmap-very-high: #a78bfa;
-    -heatmap-extreme: #8b5cf6;
+    -heatmap-empty: -stat-card-secundary-bg;
+    -heatmap-very-low: #fff8e1;
+    -heatmap-low:      #ffecb3;
+    -heatmap-medium:   #ffd54f;
+    -heatmap-high:     #ffb700;
+    -heatmap-very-high: #ffa000;
+    -heatmap-extreme:   #ff8f00;
 
     -color-work: #dcfce7;
     -color-work-secundary: #166534;

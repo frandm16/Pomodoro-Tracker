@@ -7,10 +7,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DatabaseHandler {
     private static final String FOLDER_NAME = ".StudyTracker";
@@ -59,7 +56,7 @@ public class DatabaseHandler {
                     "FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE)");
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error initializeDatabase: " + e.getMessage());
         }
     }
 
@@ -115,7 +112,7 @@ public class DatabaseHandler {
                 if (rs.next()) return rs.getInt(1);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error getOrCreateTask: " + e.getMessage());
         }
         return -1;
     }
@@ -139,10 +136,10 @@ public class DatabaseHandler {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                map.computeIfAbsent(rs.getString("tag_name"), k -> new ArrayList<>()).add(rs.getString("task_name"));
+                map.computeIfAbsent(rs.getString("tag_name"), _ -> new ArrayList<>()).add(rs.getString("task_name"));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error getTagsWithTasksMap: " + e.getMessage());
         }
         return map;
     }
@@ -157,7 +154,7 @@ public class DatabaseHandler {
                 colors.put(rs.getString("name"), rs.getString("color"));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error getTagColors: " + e.getMessage());
         }
         return colors;
     }
@@ -170,7 +167,7 @@ public class DatabaseHandler {
             pst.setString(2, oldName);
             pst.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error renameTag: " + e.getMessage());
         }
     }
 
@@ -182,7 +179,7 @@ public class DatabaseHandler {
             pst.setString(2, tagName);
             pst.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error updateTagColor: " + e.getMessage());
         }
     }
 
@@ -274,8 +271,8 @@ public class DatabaseHandler {
 
                         saveSession(
                                 taskId,
-                                "sesion test",
-                                "descripcion test",
+                                "sesión test",
+                                "descripción test",
                                 duration,
                                 start,
                                 end
@@ -365,5 +362,56 @@ public class DatabaseHandler {
         }
 
         return sessions;
+    }
+
+    public static List<Session> getSessionsByTagPaged(String tag, int limit, int offset) {
+        List<Session> sessions = new ArrayList<>();
+        String sql = "SELECT s.id, s.title, s.description, s.total_minutes, s.start_date, s.end_date, " +
+                "t.name AS task_name, tg.name AS tag_name, tg.color AS tag_color " +
+                "FROM sessions s " +
+                "JOIN tasks t ON s.task_id = t.id " +
+                "JOIN tags tg ON t.tag_id = tg.id " +
+                "WHERE tg.name = ? " +
+                "ORDER BY s.start_date DESC LIMIT ? OFFSET ?";
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tag);
+            pstmt.setInt(2, limit);
+            pstmt.setInt(3, offset);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                sessions.add(new Session(
+                        rs.getInt("id"), rs.getString("tag_name"), rs.getString("tag_color"),
+                        rs.getString("task_name"), rs.getString("title"), rs.getString("description"),
+                        rs.getInt("total_minutes"), rs.getString("start_date"), rs.getString("end_date")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getSessionsByTagPaged: " + e.getMessage());
+        }
+        return sessions;
+    }
+
+    public static Map<String, Integer> getTaskSummaryByTag(String tag) {
+        Map<String, Integer> summary = new LinkedHashMap<>();
+        String sql = "SELECT t.name AS task_name, SUM(s.total_minutes) as total " +
+                "FROM sessions s " +
+                "JOIN tasks t ON s.task_id = t.id " +
+                "JOIN tags tg ON t.tag_id = tg.id " +
+                "WHERE tg.name = ? " +
+                "GROUP BY t.name ORDER BY total DESC";
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tag);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                summary.put(rs.getString("task_name"), rs.getInt("total"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getTaskSummaryByTag: " + e.getMessage());
+        }
+        return summary;
     }
 }

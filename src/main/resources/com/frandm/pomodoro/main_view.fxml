@@ -90,7 +90,7 @@
                                                           minHeight="25" maxHeight="25">
                                                         <SVGPath
                                                                 content="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"
-                                                                fill="#a855f7">
+                                                                style="-fx-fill: -color-accent">
                                                             <effect>
                                                                 <Glow level="0.2" />
                                                             </effect>
@@ -217,22 +217,13 @@
                         </GridPane>
                     </VBox>
                 </GridPane >
-                <GridPane StackPane.alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="Infinity">
+                <GridPane StackPane.alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
                     <padding>
                         <Insets right="50" bottom="30" left="50"/>
                     </padding>
 
-                    <rowConstraints>
-                        <RowConstraints percentHeight="15" vgrow="SOMETIMES" />
-                        <RowConstraints percentHeight="70" vgrow="ALWAYS" valignment="CENTER" />
-                        <RowConstraints percentHeight="15" vgrow="SOMETIMES" valignment="BOTTOM" />
-                    </rowConstraints>
 
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="100" halignment="CENTER" />
-                    </columnConstraints>
-
-                    <VBox  fx:id="mainContainer" alignment="CENTER" spacing="20" GridPane.rowIndex="1" >
+                    <VBox  fx:id="mainContainer" spacing="20"  >
                         <padding><Insets top="80" right="50" bottom="50" left="50"/></padding>
                         <VBox fx:id="activeTaskContainer" alignment="CENTER" spacing="8" minHeight="30">
                         </VBox>

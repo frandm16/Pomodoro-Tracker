@@ -342,7 +342,7 @@ public class PomodoroController {
     private void showHistoryView() {
         if (historyContainer.isVisible()) return;
 
-        historyView.refresh();
+        historyView.refreshTagsGrid();
 
         Region currentVisible = mainContainer.isVisible() ? mainContainer : statsContainer;
         switchPanels(currentVisible, historyContainer);

@@ -60,13 +60,13 @@
 }
 
 .title-button:hover {
-    -fx-border-color: -text-main;
+    -fx-border-color: -color-fg-muted;
 }
 
 .title-button.active {
     -fx-opacity: 1.0;
-    -fx-border-color: -text-main;
-    -fx-text-fill: -text-main;
+    -fx-text-fill: -color-accent;
+    -fx-border-color: -color-accent;
 }
 
 .close-button, .reset-button {
@@ -192,16 +192,16 @@
 .default-color5.chart-pie { -fx-pie-color: -heatmap-high; }
 
 .chart-series-area-line {
-    -fx-stroke: -heatmap-high;
+    -fx-stroke: -color-accent;
     -fx-stroke-width: 3px;
 }
 
 .chart-series-area-fill {
-    -fx-fill: linear-gradient(to bottom, -heatmap-low, transparent);
+    -fx-fill: linear-gradient(to bottom, -color-accent-light, transparent);
 }
 
 .chart-area-symbol {
-    -fx-background-color: -heatmap-high, white;
+    -fx-background-color: -color-accent, -color-menu;
     -fx-background-insets: 0, 2;
     -fx-background-radius: 5px;
     -fx-padding: 5px;
@@ -328,9 +328,9 @@
 
 .timeline-card:hover {
     -fx-opacity: 1.0;
-    -fx-border-color: -text-main;
+    -fx-border-color: -color-accent;
     -fx-text-fill: -text-main;
-    -fx-translate-x: 1
+    -fx-translate-y: -1
 }
 
 .sessions-container-line {
@@ -340,17 +340,65 @@
 }
 
 .timeline-card {
-    -fx-background-color: transparent;
-    -fx-background-radius: 12;
-    -fx-border-color: -color-fg-muted;
-    -fx-border-radius: 12;
-    -fx-border-width: 1;
+    fx-background-color: linear-gradient(from 0% 0% to 15% 75%, -stat-card-normal-bg, -stat-card-secundary-bg);
+    -fx-border-color: -color-border-subtle;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
 }
 
 
 .card-expanded {
-    -fx-background-color: transparent;
-    -fx-border-color: -color-fg-muted;
+    -fx-background-color: linear-gradient(from 0% 0% to 15% 75%, -stat-card-normal-bg, -stat-card-secundary-bg);
+    -fx-border-color: -color-border-subtle;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 8);
+}
+
+.tag-explorer-card {
+    -fx-background-color: linear-gradient(from 0% 0% to 15% 75%, -stat-card-normal-bg, -stat-card-secundary-bg);
+    -fx-border-color: -color-border-subtle;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
+}
+
+.tag-explorer-card:hover {
+    -fx-background-color: linear-gradient(from 0% 0% to 15% 75%, -stat-card-normal-bg, -stat-card-secundary-bg);
+    -fx-border-color: -color-accent;
+    -fx-translate-y: -3;
+}
+
+.task-summary-row {
+    -fx-background-color: -bg-panels;
+    -fx-padding: 15 20;
+    -fx-background-radius: 12;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-width: 0 0 1 0;
+}
+
+.task-summary-row:hover {
+    -fx-background-color: -color-hover;
+    -fx-border-color: -color-accent;
+}
+
+.sessions-container-line {
+    -fx-border-color: -color-border-subtle;
+    -fx-border-width: 0 0 0 2;
+    -fx-opacity: 1.0;
+}
+
+.history-date-num {
+    -fx-font-family: "JetBrains Mono", "Monospaced";
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-accent;
+}
+
+.history-month-name {
+    -fx-letter-spacing: 2px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-muted;
+    -fx-opacity: 0.8;
 }
