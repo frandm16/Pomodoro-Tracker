@@ -69,6 +69,7 @@ public class PomodoroController {
     public void initialize() {
         DatabaseHandler.initializeDatabase();
         //DatabaseHandler.generateRandomPomodoros();
+        //DatabaseHandler.generateRandomSchedule();
         ConfigManager.load(engine);
         refreshDatabaseData();
         applyTheme();

@@ -20,6 +20,8 @@ public class CalendarView extends VBox {
     private ScrollPane scrollPane;
     private LocalDate currentWeekStart;
     private PomodoroController controller;
+    private long lastPopupCloseTime = 0;
+    private Popup activePopup = null;
     private final double ROW_HEIGHT = 60.0;
     private final Pane[] dayColumns = new Pane[7];
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -43,7 +45,7 @@ public class CalendarView extends VBox {
             javafx.geometry.Point2D point = btnCreate.localToScreen(0, btnCreate.getHeight());
 
             if (point != null) {
-                showPopup(null, LocalDate.now(), point.getX(), point.getY(), LocalTime.now().getHour(), 0);
+                showPopup(null, LocalDate.now(), point.getX(), point.getY(), LocalTime.now().getHour(), 0, true);
             }
         });
         btnCreate.getItems().add(itemSession);
@@ -138,7 +140,8 @@ public class CalendarView extends VBox {
                 final int finalH = h;
                 hourCell.setOnMouseClicked(e -> {
                     if (e.getClickCount() == 1) {
-                        showPopup(null, date, e.getScreenX(), e.getScreenY(), finalH, 0);
+                        showPopup(null, date, e.getScreenX(), e.getScreenY(), finalH, 0, false);
+                        e.consume();
                     }
                 });
                 columnCanvas.getChildren().add(hourCell);
@@ -147,8 +150,24 @@ public class CalendarView extends VBox {
         }
     }
 
-    private void showPopup(Map<String, Object> existingSession, LocalDate date, double screenX, double screenY, int hour, int minute) {
+    private void showPopup(Map<String, Object> existingSession, LocalDate date, double screenX, double screenY, int hour, int minute, boolean isSessionClick) {
+        long currentTime = System.currentTimeMillis();
+        if (!isSessionClick && (currentTime - lastPopupCloseTime < 150)) {
+            return;
+        }
+
+        if (activePopup != null && activePopup.isShowing()) {
+            activePopup.hide();
+            activePopup = null;
+            lastPopupCloseTime = currentTime;
+
+            if (!isSessionClick) {
+                return;
+            }
+        }
+
         Popup popup = new Popup();
+        activePopup = popup;
         popup.setAutoHide(true);
 
         VBox root = new VBox(12);
@@ -177,11 +196,11 @@ public class CalendarView extends VBox {
 
         HBox timeRow = new HBox(10);
         timeRow.setAlignment(Pos.CENTER);
-        timeRow.getChildren().addAll(
-                new HBox(3, hStart, new Label(":"), mStart),
-                new Label("to"),
-                new HBox(3, hEnd, new Label(":"), mEnd)
-        );
+        HBox inicio = new HBox(3, hStart, new Label(":"), mStart);
+        inicio.setAlignment(Pos.CENTER);
+        HBox fin = new HBox(3, hEnd, new Label(":"), mEnd);
+        fin.setAlignment(Pos.CENTER);
+        timeRow.getChildren().addAll(inicio, new Label("to"), fin);
 
         ComboBox<String> comboTags = new ComboBox<>();
         ComboBox<String> comboTasks = new ComboBox<>();
@@ -268,6 +287,13 @@ public class CalendarView extends VBox {
             });
             root.getChildren().add(btnDelete);
         }
+
+        popup.setOnHidden(e -> {
+            lastPopupCloseTime = System.currentTimeMillis();
+            if (activePopup == popup) {
+                activePopup = null;
+            }
+        });
 
         popup.getContent().add(root);
         popup.show(this.getScene().getWindow(), screenX, screenY);
@@ -357,7 +383,10 @@ public class CalendarView extends VBox {
         String color = s.getOrDefault("tag_color", "#94a3b8").toString();
         VBox block = createSessionBlock(title != null ? title : taskName, tagName, color, start, end);
 
-        block.setOnMouseClicked(e -> showPopup(s, start.toLocalDate(), e.getScreenX(), e.getScreenY(), start.getHour(), start.getMinute()));
+        block.setOnMouseClicked(e ->{
+            showPopup(s, start.toLocalDate(), e.getScreenX(), e.getScreenY(), start.getHour(), start.getMinute(), true);
+            e.consume();
+        });
 
         double yStart = (start.getHour() * ROW_HEIGHT) + (start.getMinute() * (ROW_HEIGHT / 60.0));
         double height = Math.max(30, Duration.between(start, end).toMinutes() * (ROW_HEIGHT / 60.0));
@@ -375,7 +404,7 @@ public class CalendarView extends VBox {
     private VBox createSessionBlock(String title, String tag, String color, LocalDateTime start, LocalDateTime end) {
         VBox sessionBlock = new VBox(2);
         sessionBlock.getStyleClass().add("calendar-session-block");
-        sessionBlock.setStyle("-fx-border-color: " + color + "; -fx-background-color: " + color + "15; -fx-border-width: 0 0 0 3; -fx-background-radius: 4; -fx-border-radius: 0 4 4 0;");
+        sessionBlock.setStyle("-fx-border-color: " + color + "; -fx-background-color: " + color + "40; -fx-border-width: 0 0 0 3; -fx-background-radius: 4; -fx-border-radius: 0 4 4 0;");
 
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("calendar-session-task");

@@ -404,27 +404,22 @@ public class DatabaseHandler {
     }
 
     public static void updateScheduledSession(int id, String taskName, String tagName, LocalDateTime start, LocalDateTime end) {
+        Map<String, String> colors = getTagColors();
+        int taskId = getOrCreateTask(tagName, colors.getOrDefault(tagName, "#ffffff"), taskName);
+
+        if (taskId == -1) {
+            System.err.println("[ERROR] No se pudo obtener el taskId para actualizar la sesión.");
+            return;
+        }
+
         String query = "UPDATE scheduled_sessions SET " +
-                "task_id = (SELECT id FROM tasks WHERE name = ?), " +
-                "tag_id = (SELECT id FROM tags WHERE name = ?), " +
+                "task_id = ?, " +
                 "start_time = ?, " +
                 "end_time = ? " +
                 "WHERE id = ?";
 
-        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        executeUpdates(query, taskId, start.format(DATE_FORMATTER), end.format(DATE_FORMATTER), id);
 
-            pstmt.setString(1, taskName);
-            pstmt.setString(2, tagName);
-            pstmt.setString(3, start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            pstmt.setString(4, end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            pstmt.setInt(5, id);
-
-            pstmt.executeUpdate();
-            System.out.println("Sesión actualizada correctamente.");
-        } catch (SQLException e) {
-            System.err.println("Error al actualizar la sesión: " + e.getMessage());
-        }
     }
 
     public static void cleanCorruptSessions() {
@@ -539,6 +534,54 @@ private static void executeUpdates(String sql, Object... params) {
             System.out.println("[DEBUG] datos aleatorios generados");
         } catch (SQLException e) {
             System.err.println("Error generando datos: " + e.getMessage());
+        }
+    }
+
+    public static void generateRandomSchedule() {
+        Random random = new Random();
+        LocalDate today = LocalDate.now();
+        Map<String, List<String>> currentData = getTagsWithTasksMap();
+
+        if (currentData.isEmpty()) {
+            currentData.put("General", new ArrayList<>(List.of("Tarea inicial")));
+        }
+
+        List<String> tagList = new ArrayList<>(currentData.keySet());
+        String[] titles = {"Sesión Intensa", "Enfoque Deep Work", "Sprint de Tareas", "Avance Crítico", "Práctica Pro", "Estudio de Módulo"};
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl())) {
+            conn.setAutoCommit(false);
+
+            for (int i = -4; i <= 10; i++) {
+                LocalDate date = today.plusDays(i);
+
+                if (random.nextDouble() < 0.90) {
+                    int sessionsToday = random.nextInt(4) + 3;
+
+                    LocalDateTime currentTime = date.atTime(7 + random.nextInt(3), 0);
+
+                    for (int s = 0; s < sessionsToday; s++) {
+                        String tagName = tagList.get(random.nextInt(tagList.size()));
+                        List<String> tasksOfTag = currentData.get(tagName);
+                        String taskName = tasksOfTag.get(random.nextInt(tasksOfTag.size()));
+                        String title = titles[random.nextInt(titles.length)];
+
+                        int duration = 60 + (random.nextInt(7) * 15);
+                        LocalDateTime start = currentTime;
+                        LocalDateTime end = start.plusMinutes(duration);
+
+                        saveScheduledSession(tagName, taskName, title, start, end);
+
+                        currentTime = end.plusMinutes(15 + random.nextInt(31));
+
+                        if (currentTime.getHour() >= 23) break;
+                    }
+                }
+            }
+            conn.commit();
+            System.out.println("[DEBUG] Calendario 'Abundante' generado con éxito.");
+        } catch (SQLException e) {
+            System.err.println("Error en generateAbundantSchedule: " + e.getMessage());
         }
     }
     //endregion
