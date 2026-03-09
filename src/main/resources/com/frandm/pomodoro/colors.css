@@ -76,3 +76,46 @@
     -color-long-break-secundary: #5b21b6;
     -color-border-subtle: rgb(197, 197, 197);
 }
+
+.primer-electric-blue {
+    -color-bg-default: #000b1e;
+    -color-fg-default: #e0f2fe;
+    -color-fg-secundary: #075985;
+    -color-fg-muted: #38bdf8;
+    -color-bg-subtle: #08142c;
+
+    -color-accent: -heatmap-high;
+    -color-accent-secundary: #0ea5e9;
+    -color-accent-light: -heatmap-low;
+
+    -color-menu: -color-bg-default;
+    -color-hover: rgba(14, 165, 233, 0.15);
+    -bg-panels: -color-bg-subtle;
+    -text-main: -color-fg-default;
+    -text-dark: #f0f9ff;
+    -text-muted: -color-fg-muted;
+
+    -stat-card-normal-bg: rgba(14, 165, 233, 0.1);
+    -stat-card-red-bg: rgba(244, 63, 94, 0.15);
+    -stat-card-secundary-bg: rgba(56, 189, 248, 0.05);
+
+    /* Heatmap (Gradiente de Azul Eléctrico) */
+    -heatmap-empty: rgba(255, 255, 255, 0.03);
+    -heatmap-very-low: #0c4a6e;      /* Azul oscuro */
+    -heatmap-low:      #0369a1;      /* Azul medio */
+    -heatmap-medium:   #0284c7;      /* Azul brillante */
+    -heatmap-high:     #38bdf8;      /* Celeste eléctrico */
+    -heatmap-very-high: #7dd3fc;      /* Cian claro */
+    -heatmap-extreme:   #f0f9ff;      /* Blanco azulado (fuego azul) */
+
+    /* Colores de Sesión (Adaptados al tema azul) */
+    -color-work: #082f49;
+    -color-work-secundary: #7dd3fc;
+    -color-break: #1e1b4b;           /* Un toque de violeta para diferenciar */
+    -color-break-secundary: #a5b4fc;
+    -color-long-break: #1e293b;
+    -color-long-break-secundary: #94a3b8;
+
+    /* Bordes */
+    -color-border-subtle: rgba(56, 189, 248, 0.2);
+}

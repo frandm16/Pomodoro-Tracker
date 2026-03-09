@@ -15,6 +15,7 @@
 <?import javafx.scene.effect.Glow?>
 <?import javafx.scene.effect.GaussianBlur?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
+
 <StackPane fx:id="rootPane" prefHeight="700.0" prefWidth="1000.0"
            stylesheets="@styles.css" styleClass="root-pane"
            xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
@@ -403,7 +404,7 @@
             <RowConstraints percentHeight="80" />
             <RowConstraints percentHeight="10" />
         </rowConstraints>
-        <Region style="-fx-background-color: rgba(0,0,0,0.7);" GridPane.columnSpan="3" GridPane.rowSpan="3"><effect><GaussianBlur radius="15" /></effect></Region>
+        <Region onMouseClicked="#toggleSetup" style="-fx-background-color: rgba(0,0,0,0.7);" GridPane.columnSpan="3" GridPane.rowSpan="3"><effect><GaussianBlur radius="15" /></effect></Region>
         <StackPane styleClass="setup-pane-root" GridPane.columnIndex="1" GridPane.rowIndex="1">
             <HBox spacing="20" styleClass="setup-main-box">
                 <VBox spacing="10" prefWidth="250">
@@ -446,7 +447,7 @@
             <RowConstraints percentHeight="60" />
             <RowConstraints percentHeight="20" />
         </rowConstraints>
-        <Region style="-fx-background-color: rgba(0,0,0,0.7);" GridPane.columnSpan="3" GridPane.rowSpan="3"><effect><GaussianBlur radius="15" /></effect></Region>
+        <Region onMouseClicked="#closeSummary" style="-fx-background-color: rgba(0,0,0,0.7);" GridPane.columnSpan="3" GridPane.rowSpan="3"><effect><GaussianBlur radius="15" /></effect></Region>
         <StackPane styleClass="summaryStackPane" GridPane.columnIndex="1" GridPane.rowIndex="1">
             <VBox  spacing="40" >
                 <padding><Insets top="30" right="30" bottom="30" left="30"/></padding>
@@ -488,6 +489,15 @@
         </StackPane>
     </GridPane>
 
-
+    <VBox fx:id="notificationContainer"
+          mouseTransparent="true"
+          alignment="TOP_RIGHT"
+          spacing="10"
+          maxWidth="350"
+          StackPane.alignment="TOP_RIGHT">
+        <padding>
+            <Insets top="20" right="20" />
+        </padding>
+    </VBox>
 
 </StackPane>

@@ -67,9 +67,12 @@ public class SetupManager {
                     updateFuzzyResults(input, container, tagsMap, colors, onSelect);
                     controller.handleStartSessionFromSetup();
                     onSelect.run();
+                    NotificationManager.show("Task created", "Successfully created " + input, NotificationManager.NotificationType.INFO);
                 });
             }else{
-
+                createBtn.setOnAction(e -> {
+                    NotificationManager.show("Cant create task", "A tag must be selected", NotificationManager.NotificationType.ERROR);
+                });
             }
 
             container.getChildren().add(createBtn);

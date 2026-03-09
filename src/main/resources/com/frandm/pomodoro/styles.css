@@ -546,7 +546,6 @@
     -fx-border-color: -color-border-subtle;
     -fx-border-width: 1.5;
     -fx-border-radius: 20;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 30, 0, 0, 15);
 }
 
 .summaryTitle {
@@ -654,4 +653,38 @@
 .play-icon:hover {
     -fx-icon-size: 22px;
     -fx-icon-color: -color-fg-muted;
+}
+
+/* --- notifications --- */
+
+.notification-toast {
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-width: 1;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 5);
+}
+
+.notification-toast:hover {
+    -fx-background-color: -color-hover;
+}
+
+.notification-toast .font-icon {
+    -fx-icon-color: -color-accent;
+}
+
+.notification-progress {
+
+    -fx-background-radius: 0 0 10 10;
+}
+
+.toast-success .notification-progress,
+.toast-success .font-icon {
+    -fx-background-color: #10b981;
+    -fx-icon-color: #10b981;
+}
+
+.notification-icon {
+    -fx-icon-size: 25px;
 }

@@ -37,7 +37,7 @@ public class PomodoroController {
     @FXML private ScrollPane mainScrollPane;
     @FXML private GridPane setupPane, mainContainer;
     @FXML private StackPane rootPane;
-    @FXML private VBox settingsPane, scheduleListContainer, statsContainer, plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage, fuzzyResultsContainer, tagsListContainer, activeTaskContainer;
+    @FXML private VBox settingsPane, notificationContainer, scheduleListContainer, statsContainer, plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage, fuzzyResultsContainer, tagsListContainer, activeTaskContainer;
     @FXML private Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
             alarmVolumeValLabel, widthSliderValLabel, streakLabel, timeThisWeekLabel,
             timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel;
@@ -110,6 +110,8 @@ public class PomodoroController {
         summaryPane.setVisible(false);
         summaryPane.setManaged(false);
         setupStars();
+
+        NotificationManager.init(notificationContainer);
 
         //region paneles
         settingsPane.setTranslateX(-600);
@@ -254,6 +256,7 @@ public class PomodoroController {
 
         resetFullApp();
         closeSummary();
+        NotificationManager.show("Session finished", "Saved session", NotificationManager.NotificationType.SUCCESS);
     }
 
     @FXML
@@ -444,6 +447,8 @@ public class PomodoroController {
         if (isDarkMode) {
             Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
             rootPane.getStyleClass().add("primer-dark");
+            //Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
+            //rootPane.getStyleClass().add("primer-electric-blue");
         } else {
             Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
             rootPane.getStyleClass().add("primer-light");
