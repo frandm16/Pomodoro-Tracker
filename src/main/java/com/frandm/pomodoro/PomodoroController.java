@@ -18,6 +18,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.Circle;
+import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import javax.swing.*;
 import java.time.LocalDateTime;
@@ -369,16 +370,17 @@ public class PomodoroController {
         PomodoroEngine.State current = engine.getCurrentState();
         PomodoroEngine.State logical = engine.getLogicalState();
 
+
         if (current == PomodoroEngine.State.MENU) {
-            startPauseBtn.setText(setupManager.getSelectedTag() == null ? "SETUP" : "START");
+            updateIcon(startPauseBtn, setupManager.getSelectedTag() == null ? "mdi2p-plus" : "mdi2p-play",setupManager.getSelectedTag() == null ? "Setup" : "Play");
         } else {
-            startPauseBtn.setText(current == PomodoroEngine.State.WAITING ? "RESUME" : "PAUSE");
+            updateIcon(startPauseBtn, current == PomodoroEngine.State.WAITING ? "mdi2p-play" : "mdi2p-pause", current == PomodoroEngine.State.WAITING ? "Play" : "Pause");
         }
 
         boolean isMenu = (current == PomodoroEngine.State.MENU);
         boolean isRunning = (current != PomodoroEngine.State.WAITING && !isMenu);
-        skipBtn.setVisible(isRunning);
-        skipBtn.setManaged(isRunning);
+        skipBtn.setVisible(!isMenu);
+        skipBtn.setManaged(true);
 
         boolean hasStarted = (!isMenu);
         finishBtn.setVisible(hasStarted);
@@ -627,6 +629,20 @@ public class PomodoroController {
             starsContainer.getChildren().add(star);
         }
         updateStarsUI();
+    }
+
+    public void updateIcon(Button button, String iconCode, String tooltipText) {
+        FontIcon icon = new FontIcon(iconCode);
+        icon.setIconSize(24);
+        icon.getStyleClass().add("menu-icon");
+
+        button.setGraphic(icon);
+        button.setText("");
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        button.setFocusTraversable(false);
+        Tooltip tooltip = new Tooltip(tooltipText);
+        tooltip.setShowDelay(Duration.millis(250));
+        button.setTooltip(tooltip);
     }
 
     private void updateStarsUI() {

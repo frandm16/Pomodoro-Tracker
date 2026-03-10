@@ -262,13 +262,35 @@
                                 <VBox alignment="CENTER">
                                     <Label fx:id="stateLabel" text="Pomodoro" styleClass="state-label" />
                                     <Label fx:id="timerLabel" text="25:00" styleClass="timer-label"/>
+                                    <Button fx:id="skipBtn" onAction="#handleSkip"
+                                            styleClass="menu-button" alignment="CENTER"
+                                            contentDisplay="GRAPHIC_ONLY" >
+                                        <graphic>
+                                            <FontIcon iconLiteral="mdi2s-skip-next" styleClass="menu-icon" />
+                                        </graphic>
+                                        <tooltip>
+                                            <Tooltip text="Skip" showDelay="250ms" />
+                                        </tooltip>
+                                    </Button>
                                 </VBox>
 
                             </StackPane>
                             <HBox alignment="CENTER" spacing="25">
-                                <Button fx:id="startPauseBtn" onAction="#handleMainAction" prefHeight="60" prefWidth="140" text="START" styleClass="button-main" />
-                                <Button fx:id="skipBtn" onAction="#handleSkip" prefHeight="60" prefWidth="100" text="SKIP" styleClass="button-secondary" />
-                                <Button fx:id="finishBtn" onAction="#handleFinish" prefHeight="60" prefWidth="120" text="FINISH" styleClass="button-secondary" />
+                                <Button fx:id="startPauseBtn" onAction="#handleMainAction"
+                                        styleClass="menu-button" alignment="CENTER"
+                                        contentDisplay="GRAPHIC_ONLY" >
+                                </Button>
+
+                                <Button fx:id="finishBtn" onAction="#handleFinish"
+                                        styleClass="menu-button" alignment="CENTER"
+                                        contentDisplay="GRAPHIC_ONLY" >
+                                    <graphic>
+                                        <FontIcon iconLiteral="mdi2s-stop" styleClass="menu-icon" />
+                                    </graphic>
+                                    <tooltip>
+                                        <Tooltip text="Finish" showDelay="250ms" />
+                                    </tooltip>
+                                </Button>
                             </HBox>
                         </VBox>
                     </GridPane>
@@ -510,6 +532,9 @@
                         <graphic>
                             <FontIcon styleClass="trashIcon"/>
                         </graphic>
+                        <tooltip>
+                            <Tooltip text="Delete Session" showDelay="250ms" />
+                        </tooltip>
                     </Button>
                 </HBox>
             </VBox>
