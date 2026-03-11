@@ -303,7 +303,7 @@ public class PomodoroController {
             statsDashboard.refresh();
             uiManager.switchPanels(getActivePanel(), statsContainer);
         } else if (clickedBtn == historyBtn) {
-            historyView.refreshTagsGrid();
+            historyView.resetAndReload();
             uiManager.switchPanels(getActivePanel(), historyContainer);
         }
     }
@@ -659,7 +659,6 @@ public class PomodoroController {
     public void switchToTimer() {
         if (getActivePanel() == mainContainer) return;
         menuBtn.fire();
-        mainScrollPane.setVvalue(0.0);
     }
 
     public void playScheduleSession(String tag, String task) {
@@ -668,7 +667,6 @@ public class PomodoroController {
         setupManager.setSelectedTask(task);
         updateActiveTaskDisplay(setupManager.getSelectedTag(), setupManager.getSelectedTask());
         updateUIFromEngine();
-        uiManager.switchPanels(getActivePanel(), mainContainer);
     }
 
 }

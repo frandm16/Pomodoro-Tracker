@@ -1,16 +1,10 @@
 package com.frandm.pomodoro;
 
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
-
-import java.awt.event.ActionEvent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -18,17 +12,21 @@ import java.util.*;
 
 public class HistoryView extends StackPane {
 
-    private final Map<String, String> tagColors;
-    private final VBox tagsGridRoot;
+    private final PomodoroController controller;
+    private final VBox globalHistoryRoot;
+    private final VBox focusAreasRoot;
     private final VBox detailRoot;
-    private final Label detailTitle;
+    private final Button btnGlobalHistory;
+    private final Button btnFocusAreas;
     private final VBox sessionsContainer;
     private final VBox tasksSummaryContainer;
+    private final Label detailTitleLabel;
     private final Button loadMoreBtn;
-    private final ScrollPane detailScrollPane;
+    private ComboBox<String> tagFilterCombo;
+    private ComboBox<String> taskFilterCombo;
 
     private String currentTag = null;
-    private PomodoroController controller;
+    private String currentTask = null;
     private int currentOffset = 0;
     private final int PAGE_SIZE = 50;
     private LocalDate lastDate = null;
@@ -36,334 +34,352 @@ public class HistoryView extends StackPane {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public HistoryView(Map<String, String> tagColors, PomodoroController controller) {
-        this.tagColors = tagColors;
         this.controller = controller;
 
-        tagsGridRoot = new VBox(25);
-        tagsGridRoot.setPadding(new Insets(30));
-        tagsGridRoot.setAlignment(Pos.TOP_CENTER);
+        HBox navigationBar = new HBox();
+        navigationBar.getStyleClass().add("history-nav-bar");
 
-        detailRoot = new VBox(20);
-        detailRoot.setPadding(new Insets(20));
-        detailRoot.setVisible(false);
+        btnGlobalHistory = new Button("Global History");
+        btnFocusAreas = new Button("Focus Areas");
+        btnGlobalHistory.getStyleClass().addAll("title-button", "active");
+        btnFocusAreas.getStyleClass().add("title-button");
+        navigationBar.getChildren().addAll(btnGlobalHistory, btnFocusAreas);
 
-        Button backBtn = new Button("← Back");
-        backBtn.getStyleClass().add("button-secondary");
-        backBtn.setOnAction(e -> showTagsGrid());
+        globalHistoryRoot = new VBox();
+        globalHistoryRoot.getStyleClass().add("history-content-root");
 
-        detailTitle = new Label();
-        detailTitle.getStyleClass().add("big-card-title");
+        HBox filterBar = new HBox();
+        filterBar.getStyleClass().add("history-filter-bar");
 
-        HBox viewSelector = new HBox(10);
-        Button btnTimeline = new Button("History");
-        Button btnTasks = new Button("Tasks");
-        btnTimeline.getStyleClass().addAll("title-button", "active");
-        btnTasks.getStyleClass().add("title-button");
+        tagFilterCombo = new ComboBox<>();
+        tagFilterCombo.setPromptText("All Tags");
 
-        sessionsContainer = new VBox(15);
-        tasksSummaryContainer = new VBox(10);
-        tasksSummaryContainer.setVisible(false);
-        tasksSummaryContainer.setManaged(false);
+        taskFilterCombo = new ComboBox<>();
+        taskFilterCombo.setPromptText("All Tasks");
+        taskFilterCombo.setDisable(true);
 
-        btnTimeline.setOnAction(e -> toggleView(true, btnTimeline, btnTasks));
-        btnTasks.setOnAction(e -> toggleView(false, btnTasks, btnTimeline));
+        Label filterIcon = new Label();
+        filterIcon.setGraphic(new FontIcon("mdi2f-filter-variant"));
+        filterIcon.getStyleClass().add("filter-label-icon");
 
-        viewSelector.getChildren().addAll(btnTimeline, btnTasks);
+        filterBar.getChildren().addAll(filterIcon, tagFilterCombo, taskFilterCombo);
+
+        sessionsContainer = new VBox();
+        sessionsContainer.getStyleClass().add("sessions-main-container");
 
         loadMoreBtn = new Button("Load more");
         loadMoreBtn.getStyleClass().add("button-secondary");
         loadMoreBtn.setOnAction(e -> loadMore());
 
-        VBox detailContent = new VBox(20, detailTitle, viewSelector, sessionsContainer, tasksSummaryContainer, loadMoreBtn);
-        detailScrollPane = new ScrollPane(detailContent);
-        detailScrollPane.setFitToWidth(true);
-        detailScrollPane.getStyleClass().add("setup-scroll");
+        VBox scrollContent = new VBox( sessionsContainer, loadMoreBtn);
+        scrollContent.getStyleClass().add("history-scroll-content");
 
-        detailRoot.getChildren().addAll(backBtn, detailScrollPane);
+        ScrollPane historyScroll = new ScrollPane(scrollContent);
+        historyScroll.setFitToWidth(true);
+        historyScroll.getStyleClass().add("setup-scroll");
+        globalHistoryRoot.getChildren().addAll(filterBar, historyScroll);
 
-        this.getChildren().addAll(tagsGridRoot, detailRoot);
-        refreshTagsGrid();
-    }
+        focusAreasRoot = new VBox();
+        focusAreasRoot.getStyleClass().add("focus-areas-root");
+        focusAreasRoot.setVisible(false);
+        focusAreasRoot.setManaged(false);
 
-    public void refreshTagsGrid() {
-        this.currentTag = null;
-        this.currentOffset = 0;
-        this.lastDate = null;
-        this.lastSessionsContainer = null;
-
-        sessionsContainer.getChildren().clear();
-        tasksSummaryContainer.getChildren().clear();
-
-        tagsGridRoot.setVisible(true);
+        detailRoot = new VBox();
+        detailRoot.getStyleClass().add("history-detail-root");
         detailRoot.setVisible(false);
-        tagsGridRoot.getChildren().clear();
+        detailRoot.setManaged(false);
 
-        Label title = new Label("Focus Areas");
-        title.getStyleClass().add("big-card-title");
+        Button backBtn = new Button("Back");
+        backBtn.getStyleClass().add("button-secondary");
+        backBtn.setGraphic(new FontIcon("mdi2a-arrow-left"));
+        backBtn.setOnAction(e -> switchTab(false));
 
-        GridPane grid = new GridPane();
-        grid.setHgap(20);
-        grid.setVgap(20);
-        grid.setAlignment(Pos.TOP_CENTER);
+        detailTitleLabel = new Label();
+        detailTitleLabel.getStyleClass().add("detail-title-label");
 
-        for (int i = 0; i < 4; i++) {
-            ColumnConstraints col = new ColumnConstraints();
-            col.setPercentWidth(25);
-            grid.getColumnConstraints().add(col);
-        }
+        HBox details = new HBox(backBtn, detailTitleLabel);
+        details.getStyleClass().add("details-focus-area");
 
-        grid.setMaxWidth(1200);
+        tasksSummaryContainer = new VBox();
+        tasksSummaryContainer.getStyleClass().add("tasks-summary-container");
 
-        Map<String, String> updatedTags = DatabaseHandler.getTagColors();
-        int column = 0;
-        int row = 0;
+        ScrollPane detailScroll = new ScrollPane(tasksSummaryContainer);
+        detailScroll.setFitToWidth(true);
+        detailScroll.getStyleClass().add("setup-scroll");
+        detailRoot.getChildren().addAll(details, detailScroll);
 
-        for (Map.Entry<String, String> entry : updatedTags.entrySet()) {
-            VBox card = createTagCard(entry.getKey(), entry.getValue());
-            grid.add(card, column, row);
+        btnGlobalHistory.setOnAction(e -> switchTab(true));
+        btnFocusAreas.setOnAction(e -> switchTab(false));
 
-            column++;
-            if (column == 4) {
-                column = 0;
-                row++;
-            }
-        }
+        setupFilterListeners();
+        VBox layout = new VBox(navigationBar, globalHistoryRoot, focusAreasRoot, detailRoot);
+        layout.getStyleClass().add("history-view-layout");
+        this.getChildren().add(layout);
 
-        tagsGridRoot.getChildren().addAll(title, grid);
+        initData();
     }
 
-    private VBox createTagCard(String name, String color) {
-        VBox card = new VBox(15);
-        card.getStyleClass().add("tag-explorer-card");
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.setMaxWidth(Double.MAX_VALUE);
-
-        Region dot = new Region();
-        dot.setPrefSize(14, 14);
-        dot.setMaxSize(14, 14);
-        dot.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 50%;");
-
-        Label nameLabel = new Label(name);
-        nameLabel.getStyleClass().add("history-card-title");
-        nameLabel.setWrapText(true);
-
-        card.getChildren().addAll(dot, nameLabel);
-        card.setOnMouseClicked(e -> openTagDetail(name));
-
-        return card;
+    private void initData() {
+        refreshFilters();
+        resetAndReload();
     }
 
-    private void openTagDetail(String tagName) {
-        this.currentTag = tagName;
-        this.currentOffset = 0;
-        this.lastDate = null;
-        this.lastSessionsContainer = null;
+    private void switchTab(boolean showGlobal) {
+        btnGlobalHistory.getStyleClass().remove("active");
+        btnFocusAreas.getStyleClass().remove("active");
+        globalHistoryRoot.setVisible(showGlobal);
+        globalHistoryRoot.setManaged(showGlobal);
+        focusAreasRoot.setVisible(!showGlobal);
+        focusAreasRoot.setManaged(!showGlobal);
+        detailRoot.setVisible(false);
+        detailRoot.setManaged(false);
 
-        detailTitle.setText(tagName);
-        sessionsContainer.getChildren().clear();
-        tasksSummaryContainer.getChildren().clear();
+        if (showGlobal) {
+            btnGlobalHistory.getStyleClass().add("active");
+            resetAndReload();
+        } else {
+            btnFocusAreas.getStyleClass().add("active");
+            refreshFocusAreasGrid();
+        }
+    }
 
-        tagsGridRoot.setVisible(false);
+    private void showTagDetail(String tagName) {
+        focusAreasRoot.setVisible(false);
+        focusAreasRoot.setManaged(false);
         detailRoot.setVisible(true);
+        detailRoot.setManaged(true);
+        detailTitleLabel.setText(tagName);
+        String color = DatabaseHandler.getTagColors().getOrDefault(tagName, "#ffffff");
+        detailTitleLabel.setStyle("-fx-text-fill: " + color + ";");
+        loadTagSummary(tagName);
+    }
+
+    private void loadTagSummary(String tagName) {
+        tasksSummaryContainer.getChildren().clear();
+        Map<String, Integer> summary = DatabaseHandler.getTaskSummaryByTag(tagName);
+        summary.forEach((task, minutes) -> {
+            HBox row = new HBox();
+            row.getStyleClass().add("summary-row-card");
+            Label name = new Label(task);
+            name.getStyleClass().add("summary-task-name");
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+            Label time = new Label(minutes + " min");
+            time.getStyleClass().add("summary-task-time");
+            Button btnPlayTask = new Button();
+            FontIcon playIcon = new FontIcon("fas-play");
+            btnPlayTask.setGraphic(playIcon);
+            btnPlayTask.getStyleClass().add("play-schedule-session");
+            btnPlayTask.setOnAction(e -> {
+                e.consume();
+                controller.playScheduleSession(tagName, task);
+                controller.switchToTimer();
+            });
+            Tooltip ttPlay = new Tooltip("Start task");
+            ttPlay.setShowDelay(Duration.millis(75));
+            ttPlay.getStyleClass().add("heatmap-tooltip");
+            btnPlayTask.setTooltip(ttPlay);
+
+            row.getChildren().addAll(name, spacer, time, btnPlayTask);
+            tasksSummaryContainer.getChildren().add(row);
+        });
+    }
+
+    private void setupFilterListeners() {
+        tagFilterCombo.setOnAction(e -> {
+            String selected = tagFilterCombo.getValue();
+            if (selected == null || selected.equals("All Tags")) {
+                currentTag = null;
+                currentTask = null;
+                taskFilterCombo.setValue("All Tasks");
+                taskFilterCombo.setDisable(true);
+            } else {
+                currentTag = selected;
+                currentTask = null;
+                updateTaskFilterCombo(currentTag);
+                taskFilterCombo.setValue("All Tasks");
+                taskFilterCombo.setDisable(false);
+            }
+            resetAndReload();
+        });
+        taskFilterCombo.setOnAction(e -> {
+            String selected = taskFilterCombo.getValue();
+            currentTask = (selected == null || selected.equals("All Tasks")) ? null : selected;
+            resetAndReload();
+        });
+    }
+
+    private void updateTaskFilterCombo(String tagName) {
+        taskFilterCombo.getItems().clear();
+        taskFilterCombo.getItems().add("All Tasks");
+        taskFilterCombo.getItems().addAll(DatabaseHandler.getTasksByTag(tagName));
+    }
+
+    private void refreshFilters() {
+        tagFilterCombo.getItems().clear();
+        tagFilterCombo.getItems().add("All Tags");
+        tagFilterCombo.getItems().addAll(DatabaseHandler.getTagColors().keySet());
+    }
+
+    public void resetAndReload() {
+        currentOffset = 0;
+        sessionsContainer.getChildren().clear();
+
+        LocalDate today = LocalDate.now();
+        List<Session> allLoaded = DatabaseHandler.getFilteredSessions(currentTag, currentTask, 500, 0);
+
+        long todayTotal = allLoaded.stream()
+                .filter(s -> LocalDateTime.parse(s.getStartDate(), DATE_FORMATTER).toLocalDate().equals(today))
+                .mapToLong(Session::getTotalMinutes)
+                .sum();
+
+        List<Session> todaySessions = allLoaded.stream()
+                .filter(s -> LocalDateTime.parse(s.getStartDate(), DATE_FORMATTER).toLocalDate().equals(today))
+                .toList();
+
+        String statusMessage = todaySessions.isEmpty() ? "Not registered sessions" : null;
+
+        createNewDayBlock(today, todayTotal, statusMessage);
+        lastDate = today;
+
+        if (!todaySessions.isEmpty()) {
+            todaySessions.forEach(s -> lastSessionsContainer.getChildren().add(createTimelineCard(s)));
+        }
 
         loadMore();
-        loadTasksSummary(tagName);
-    }
-
-    private void loadTasksSummary(String tagName) {
-        Map<String, Integer> summary = DatabaseHandler.getTaskSummaryByTag(tagName);
-        summary.forEach((task, minutes) -> tasksSummaryContainer.getChildren().add(createTaskSummaryRow(tagName, task, minutes)));
-    }
-
-    private HBox createTaskSummaryRow(String tagName, String task, int minutes) {
-        HBox row = new HBox(15);
-        row.getStyleClass().add("task-summary-row");
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(10, 15, 10, 15));
-
-        Label name = new Label(task == null || task.isEmpty() ? "General" : task);
-        name.getStyleClass().add("history-card-title");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label time = new Label(minutes + " min");
-        time.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; -fx-text-fill: -color-accent;");
-
-        Button btnPlayTask = new Button();
-        FontIcon playIcon = new FontIcon("fas-play");
-        btnPlayTask.setGraphic(playIcon);
-        btnPlayTask.getStyleClass().add("play-schedule-session");
-        btnPlayTask.setOnAction(e -> {
-            e.consume();
-            controller.playScheduleSession(tagName, task);
-            controller.switchToTimer();
-        });
-        btnPlayTask.getStyleClass().addAll("btn-action", "btn-repeat");
-        Tooltip ttPlay = new Tooltip("Start task");
-        ttPlay.setShowDelay(Duration.millis(75));
-        ttPlay.getStyleClass().add("heatmap-tooltip");
-        btnPlayTask.setTooltip(ttPlay);
-
-        row.getChildren().addAll(name, spacer, time, btnPlayTask);
-        return row;
-    }
-
-    private void toggleView(boolean showTimeline, Button active, Button inactive) {
-        active.getStyleClass().add("active");
-        inactive.getStyleClass().remove("active");
-        sessionsContainer.setVisible(showTimeline);
-        sessionsContainer.setManaged(showTimeline);
-        loadMoreBtn.setVisible(showTimeline && !sessionsContainer.getChildren().isEmpty());
-        tasksSummaryContainer.setVisible(!showTimeline);
-        tasksSummaryContainer.setManaged(!showTimeline);
-    }
-
-    private void showTagsGrid() {
-        detailRoot.setVisible(false);
-        tagsGridRoot.setVisible(true);
-        refreshTagsGrid();
     }
 
     private void loadMore() {
-        List<Session> sessions = DatabaseHandler.getSessionsByTagPaged(currentTag, PAGE_SIZE, currentOffset);
-        if (sessions.isEmpty()) {
+        List<Session> sessions = DatabaseHandler.getFilteredSessions(currentTag, currentTask, PAGE_SIZE, currentOffset);
+
+        if (sessions.isEmpty() && currentOffset == 0) {
+            Label noSessions = new Label("No sessions found");
+            noSessions.getStyleClass().add("no-sessions-label");
+            sessionsContainer.getChildren().add(noSessions);
             loadMoreBtn.setVisible(false);
             return;
         }
+
         for (Session s : sessions) {
             LocalDate sessionDate = LocalDateTime.parse(s.getStartDate(), DATE_FORMATTER).toLocalDate();
-            if (lastDate == null || !sessionDate.equals(lastDate)) {
-                createNewDayBlock(sessionDate);
+
+            if (!sessionDate.equals(lastDate)) {
+                long totalMinutes = sessions.stream()
+                        .filter(se -> LocalDateTime.parse(se.getStartDate(), DATE_FORMATTER).toLocalDate().equals(sessionDate))
+                        .mapToLong(Session::getTotalMinutes)
+                        .sum();
+
+                createNewDayBlock(sessionDate, totalMinutes, null);
                 lastDate = sessionDate;
             }
             lastSessionsContainer.getChildren().add(createTimelineCard(s));
         }
+
         currentOffset += PAGE_SIZE;
         loadMoreBtn.setVisible(sessions.size() == PAGE_SIZE);
     }
 
-    private void createNewDayBlock(LocalDate date) {
-        HBox dayRow = new HBox(15);
-        dayRow.setAlignment(Pos.TOP_LEFT);
-        VBox dateBox = new VBox(-2);
-        dateBox.setAlignment(Pos.TOP_CENTER);
-        dateBox.setMinWidth(70);
-        dateBox.setPadding(new Insets(10, 0, 0, 0));
+    private void createNewDayBlock(LocalDate date, long totalMinutes, String statusMessage) {
+        HBox dayHeader = new HBox(15);
+        dayHeader.getStyleClass().add("history-day-header");
+        dayHeader.setAlignment(Pos.CENTER_LEFT);
 
+        StackPane circle = new StackPane();
+        circle.getStyleClass().add("timeline-date-circle");
+
+        VBox dateTextCont = new VBox(-2);
+        dateTextCont.setAlignment(Pos.CENTER);
         Label dayNum = new Label(String.valueOf(date.getDayOfMonth()));
-        dayNum.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: -color-accent;");
+        dayNum.getStyleClass().add("timeline-day-num");
+        Label dayLabel = new Label(date.format(DateTimeFormatter.ofPattern("MMM")).toUpperCase());
+        dayLabel.getStyleClass().add("timeline-day-month");
+        dateTextCont.getChildren().addAll(dayNum, dayLabel);
+        circle.getChildren().add(dateTextCont);
 
-        String month = date.format(DateTimeFormatter.ofPattern("MMM")).toUpperCase();
-        Label monthName = new Label(month);
-        monthName.setStyle("-fx-font-size: 11px; -fx-text-fill: -color-fg-muted; -fx-font-weight: bold;");
+        VBox dayInfo = new VBox(2);
+        dayInfo.setAlignment(Pos.CENTER_LEFT);
+        Label dateFull = new Label(date.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM")));
+        dateFull.getStyleClass().add("day-full-label");
 
-        dateBox.getChildren().addAll(dayNum, monthName);
-        lastSessionsContainer = new VBox(15);
-        HBox.setHgrow(lastSessionsContainer, Priority.ALWAYS);
-        lastSessionsContainer.setStyle("-fx-border-color: -color-border-subtle; -fx-border-width: 0 0 0 2; -fx-padding: 0 0 30 20;");
+        long h = totalMinutes / 60;
+        long m = totalMinutes % 60;
+        Label totalLabel = new Label(String.format("Total: %dh %02dm", h, m));
+        totalLabel.getStyleClass().add("day-total-label");
 
-        dayRow.getChildren().addAll(dateBox, lastSessionsContainer);
-        sessionsContainer.getChildren().add(dayRow);
-    }
+        dayInfo.getChildren().addAll(dateFull, totalLabel);
+        dayHeader.getChildren().addAll(circle, dayInfo);
 
-    private VBox createTimelineCard(Session s) {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("timeline-card");
-        card.setPadding(new Insets(15));
-
-        HBox header = new HBox(10);
-        header.setAlignment(Pos.CENTER_LEFT);
-
-        Label sessionTitle = new Label(s.getTitle());
-        sessionTitle.getStyleClass().add("history-card-title");
-        sessionTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        HBox actionButtons = new HBox(8);
-        actionButtons.setAlignment(Pos.CENTER_RIGHT);
-
-        Button btnRepeat = new Button("↻");
-        btnRepeat.getStyleClass().addAll("btn-action", "btn-repeat");
-        Tooltip ttRepeat = new Tooltip("Repeat session");
-        ttRepeat.setShowDelay(Duration.millis(75));
-        ttRepeat.getStyleClass().add("heatmap-tooltip");
-        btnRepeat.setTooltip(ttRepeat);
-        btnRepeat.setOnAction(e -> { e.consume(); repeatSession(s); });
-
-        Button btnEdit = new Button("✎");
-        btnEdit.getStyleClass().addAll("btn-action", "btn-edit");
-        Tooltip ttEdit = new Tooltip("Edit session details");
-        ttEdit.setShowDelay(Duration.millis(75));
-        ttEdit.getStyleClass().add("heatmap-tooltip");
-        btnEdit.setTooltip(ttEdit);
-        btnEdit.setOnAction(e -> { e.consume(); editSession(s); });
-
-        Button btnDelete = new Button("×");
-        btnDelete.getStyleClass().addAll("btn-action", "btn-delete");
-        Tooltip ttDelete = new Tooltip("Delete session");
-        ttDelete.setShowDelay(Duration.millis(75));
-        ttDelete.getStyleClass().add("heatmap-tooltip");
-        btnDelete.setTooltip(ttDelete);
-        btnDelete.setOnAction(e -> { e.consume(); deleteSession(s, card); });
-
-        actionButtons.getChildren().addAll(btnRepeat, btnEdit, btnDelete);
-
-        HBox stars = new HBox();
-        stars.setAlignment(Pos.CENTER_LEFT);
-        for (int i = 1; i <= 5; i++) {
-
-            FontIcon star = new FontIcon("fas-star");
-            star.setIconSize(10);
-            star.setCursor(javafx.scene.Cursor.HAND);
-
-            if (i <= s.getRating()) {
-                star.getStyleClass().add("selectedStarHistory");
-            } else {
-                star.getStyleClass().add("unselectedStarHistory");
-            }
-            stars.getChildren().add(star);
+        if (statusMessage != null) {
+            Label statusLabel = new Label(statusMessage);
+            statusLabel.getStyleClass().add("today-status-inline");
+            dayHeader.getChildren().add(statusLabel);
         }
 
+        lastSessionsContainer = new VBox(15);
+        lastSessionsContainer.getStyleClass().add("day-sessions-container-clean");
 
+        sessionsContainer.getChildren().addAll(dayHeader, lastSessionsContainer);
+    }
 
-        HBox tagsContainer = new HBox(8);
-        tagsContainer.setAlignment(Pos.CENTER_LEFT);
-        Label taskLabel = new Label(s.getTask());
-        taskLabel.getStyleClass().add("task-badge");
-        tagsContainer.getChildren().addAll(taskLabel);
+    public void refreshFocusAreasGrid() {
+        focusAreasRoot.getChildren().clear();
+        GridPane grid = new GridPane();
+        grid.getStyleClass().add("focus-areas-grid");
 
-        VBox details = new VBox(12);
-        details.setManaged(false);
-        details.setVisible(false);
+        for (int i = 0; i < 4; i++) {
+            ColumnConstraints colConst = new ColumnConstraints();
+            colConst.setPercentWidth(25);
+            grid.getColumnConstraints().add(colConst);
+        }
 
-        String start = s.getStartDate().length() >= 16 ? s.getStartDate().substring(11, 16) : "--:--";
-        String end = s.getEndDate() != null && s.getEndDate().length() >= 16 ? s.getEndDate().substring(11, 16) : "--:--";
+        Map<String, String> updatedTags = DatabaseHandler.getTagColors();
+        int col = 0, row = 0;
+        for (Map.Entry<String, String> entry : updatedTags.entrySet()) {
+            grid.add(createTagCard(entry.getKey(), entry.getValue()), col++, row);
+            if (col == 4) { col = 0; row++; }
+        }
+        focusAreasRoot.getChildren().add(grid);
+    }
 
-        Label timeRange = new Label(start + " — " + end + " (" + s.getTotalMinutes() + " min)");
-        timeRange.setStyle("-fx-text-fill: -text-muted; -fx-font-size: 12px;");
-        Label desc = new Label(s.getDescription());
-        desc.setWrapText(true);
-        desc.setStyle("-fx-text-fill: -text-muted; -fx-font-style: italic; -fx-font-size: 11px;");
-
-        header.getChildren().addAll(sessionTitle, timeRange, spacer, actionButtons);
-        details.getChildren().addAll(stars, desc);
-
-        card.setOnMouseClicked(e -> {
-            boolean isExpanded = details.isVisible();
-            details.setVisible(!isExpanded);
-            details.setManaged(!isExpanded);
-            if (!isExpanded) card.getStyleClass().add("card-expanded");
-            else card.getStyleClass().remove("card-expanded");
-        });
-
-        card.getChildren().addAll(header, tagsContainer, details);
+    private VBox createTagCard(String name, String color) {
+        VBox card = new VBox();
+        card.getStyleClass().add("tag-explorer-card");
+        HBox topRow = new HBox();
+        topRow.getStyleClass().add("tag-card-header");
+        Region dot = new Region();
+        dot.getStyleClass().add("tag-card-dot");
+        dot.setStyle("-fx-background-color: " + color + ";");
+        Label nameLabel = new Label(name);
+        nameLabel.getStyleClass().add("tag-card-name");
+        topRow.getChildren().addAll(dot, nameLabel);
+        card.getChildren().add(topRow);
+        card.setOnMouseClicked(e -> showTagDetail(name));
         return card;
     }
 
-    private void repeatSession(Session s) {}
-    private void editSession(Session s) {}
-    private void deleteSession(Session s, VBox card) {}
+    private VBox createTimelineCard(Session s) {
+        VBox card = new VBox();
+        card.getStyleClass().add("timeline-card");
+        HBox header = new HBox();
+        header.getStyleClass().add("timeline-card-header");
+        Label sessionTitle = new Label(s.getTitle());
+        sessionTitle.getStyleClass().add("timeline-card-title");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        String start = s.getStartDate().substring(11, 16);
+        String end = s.getEndDate().substring(11, 16);
+        Label timeRange = new Label(start + " — " + end + " (" + s.getTotalMinutes() + " m)");
+        timeRange.getStyleClass().add("timeline-card-time");
+        header.getChildren().addAll(sessionTitle, timeRange, spacer);
+        HBox badges = new HBox();
+        badges.getStyleClass().add("timeline-card-badges");
+        Label tagBadge = new Label(s.getTag());
+        tagBadge.getStyleClass().add("task-badge");
+        tagBadge.setStyle("-fx-border-color: " + s.getTagColor() + "; -fx-text-fill: " + s.getTagColor() + ";");
+        Label taskBadge = new Label(s.getTask());
+        taskBadge.getStyleClass().add("task-badge");
+        badges.getChildren().addAll(tagBadge, taskBadge);
+        card.getChildren().addAll(header, badges);
+        return card;
+    }
 }

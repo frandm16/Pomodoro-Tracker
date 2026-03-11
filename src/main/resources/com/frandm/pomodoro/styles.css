@@ -301,81 +301,138 @@
 
 /* --- history --- */
 
-.history-card-title {
+.history-view-layout {
+    -fx-padding: 20;
+    -fx-spacing: 15;
+}
+
+.sessions-main-container {
+    -fx-padding: 10 20;
+    -fx-background-color: transparent;
+}
+
+.history-day-header {
+    -fx-padding: 35 0 10 0;
+    -fx-spacing: 15;
+    -fx-alignment: center-left;
+}
+
+.history-filter-bar {
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 12;
+    -fx-padding: 5 5 10 20;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-color: -color-accent;
+}
+
+.filter-label-icon {
+    -fx-icon-color: -color-accent;
+    -fx-icon-size: 20;
+}
+
+.history-filter-bar .combo-box {
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 2 5;
+    -fx-min-width: 150;
+    -fx-cursor: hand;
+}
+
+.history-filter-bar .combo-box:hover {
+    -fx-border-color: -color-accent;
+}
+
+.history-filter-bar .combo-box .label {
+    -fx-text-fill: -text-main;
+    -fx-font-size: 13px;
+}
+
+.history-filter-bar .combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.history-filter-bar .combo-box .arrow {
+    -fx-background-color: -text-muted;
+}
+
+.timeline-date-circle {
+    -fx-min-width: 55;
+    -fx-min-height: 55;
+    -fx-max-width: 55;
+    -fx-max-height: 55;
+    -fx-border-color: -color-accent;
+    -fx-border-width: 2;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-effect: dropshadow(three-pass-box, -color-accent-light, 8, 0, 0, 0);
+}
+
+.timeline-day-num {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+    -fx-text-fill: -text-main;
+}
+
+.timeline-day-month {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-accent;
+}
+
+.day-full-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-text-fill: -text-main;
+}
+
+.day-total-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -text-muted;
+}
+
+.day-sessions-container-clean {
+    -fx-padding: 10 0 10 2;
+    -fx-spacing: 15;
+}
+
+.timeline-card {
+    -fx-background-color: linear-gradient(from 0% 0% to 15% 75%, -stat-card-normal-bg, -stat-card-secundary-bg);
+    -fx-padding: 18;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
+}
+
+.timeline-card:hover {
+    -fx-border-color: -color-accent;
+    -fx-translate-y: -3;
+    -fx-effect: dropshadow(three-pass-box, -color-accent-light, 15, 0, 0, 0);
+}
+
+.timeline-card-header {
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 10;
+}
+
+.timeline-card-title {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
     -fx-text-fill: -text-main;
 }
 
-.history-card-subtitle, .history-card-time {
-    -fx-font-size: 12px;
+.timeline-card-time {
     -fx-text-fill: -text-muted;
-}
-
-.button-sm {
-    -fx-background-color: transparent;
-    -fx-border-color: -text-muted;
-    -fx-border-radius: 8;
-    -fx-text-fill: -text-main;
     -fx-font-size: 11px;
-    -fx-padding: 5 12;
-    -fx-cursor: hand;
 }
 
-.button-sm:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
-    -fx-border-color: -text-main;
-}
-
-.history-date-num {
-    -fx-font-family: "JetBrains Mono", "Monospaced";
-    -fx-smoothing-type: lcd;
-}
-
-.history-month-name {
-    -fx-letter-spacing: 2px;
-    -fx-opacity: 0.7;
-}
-
-.history-view .button-secondary {
-    -fx-margin: 30 0 0 0;
-    -fx-min-height: 45;
-    -fx-background-radius: 12;
-    -fx-font-weight: bold;
-}
-
-.history-card-title {
-    -fx-text-fill: -text-main;
-    -fx-padding: 0 0 2 0;
-}
-
-.timeline-card:hover {
-    -fx-opacity: 1.0;
-    -fx-border-color: -color-accent;
-    -fx-text-fill: -text-main;
-    -fx-translate-y: -1
-}
-
-.sessions-container-line {
-    -fx-border-color: -text-muted;
-    -fx-border-width: 0 0 0 1;
-    -fx-opacity: 0.3;
-}
-
-.timeline-card {
-    -fx-background-color: linear-gradient(from 0% 0% to 15% 75%, -stat-card-normal-bg, -stat-card-secundary-bg);
-    -fx-border-color: -color-border-subtle-light;
-    -fx-border-radius: 15;
-    -fx-background-radius: 15;
-    -fx-cursor: hand;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
-}
-
-
-.card-expanded {
-    -fx-background-color: linear-gradient(from 0% 0% to 15% 75%, -stat-card-normal-bg, -stat-card-secundary-bg);
-    -fx-border-color: -color-border-subtle-light;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 8);
+.timeline-card-badges {
+    -fx-spacing: 8;
+    -fx-padding: 8 0 0 0;
 }
 
 .tag-explorer-card {
@@ -388,43 +445,122 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
 }
 
-.tag-explorer-card:hover {
+.tag-card-header {
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 12;
+}
+
+.tag-card-dot {
+    -fx-min-width: 12;
+    -fx-min-height: 12;
+    -fx-max-width: 12;
+    -fx-max-height: 12;
+    -fx-background-radius: 50%;
+}
+
+.tag-card-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-main;
+}
+
+.summary-row-card {
+    -fx-background-color: -bg-panels;
+    -fx-padding: 10 5 10 20 ;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-spacing: 15px;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.summary-task-name {
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-text-fill: -text-main;
+}
+
+.summary-task-time {
+    -fx-text-fill: -color-accent;
+    -fx-font-weight: bold;
+    -fx-font-family: "JetBrains Mono";
+}
+
+.today-status-inline {
+    -fx-text-fill: -text-muted;
+    -fx-font-style: italic;
+    -fx-font-size: 13px;
+    -fx-padding: 10 20;
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.focus-areas-root {
+    -fx-padding: 20 0;
+}
+
+.focus-areas-grid {
+    -fx-hgap: 20;
+    -fx-vgap: 20;
+    -fx-alignment: TOP_CENTER;
+}
+
+.tag-explorer-card {
     -fx-background-color: linear-gradient(from 0% 0% to 15% 75%, -stat-card-normal-bg, -stat-card-secundary-bg);
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
+    -fx-min-height: 100;
+}
+
+.tag-explorer-card:hover {
     -fx-border-color: -color-accent;
     -fx-translate-y: -3;
+    -fx-effect: dropshadow(three-pass-box, -color-accent-light, 15, 0, 0, 0);
 }
 
-.task-summary-row {
-    -fx-background-color: -bg-panels;
-    -fx-padding: 15 20;
-    -fx-background-radius: 12;
-    -fx-border-color: -color-border-subtle;
-    -fx-border-width: 0 0 1 0;
+.tag-card-header {
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 12;
 }
 
-.task-summary-row:hover {
-    -fx-background-color: -color-hover;
-    -fx-border-color: -color-accent;
+.tag-card-dot {
+    -fx-min-width: 12;
+    -fx-min-height: 12;
+    -fx-max-width: 12;
+    -fx-max-height: 12;
+    -fx-background-radius: 50%;
 }
 
-.sessions-container-line {
-    -fx-border-color: -color-border-subtle;
-    -fx-border-width: 0 0 0 2;
-    -fx-opacity: 1.0;
-}
-
-.history-date-num {
-    -fx-font-family: "JetBrains Mono", "Monospaced";
+.tag-card-name {
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-text-fill: -color-accent;
+    -fx-text-fill: -text-main;
 }
 
-.history-month-name {
-    -fx-letter-spacing: 2px;
-    -fx-font-weight: bold;
-    -fx-text-fill: -text-muted;
-    -fx-opacity: 0.8;
+.details-focus-area {
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 15px;
+    -fx-padding: 5 0 20 0;
 }
+
+
+.detail-title-label {
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+}
+
+.tasks-summary-container {
+    -fx-padding: 0 15 0 15;
+    -fx-spacing: 10;
+}
+
 
 /* --- planner --- */
 
@@ -841,4 +977,81 @@
 .menu-button:hover {
     -fx-scale-x: 1.1;
     -fx-scale-y: 1.1;
+}
+
+/* --- combobox --- */
+
+.combo-box {
+    -fx-background-color: -color-bg-subtle; /* Fondo oscuro sutil */
+    -fx-background-radius: 10;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 10;
+    -fx-padding: 2 5;
+    -fx-cursor: hand;
+    -fx-display-caret: false;
+}
+
+.combo-box:hover {
+    -fx-border-color: -color-accent;
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+
+}
+
+.combo-box:focused {
+    -fx-border-color: -color-accent;
+    -fx-border-width: 1.5;
+}
+
+.combo-box .label {
+    -fx-text-fill: -text-main;
+    -fx-font-size: 13px;
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 10 0 5;
+}
+
+.combo-box .arrow {
+    -fx-background-color: -text-muted;
+    -fx-shape: "M 0 0 L 4 4 L 8 0 Z";
+}
+
+.combo-box:hover .arrow {
+    -fx-background-color: -color-accent;
+}
+.combo-box-base {
+    -fx-cell-size: 35px;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: -bg-panels;
+    -fx-background-radius: 10;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-radius: 10;
+    -fx-padding: 5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 8);
+}
+
+.combo-box-popup .list-cell {
+    -fx-text-fill: -text-muted;
+    -fx-background-color: transparent;
+    -fx-padding: 8 12;
+    -fx-background-radius: 5;
+}
+
+.combo-box-popup .list-cell:hover {
+    -fx-background-color: -color-hover;
+    -fx-text-fill: -text-main;
+    -fx-cursor: hand;
+}
+
+.combo-box-popup .list-cell:selected {
+    -fx-text-fill: -color-accent;
+    -fx-font-weight: bold;
+}
+
+.combo-box:disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
 }

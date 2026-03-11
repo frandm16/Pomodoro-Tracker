@@ -131,6 +131,22 @@ public class DatabaseHandler {
         }
         return -1;
     }
+
+    public static List<String> getTasksByTag(String tagName) {
+        List<String> tasks = new ArrayList<>();
+        String sql = "SELECT t.name FROM tasks t JOIN tags tg ON t.tag_id = tg.id WHERE tg.name = ? ORDER BY t.name ASC";
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tagName);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                tasks.add(rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getTasksByTag: " + e.getMessage());
+        }
+        return tasks;
+    }
 //endregion
 //region tag and task update
     public static void createTag(String name, String color) {
@@ -590,6 +606,65 @@ private static void executeUpdates(String sql, Object... params) {
         } catch (SQLException e) {
             System.err.println("Error en generateAbundantSchedule: " + e.getMessage());
         }
+    }
+    //endregion
+    //region history
+    public static List<Session> getFilteredSessions(String tagFilter, String taskFilter, int limit, int offset) {
+        List<Session> sessions = new ArrayList<>();
+
+        // Construcción dinámica de la consulta
+        StringBuilder sql = new StringBuilder(
+                "SELECT s.id, tg.name as tag_name, tg.color as tag_color, t.name as task_name, " +
+                        "s.title, s.description, s.total_minutes, s.start_date, s.end_date, s.rating, s.is_favorite " +
+                        "FROM sessions s " +
+                        "JOIN tasks t ON s.task_id = t.id " +
+                        "JOIN tags tg ON t.tag_id = tg.id WHERE 1=1 "
+        );
+
+        if (tagFilter != null && !tagFilter.isEmpty()) {
+            sql.append("AND tg.name = ? ");
+        }
+        if (taskFilter != null && !taskFilter.isEmpty()) {
+            sql.append("AND t.name = ? ");
+        }
+
+        sql.append("ORDER BY s.start_date DESC LIMIT ? OFFSET ?");
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            int paramIdx = 1;
+            if (tagFilter != null && !tagFilter.isEmpty()) {
+                pstmt.setString(paramIdx++, tagFilter);
+            }
+            if (taskFilter != null && !taskFilter.isEmpty()) {
+                pstmt.setString(paramIdx++, taskFilter);
+            }
+
+            pstmt.setInt(paramIdx++, limit);
+            pstmt.setInt(paramIdx, offset);
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Session s = new Session(
+                        rs.getInt("id"),
+                        rs.getString("tag_name"),
+                        rs.getString("tag_color"),
+                        rs.getString("task_name"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getInt("total_minutes"),
+                        rs.getString("start_date"),
+                        rs.getString("end_date")
+                );
+                s.setRating(rs.getInt("rating"));
+                s.setFavorite(rs.getInt("is_favorite") == 1);
+                sessions.add(s);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error en getFilteredSessions: " + e.getMessage());
+        }
+        return sessions;
     }
     //endregion
 }
