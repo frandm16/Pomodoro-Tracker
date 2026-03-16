@@ -1,5 +1,6 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.core;
 
+import com.frandm.pomodoro.controllers.PomodoroController;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -16,7 +17,7 @@ public class SetupManager {
     private String selectedTask = null;
     private final PomodoroController controller;
 
-    SetupManager(PomodoroController p){
+    public SetupManager(PomodoroController p){
         this.controller = p;
     }
 

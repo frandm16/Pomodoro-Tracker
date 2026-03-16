@@ -1,4 +1,4 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.ui.util;
 
 import javafx.animation.*;
 import javafx.scene.Node;
@@ -6,8 +6,8 @@ import javafx.util.Duration;
 
 public class Animations {
 
-    private static final Duration IN_TIME = Duration.millis(350);
-    private static final Duration OUT_TIME = Duration.millis(250);
+    private static final Duration IN_TIME = Duration.millis(150);
+    private static final Duration OUT_TIME = Duration.millis(150);
     private static final Interpolator POP_INTER = Interpolator.SPLINE(0.1, 1.0, 0.6, 1.0);
 
     public static void show(Node overlay, Node box, Runnable onFinished) {

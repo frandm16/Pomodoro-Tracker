@@ -1,5 +1,6 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.ui.util;
 
+import com.frandm.pomodoro.controllers.PomodoroController;
 import javafx.animation.*;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Button;
@@ -57,7 +58,7 @@ public class UIManager {
         new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(fillProp, startColor)), new KeyFrame(Duration.millis(200), new KeyValue(fillProp, targetColor))).play();
     }
 
-    public void updateActiveBadge(VBox container, String tag, String task, String color,PomodoroController controller) {
+    public void updateActiveBadge(VBox container, String tag, String task, String color, PomodoroController controller) {
         container.getChildren().clear();
         Button tagBtn = new Button(tag);
         tagBtn.setOnAction(e -> controller.toggleSetup());

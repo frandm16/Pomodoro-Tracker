@@ -1,37 +1,24 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.ui.views.logs;
 
+import com.frandm.pomodoro.core.DatabaseHandler;
+import com.frandm.pomodoro.models.Session;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.List;
 
-public class HistoryView extends StackPane {
-
-    private final PomodoroController controller;
-    private final VBox globalHistoryRoot;
-    private final VBox focusAreasRoot;
-    private final VBox calendarHistoryRoot;
-    private final VBox detailRoot;
-
-    private final Button btnGlobalHistory;
-    private final Button btnFocusAreas;
-    private final Button btnCalendarHistory;
-
+public class HistoryTab extends VBox {
+    private final LogsController logsController;
     private final VBox sessionsContainer;
-    private final VBox tasksSummaryContainer;
-    private final Label detailTitleLabel;
-    private final Button loadMoreBtn;
     private final ComboBox<String> tagFilterCombo;
     private final ComboBox<String> taskFilterCombo;
-
-    private final HistoryCalendarView historyCalendar;
+    private final Button loadMoreBtn;
     private String currentTag = null;
     private String currentTask = null;
     private int currentOffset = 0;
@@ -40,31 +27,15 @@ public class HistoryView extends StackPane {
     private VBox lastSessionsContainer = null;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public HistoryView(Map<String, String> tagColors, PomodoroController controller) {
-        this.controller = controller;
-
-        HBox navigationBar = new HBox();
-        navigationBar.getStyleClass().add("history-nav-bar");
-
-        btnGlobalHistory = new Button("History");
-        btnFocusAreas = new Button("Focus");
-        btnCalendarHistory = new Button("Calendar");
-
-        btnGlobalHistory.getStyleClass().addAll("title-button", "active");
-        btnFocusAreas.getStyleClass().add("title-button");
-        btnCalendarHistory.getStyleClass().add("title-button");
-
-        navigationBar.getChildren().addAll(btnGlobalHistory, btnFocusAreas, btnCalendarHistory);
-
-        globalHistoryRoot = new VBox();
-        globalHistoryRoot.getStyleClass().add("history-content-root");
+    public HistoryTab(LogsController logsController) {
+        this.logsController = logsController;
+        this.getStyleClass().add("history-content-root");
 
         HBox filterBar = new HBox();
         filterBar.getStyleClass().add("history-filter-bar");
 
         tagFilterCombo = new ComboBox<>();
         tagFilterCombo.setPromptText("All Tags");
-
         taskFilterCombo = new ComboBox<>();
         taskFilterCombo.setPromptText("All Tasks");
         taskFilterCombo.setDisable(true);
@@ -85,142 +56,16 @@ public class HistoryView extends StackPane {
         loadMoreBtn.getStyleClass().add("button-secondary");
         loadMoreBtn.setOnAction(_ -> loadMore());
 
-        VBox scrollContent = new VBox( sessionsContainer, loadMoreBtn);
+        VBox scrollContent = new VBox(sessionsContainer, loadMoreBtn);
         scrollContent.getStyleClass().add("history-scroll-content");
 
         ScrollPane historyScroll = new ScrollPane(scrollContent);
         historyScroll.setFitToWidth(true);
         historyScroll.getStyleClass().add("setup-scroll");
-        globalHistoryRoot.getChildren().addAll(filterBar, historyScroll);
 
-        focusAreasRoot = new VBox();
-        focusAreasRoot.getStyleClass().add("focus-areas-root");
-        focusAreasRoot.setVisible(false);
-        focusAreasRoot.setManaged(false);
-
-        calendarHistoryRoot = new VBox();
-        calendarHistoryRoot.getStyleClass().add("history-calendar-root");
-        calendarHistoryRoot.setVisible(false);
-        calendarHistoryRoot.setManaged(false);
-        VBox.setVgrow(calendarHistoryRoot, Priority.ALWAYS);
-
-        historyCalendar = new HistoryCalendarView(controller, this);
-        calendarHistoryRoot.getChildren().add(historyCalendar);
-
-        detailRoot = new VBox();
-        detailRoot.getStyleClass().add("history-detail-root");
-        detailRoot.setVisible(false);
-        detailRoot.setManaged(false);
-
-
-        Button backBtn = new Button("Back");
-        backBtn.getStyleClass().add("button-secondary");
-        backBtn.setGraphic(new FontIcon("mdi2a-arrow-left"));
-        backBtn.setOnAction(_ -> switchTab(1));
-
-        detailTitleLabel = new Label();
-        detailTitleLabel.getStyleClass().add("detail-title-label");
-
-        HBox details = new HBox(backBtn, detailTitleLabel);
-        details.getStyleClass().add("details-focus-area");
-
-        tasksSummaryContainer = new VBox();
-        tasksSummaryContainer.getStyleClass().add("tasks-summary-container");
-
-        ScrollPane detailScroll = new ScrollPane(tasksSummaryContainer);
-        detailScroll.setFitToWidth(true);
-        detailScroll.getStyleClass().add("setup-scroll");
-        detailRoot.getChildren().addAll(details, detailScroll);
-
-        btnGlobalHistory.setOnAction(_ -> switchTab(1));
-        btnFocusAreas.setOnAction(_ -> switchTab(2));
-        btnCalendarHistory.setOnAction(_ -> switchTab(3));
-
+        this.getChildren().addAll(filterBar, historyScroll);
         setupFilterListeners();
-        VBox layout = new VBox(navigationBar, globalHistoryRoot, focusAreasRoot, calendarHistoryRoot, detailRoot);
-        layout.getStyleClass().add("history-view-layout");
-        this.getChildren().add(layout);
-
-        initData();
-    }
-
-    private void initData() {
         refreshFilters();
-        resetAndReload();
-    }
-
-    private void switchTab(int tabIndex) {
-        btnGlobalHistory.getStyleClass().remove("active");
-        btnFocusAreas.getStyleClass().remove("active");
-        btnCalendarHistory.getStyleClass().remove("active");
-
-        globalHistoryRoot.setVisible(false); globalHistoryRoot.setManaged(false);
-        focusAreasRoot.setVisible(false); focusAreasRoot.setManaged(false);
-        calendarHistoryRoot.setVisible(false); calendarHistoryRoot.setManaged(false);
-        detailRoot.setVisible(false); detailRoot.setManaged(false);
-
-        switch (tabIndex) {
-            case 1 -> {
-                btnGlobalHistory.getStyleClass().add("active");
-                globalHistoryRoot.setVisible(true);
-                globalHistoryRoot.setManaged(true);
-                resetAndReload();
-            }
-            case 2 -> {
-                btnFocusAreas.getStyleClass().add("active");
-                focusAreasRoot.setVisible(true);
-                focusAreasRoot.setManaged(true);
-                refreshFocusAreasGrid();
-            }
-            case 3 -> {
-                btnCalendarHistory.getStyleClass().add("active");
-                calendarHistoryRoot.setVisible(true);
-                calendarHistoryRoot.setManaged(true);
-                historyCalendar.refresh();
-            }
-        }
-    }
-
-    private void showTagDetail(String tagName) {
-        focusAreasRoot.setVisible(false);
-        focusAreasRoot.setManaged(false);
-        detailRoot.setVisible(true);
-        detailRoot.setManaged(true);
-        detailTitleLabel.setText(tagName);
-        String color = DatabaseHandler.getTagColors().getOrDefault(tagName, "#ffffff");
-        detailTitleLabel.setStyle("-fx-text-fill: " + color + ";");
-        loadTagSummary(tagName);
-    }
-
-    private void loadTagSummary(String tagName) {
-        tasksSummaryContainer.getChildren().clear();
-        Map<String, Integer> summary = DatabaseHandler.getTaskSummaryByTag(tagName);
-        summary.forEach((task, minutes) -> {
-            HBox row = new HBox();
-            row.getStyleClass().add("summary-row-card");
-            Label name = new Label(task);
-            name.getStyleClass().add("summary-task-name");
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-            Label time = new Label(minutes + " min");
-            time.getStyleClass().add("summary-task-time");
-            Button btnPlayTask = new Button();
-            FontIcon playIcon = new FontIcon("fas-play");
-            btnPlayTask.setGraphic(playIcon);
-            btnPlayTask.getStyleClass().add("play-schedule-session");
-            btnPlayTask.setOnAction(e -> {
-                e.consume();
-                controller.playScheduleSession(tagName, task);
-                controller.switchToTimer();
-            });
-            Tooltip ttPlay = new Tooltip("Start task");
-            ttPlay.setShowDelay(Duration.millis(75));
-            ttPlay.getStyleClass().add("heatmap-tooltip");
-            btnPlayTask.setTooltip(ttPlay);
-
-            row.getChildren().addAll(name, spacer, time, btnPlayTask);
-            tasksSummaryContainer.getChildren().add(row);
-        });
     }
 
     private void setupFilterListeners() {
@@ -266,7 +111,6 @@ public class HistoryView extends StackPane {
         if (lastSessionsContainer != null) {
             lastSessionsContainer.getChildren().clear();
         }
-
         loadMore();
     }
 
@@ -277,7 +121,6 @@ public class HistoryView extends StackPane {
         if (currentOffset == 0) {
             boolean hasTodaySessions = !sessions.isEmpty() &&
                     LocalDateTime.parse(sessions.getFirst().getStartDate(), DATE_FORMATTER).toLocalDate().equals(today);
-
             if (!hasTodaySessions) {
                 createNewDayBlock(today, 0, "No sessions registered for today");
                 lastDate = today;
@@ -296,13 +139,11 @@ public class HistoryView extends StackPane {
 
         for (Session s : sessions) {
             LocalDate sessionDate = LocalDateTime.parse(s.getStartDate(), DATE_FORMATTER).toLocalDate();
-
             if (!sessionDate.equals(lastDate)) {
                 long totalMinutes = sessions.stream()
                         .filter(se -> LocalDateTime.parse(se.getStartDate(), DATE_FORMATTER).toLocalDate().equals(sessionDate))
                         .mapToLong(Session::getTotalMinutes)
                         .sum();
-
                 createNewDayBlock(sessionDate, totalMinutes, null);
                 lastDate = sessionDate;
             }
@@ -310,7 +151,6 @@ public class HistoryView extends StackPane {
                 lastSessionsContainer.getChildren().add(createTimelineCard(s));
             }
         }
-
         currentOffset += PAGE_SIZE;
         loadMoreBtn.setVisible(sessions.size() == PAGE_SIZE);
     }
@@ -353,44 +193,7 @@ public class HistoryView extends StackPane {
 
         lastSessionsContainer = new VBox(15);
         lastSessionsContainer.getStyleClass().add("day-sessions-container-clean");
-
         sessionsContainer.getChildren().addAll(dayHeader, lastSessionsContainer);
-    }
-
-    public void refreshFocusAreasGrid() {
-        focusAreasRoot.getChildren().clear();
-        GridPane grid = new GridPane();
-        grid.getStyleClass().add("focus-areas-grid");
-
-        for (int i = 0; i < 4; i++) {
-            ColumnConstraints colConst = new ColumnConstraints();
-            colConst.setPercentWidth(25);
-            grid.getColumnConstraints().add(colConst);
-        }
-
-        Map<String, String> updatedTags = DatabaseHandler.getTagColors();
-        int col = 0, row = 0;
-        for (Map.Entry<String, String> entry : updatedTags.entrySet()) {
-            grid.add(createTagCard(entry.getKey(), entry.getValue()), col++, row);
-            if (col == 4) { col = 0; row++; }
-        }
-        focusAreasRoot.getChildren().add(grid);
-    }
-
-    private VBox createTagCard(String name, String color) {
-        VBox card = new VBox();
-        card.getStyleClass().add("tag-explorer-card");
-        HBox topRow = new HBox();
-        topRow.getStyleClass().add("tag-card-header");
-        Region dot = new Region();
-        dot.getStyleClass().add("tag-card-dot");
-        dot.setStyle("-fx-background-color: " + color + ";");
-        Label nameLabel = new Label(name);
-        nameLabel.getStyleClass().add("tag-card-name");
-        topRow.getChildren().addAll(dot, nameLabel);
-        card.getChildren().add(topRow);
-        card.setOnMouseClicked(_ -> showTagDetail(name));
-        return card;
     }
 
     private VBox createTimelineCard(Session s) {
@@ -417,20 +220,18 @@ public class HistoryView extends StackPane {
         optionsBtn.setGraphic(optionsIcon);
 
         ContextMenu contextMenu = new ContextMenu();
-        contextMenu.getStyleClass().add("session-context-menu");
+        contextMenu.getStyleClass().add(logsController.getTheme());
 
         MenuItem editItem = new MenuItem("Edit");
         editItem.setGraphic(new FontIcon("mdi2p-pencil"));
-        editItem.setOnAction(_ -> controller.openEditSession(s));
-
+        editItem.setOnAction(_ -> logsController.requestEdit(s));
 
         MenuItem deleteItem = new MenuItem("Delete");
         deleteItem.setGraphic(new FontIcon("mdi2t-trash-can-outline"));
         deleteItem.getStyleClass().add("menu-item-delete");
-        deleteItem.setOnAction(_ -> controller.showDeleteConfirmation(s, this));
+        deleteItem.setOnAction(_ -> logsController.requestDelete(s));
 
         contextMenu.getItems().addAll(editItem, deleteItem);
-
         optionsBtn.setOnAction(_ -> contextMenu.show(optionsBtn, Side.BOTTOM, 0, 0));
 
         header.getChildren().addAll(sessionTitle, timeRange, spacer, optionsBtn);
@@ -452,16 +253,11 @@ public class HistoryView extends StackPane {
         HBox stars = new HBox();
         stars.setAlignment(Pos.CENTER_LEFT);
         for (int i = 1; i <= 5; i++) {
-
             FontIcon star = new FontIcon("fas-star");
             star.setIconSize(10);
             star.setCursor(javafx.scene.Cursor.HAND);
-
-            if (i <= s.getRating()) {
-                star.getStyleClass().add("selectedStarHistory");
-            } else {
-                star.getStyleClass().add("unselectedStarHistory");
-            }
+            if (i <= s.getRating()) star.getStyleClass().add("selectedStarHistory");
+            else star.getStyleClass().add("unselectedStarHistory");
             stars.getChildren().add(star);
         }
         Label desc = new Label(s.getDescription());
@@ -469,7 +265,6 @@ public class HistoryView extends StackPane {
         desc.setStyle("-fx-text-fill: -text-muted; -fx-font-style: italic; -fx-font-size: 11px;");
 
         details.getChildren().addAll(stars, desc);
-
         card.setOnMouseClicked(_ -> {
             boolean isExpanded = details.isVisible();
             details.setVisible(!isExpanded);
@@ -478,13 +273,7 @@ public class HistoryView extends StackPane {
             else card.getStyleClass().remove("card-expanded");
         });
 
-
         card.getChildren().addAll(header, badges, details);
         return card;
     }
-
-    public HistoryCalendarView getHistoryCalendar() {
-        return historyCalendar;
-    }
-
 }

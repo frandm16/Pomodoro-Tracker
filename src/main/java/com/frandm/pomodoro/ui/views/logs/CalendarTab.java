@@ -1,5 +1,8 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.ui.views.logs;
 
+import com.frandm.pomodoro.models.Session;
+import com.frandm.pomodoro.controllers.PomodoroController;
+import com.frandm.pomodoro.core.DatabaseHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -14,23 +17,23 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
 
-public class HistoryCalendarView extends VBox {
+public class CalendarTab extends VBox {
 
     private GridPane calendarGrid;
     private ScrollPane scrollPane;
     private LocalDate currentWeekStart;
-    private final PomodoroController controller;
-    private final HistoryView historyView;
+    private final LogsController logsController;
+    private final LogsView logsView;
     private final double ROW_HEIGHT = 60.0;
     private final Pane[] dayColumns = new Pane[7];
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
     private final DateTimeFormatter dbFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public HistoryCalendarView(PomodoroController controller, HistoryView historyView) {
+    public CalendarTab(LogsController logsController, LogsView logsView) {
         this.currentWeekStart = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
         this.getStyleClass().add("calendar-root");
-        this.controller = controller;
-        this.historyView = historyView;
+        this.logsController = logsController;
+        this.logsView = logsView;
         VBox.setVgrow(this, Priority.ALWAYS);
         initializeUI();
     }
@@ -44,8 +47,8 @@ public class HistoryCalendarView extends VBox {
         Button btnNext = new Button();
         Button btnToday = new Button("Today");
 
-        controller.updateIcon(btnPrev, "calendar-icon", "mdi2c-chevron-left", "Previous week");
-        controller.updateIcon(btnNext, "calendar-icon", "mdi2c-chevron-right", "Next week");
+        logsController.updateIcon(btnPrev, "calendar-icon", "mdi2c-chevron-left", "Previous week");
+        logsController.updateIcon(btnNext, "calendar-icon", "mdi2c-chevron-right", "Next week");
 
         btnPrev.getStyleClass().add("calendar-button-icon");
         btnNext.getStyleClass().add("calendar-button-icon");
@@ -206,12 +209,12 @@ public class HistoryCalendarView extends VBox {
 
                 MenuItem editItem = new MenuItem("Edit");
                 editItem.setGraphic(new FontIcon("mdi2p-pencil"));
-                editItem.setOnAction(_ -> controller.openEditSession(sessionObj));
+                editItem.setOnAction(_ -> logsController.requestEdit(sessionObj));
 
                 MenuItem deleteItem = new MenuItem("Delete");
                 deleteItem.setGraphic(new FontIcon("mdi2t-trash-can-outline"));
                 deleteItem.getStyleClass().add("menu-item-delete");
-                deleteItem.setOnAction(_ -> controller.showDeleteConfirmation(sessionObj, historyView));
+                deleteItem.setOnAction(_ -> logsController.requestDelete(sessionObj));
 
                 menu.getItems().addAll(editItem, deleteItem);
                 menu.show(block, e.getScreenX(), e.getScreenY());

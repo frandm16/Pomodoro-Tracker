@@ -23,7 +23,7 @@ public class App extends Application {
     public void start(Stage stage) throws Exception {
         Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
 
-        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("main_view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("/com/frandm/pomodoro/fxml/main_view.fxml"));
         Parent root = fxmlLoader.load();
 
         javafx.scene.Node content = ((javafx.scene.layout.Pane) root).getChildren().getFirst();
@@ -33,7 +33,7 @@ public class App extends Application {
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
 
-        String mainStyles = Objects.requireNonNull(App.class.getResource("/com/frandm/pomodoro/styles.css")).toExternalForm();
+        String mainStyles = Objects.requireNonNull(App.class.getResource("/com/frandm/pomodoro/css/styles.css")).toExternalForm();
         scene.getStylesheets().add(mainStyles);
 
         stage.setScene(scene);

@@ -1,5 +1,7 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.ui.views;
 
+import com.frandm.pomodoro.controllers.PomodoroController;
+import com.frandm.pomodoro.core.DatabaseHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -15,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
 
-public class CalendarView extends VBox {
+public class PlannerView extends VBox {
 
     private GridPane calendarGrid;
     private ScrollPane scrollPane;
@@ -27,7 +29,7 @@ public class CalendarView extends VBox {
     private final Pane[] dayColumns = new Pane[7];
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-    public CalendarView(PomodoroController controller) {
+    public PlannerView(PomodoroController controller) {
         this.currentWeekStart = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
         this.getStyleClass().add("calendar-root");
         this.controller = controller;
@@ -45,6 +47,7 @@ public class CalendarView extends VBox {
         icon.getStyleClass().add("calendar-icon");
         btnCreate.setGraphic(icon);
         btnCreate.getStyleClass().add("calendar-button-add");
+
         MenuItem itemSession = new MenuItem("Schedule session");
         itemSession.setOnAction(_ -> {
             javafx.geometry.Point2D point = btnCreate.localToScreen(0, btnCreate.getHeight());
@@ -183,7 +186,7 @@ public class CalendarView extends VBox {
         String currentTheme = controller.getCurrentTheme();
         root.getStyleClass().addAll("calendar-popup", currentTheme);
 
-        root.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles.css")).toExternalForm());
+        root.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/frandm/pomodoro/css/styles.css")).toExternalForm());
 
         root.setPadding(new Insets(20));
         root.setPrefWidth(350);

@@ -17,10 +17,10 @@
 
 <?import atlantafx.base.controls.ToggleSwitch?>
 <StackPane fx:id="rootPane" prefHeight="700.0" prefWidth="1000.0"
-           stylesheets="@/com/frandm/pomodoro/styles.css"
+           stylesheets="@/com/frandm/pomodoro/css/styles.css"
            styleClass="root-pane"
            xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.frandm.pomodoro.PomodoroController">
+           fx:controller="com.frandm.pomodoro.controllers.PomodoroController">
     <VBox >
         <GridPane >
             <padding><Insets top="20" right="25" bottom="10" left="25" /></padding>

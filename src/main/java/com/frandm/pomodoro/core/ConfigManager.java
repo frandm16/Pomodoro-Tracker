@@ -1,4 +1,4 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.core;
 
 import java.io.*;
 import java.util.Properties;

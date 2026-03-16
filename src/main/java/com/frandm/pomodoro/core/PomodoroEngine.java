@@ -1,4 +1,4 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.core;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;

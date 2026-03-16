@@ -1,5 +1,7 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.ui.views;
 
+import com.frandm.pomodoro.models.Session;
+import com.frandm.pomodoro.core.DatabaseHandler;
 import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;

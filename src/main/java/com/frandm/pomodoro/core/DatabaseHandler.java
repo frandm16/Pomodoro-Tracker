@@ -1,5 +1,6 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.core;
 
+import com.frandm.pomodoro.models.Session;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import java.io.File;

@@ -1,10 +1,16 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.controllers;
 
 import atlantafx.base.controls.ProgressSliderSkin;
 import atlantafx.base.controls.ToggleSwitch;
 import atlantafx.base.theme.PrimerDark;
 import atlantafx.base.theme.PrimerLight;
-import javafx.animation.*;
+import com.frandm.pomodoro.core.*;
+import com.frandm.pomodoro.models.Session;
+import com.frandm.pomodoro.ui.util.Animations;
+import com.frandm.pomodoro.ui.util.UIManager;
+import com.frandm.pomodoro.ui.views.PlannerView;
+import com.frandm.pomodoro.ui.views.logs.LogsView;
+import com.frandm.pomodoro.ui.views.StatsDashboard;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -30,78 +36,70 @@ import java.util.*;
 public class PomodoroController {
 
 
-    public GridPane summaryPane;
-    public TextField summaryTitle;
-    public TextArea summaryDesc;
-    public HBox starsContainer;
-    public StackPane confirmOverlay, stackpaneCircle;
-    public VBox timerTextContainer;
-    public Slider circleSizeSlider;
-    public Label circleSizeValLabel;
-    public HBox buttonsHbox;
-    public Slider countdownSlider;
-    public Label countdownValLabel;
-    public ToggleButton timerModeBtn, pomoModeBtn, countdownModeBtn;
-    public VBox pomoSettingsPane;
-    public VBox countdownSettingsPane;
-    public ToggleSwitch countBreakTime, autoPomoToggle, autoBreakToggle;
-    public VBox settingsBox;
-    public StackPane setupBox;
-    public StackPane editSessionBox;
-    public StackPane summaryBox;
-    public Region confirmBox;
-
-    //region FXML
-    @FXML private GridPane editSessionPane;
-    @FXML private ComboBox<String> editTagCombo, editTaskCombo;
-    @FXML private TextField editTitleField;
-    @FXML private TextArea editDescArea;
-    @FXML private HBox editStarsContainer;
-    @FXML private GridPane setupPane, mainContainer, settingsPane;
-    @FXML private StackPane rootPane;
-    @FXML private VBox notificationContainer, scheduleListContainer, statsContainer, plannerContainer, historyContainer,
-            statsPlaceholder, streakVBox, streakImage, fuzzyResultsContainer, tagsListContainer, activeTaskContainer;
-    @FXML private Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
-            alarmVolumeValLabel, widthSliderValLabel, streakLabel, timeThisWeekLabel,
-            timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel;
-    @FXML private Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn, plannerBtn, historyBtn;
-    @FXML public TextField tagNameInput, fuzzySearchInput;
+    //region FXML - Componentes de Interfaz
+    @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane;
+    @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle, confirmOverlay;
+    @FXML public Region confirmBox;
+    @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer, statsContainer,
+            plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage,
+            fuzzyResultsContainer, tagsListContainer, activeTaskContainer, pomoSettingsPane,
+            countdownSettingsPane, settingsBox;
+    @FXML public HBox starsContainer, editStarsContainer, buttonsHbox;
+    @FXML public Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
+            alarmVolumeValLabel, widthSliderValLabel, countdownValLabel, circleSizeValLabel,
+            streakLabel, timeThisWeekLabel, timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel;
+    @FXML public TextField summaryTitle, editTitleField, tagNameInput, fuzzySearchInput;
+    @FXML public TextArea summaryDesc, editDescArea;
+    @FXML public ComboBox<String> editTagCombo, editTaskCombo;
     @FXML public ColorPicker tagColorInput;
+    @FXML public Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn, plannerBtn, historyBtn;
+    @FXML public ToggleButton timerModeBtn, pomoModeBtn, countdownModeBtn;
+    @FXML public ToggleSwitch countBreakTime, autoPomoToggle, autoBreakToggle;
+    @FXML public Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider,
+            widthSlider, countdownSlider, circleSizeSlider;
     @FXML public Circle circleMain;
-    @FXML private Arc progressArc;
+    @FXML public Arc progressArc;
     @FXML public AreaChart<String, Number> weeklyLineChart;
     @FXML public CategoryAxis weeksXAxis;
     @FXML public PieChart tagPieChart;
-    @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider, widthSlider;
-    @FXML private ColumnConstraints colRightStats, colCenterStats, colLeftStats;
-//endregion
+    @FXML public ColumnConstraints colRightStats, colCenterStats, colLeftStats;
+    //endregion
 
     private final PomodoroEngine engine = new PomodoroEngine();
     private final SetupManager setupManager = new SetupManager(this);
     private final UIManager uiManager = new UIManager();
 
     private StatsDashboard statsDashboard;
-    private CalendarView calendarView;
+    private PlannerView plannerView;
+    private LogsView logsView;
+
     private double SIZE_FACTOR = 0.25;
-
-
-    private HistoryView historyView;
-    private Session sessionToDelete;
-    private Session sessionToEdit;
-    private final List<FontIcon> editStarNodes = new ArrayList<>();
-    private int editRating = 0;
-
+    private int currentRating = 0;
     private boolean isDarkMode = true;
     private LocalDateTime startDate;
 
-    private int currentRating = 0;
     private final List<FontIcon> starNodes = new ArrayList<>();
+    private final List<FontIcon> editStarNodes = new ArrayList<>();
 
     private Map<String, List<String>> tagsWithTasksMap = new HashMap<>();
     private Map<String, String> tagColors = new HashMap<>();
 
     @FXML
     public void initialize() {
+        initializeCoreSystems();
+        setupViews();
+        setupInitialUIState();
+        setupSettingsPanel();
+        setupModeSystem();
+        setupFuzzySearch();
+        setupEngineCallbacks();
+
+        updateEngineSettings();
+        updateUIFromEngine();
+    }
+
+    //region initialize
+    private void initializeCoreSystems() {
         DatabaseHandler.initializeDatabase();
         // ---------------- TEST ---------------------
         //DatabaseHandler.generateRandomPomodoros();
@@ -110,67 +108,66 @@ public class PomodoroController {
         ConfigManager.load(engine);
         refreshDatabaseData();
         applyTheme();
+        NotificationManager.init(notificationContainer);
+    }
 
-        //region calendar view
-        calendarView = new CalendarView(this);
-        plannerContainer.getChildren().clear();
-        plannerContainer.getChildren().add(calendarView);
-        VBox.setVgrow(calendarView, Priority.ALWAYS);
-        //endregion
+    private void setupViews() {
+        //planner view
+        plannerView = new PlannerView(this);
+        plannerContainer.getChildren().setAll(plannerView);
+        VBox.setVgrow(plannerView, Priority.ALWAYS);
 
-        //region history view
-        historyView = new HistoryView(tagColors, this);
-        historyContainer.getChildren().clear();
-        historyContainer.getChildren().add(historyView);
-        VBox.setVgrow(historyView, Priority.ALWAYS);
-        setupEditComboListeners();
-        setupEditStars();
-        //endregion
+        // logs view
+        logsView = new LogsView(this);
+        historyContainer.getChildren().setAll(logsView);
+        logsView.getLogsController().setupEditStars(editStarsContainer, editStarNodes);
+        VBox.setVgrow(logsView, Priority.ALWAYS);
 
+        // dashboard
         statsDashboard = new StatsDashboard(
-            timeThisWeekLabel, streakLabel, streakVBox, streakImage, bestDayLabel,
-            tasksLabel, timeLastMonthLabel, weeklyLineChart,
-            tagPieChart, statsPlaceholder
+                timeThisWeekLabel, streakLabel, streakVBox, streakImage, bestDayLabel,
+                tasksLabel, timeLastMonthLabel, weeklyLineChart,
+                tagPieChart, statsPlaceholder
         );
+    }
 
+    private void setupInitialUIState() {
         summaryPane.setVisible(false);
         summaryPane.setManaged(false);
         setupStars();
+        refreshSideMenu();
+        updateActiveTaskDisplay("No tag selected", null);
 
         stackpaneCircle.widthProperty().addListener((_, _, _) -> resizeCircle());
         stackpaneCircle.heightProperty().addListener((_, _, _) -> resizeCircle());
-        SIZE_FACTOR=engine.getUiSize()* 0.005;
+        SIZE_FACTOR = engine.getUiSize() * 0.005;
         resizeCircle();
+    }
 
-        NotificationManager.init(notificationContainer);
-
-        //region paneles
-        //endregion
-        refreshSideMenu();
-
-        updateActiveTaskDisplay("No tag selected", null);
-
-        //region settings panel
+    private void setupSettingsPanel() {
         setupSlider(workSlider, workValLabel, engine.getWorkMins(), engine::setWorkMins, "");
         setupSlider(shortSlider, shortValLabel, engine.getShortMins(), engine::setShortMins, "");
         setupSlider(longSlider, longValLabel, engine.getLongMins(), engine::setLongMins, "");
         setupSlider(intervalSlider, intervalValLabel, engine.getInterval(), engine::setInterval, "");
         setupSlider(alarmVolumeSlider, alarmVolumeValLabel, engine.getAlarmSoundVolume(), engine::setAlarmSoundVolume, "%");
-        setupSlider(widthSlider,widthSliderValLabel,engine.getWidthStats(), engine::setWidthStats, "%");
+        setupSlider(widthSlider, widthSliderValLabel, engine.getWidthStats(), engine::setWidthStats, "%");
         setupSlider(countdownSlider, countdownValLabel, engine.getCountdownMins(), engine::setCountdownMins, "");
         setupSlider(circleSizeSlider, circleSizeValLabel, engine.getUiSize(), (newVal) -> {
             engine.setUiSize(newVal);
             SIZE_FACTOR = newVal * 0.005;
             resizeCircle();
         }, "%");
-        colCenterStats.percentWidthProperty().bind(widthSlider.valueProperty());
-        colLeftStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
-        colRightStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
 
         autoBreakToggle.setSelected(engine.isAutoStartBreaks());
         autoPomoToggle.setSelected(engine.isAutoStartPomo());
         countBreakTime.setSelected(engine.isCountBreakTime());
 
+        colCenterStats.percentWidthProperty().bind(widthSlider.valueProperty());
+        colLeftStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
+        colRightStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
+    }
+
+    private void setupModeSystem() {
         ToggleGroup modeGroup = new ToggleGroup();
         pomoModeBtn.setToggleGroup(modeGroup);
         timerModeBtn.setToggleGroup(modeGroup);
@@ -196,35 +193,25 @@ public class PomodoroController {
                 oldToggle.setSelected(true);
             }
         });
-        //endregion
+    }
 
+    private void setupFuzzySearch() {
         fuzzySearchInput.textProperty().addListener((_, _, val) ->
-            setupManager.updateFuzzyResults(val, fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
+                setupManager.updateFuzzyResults(val, fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
         );
 
         fuzzySearchInput.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                if (!fuzzyResultsContainer.getChildren().isEmpty()) {
-                    List<Button> buttons = fuzzyResultsContainer.getChildren().stream()
+            if (event.getCode() == KeyCode.ENTER && !fuzzyResultsContainer.getChildren().isEmpty()) {
+                fuzzyResultsContainer.getChildren().stream()
                         .filter(node -> node instanceof Button)
                         .map(node -> (Button) node)
-                        .toList();
-
-                    if(!buttons.isEmpty()){
-                        Button target;
-                        if(buttons.size() > 1){
-                            target = buttons.get(1);
-                        }else {
-                            target = buttons.getFirst();
-                        }
-                        target.fire();
-                    }
-
-                }
+                        .findFirst()
+                        .ifPresent(Button::fire);
             }
         });
+    }
 
-
+    private void setupEngineCallbacks() {
         engine.setOnTick(() -> Platform.runLater(() -> {
             timerLabel.setText(engine.getFormattedTime());
             updateProgressCircle();
@@ -233,53 +220,18 @@ public class PomodoroController {
         engine.setOnStateChange(() -> Platform.runLater(() -> {
             updateUIFromEngine();
             updateModeButtonsAvailability();
-            }));
+        }));
 
         engine.setOnTimerFinished(() -> Platform.runLater(() -> {
             uiManager.playAlarmSound(engine.getAlarmSoundVolume());
             if (engine.getCurrentMode() == PomodoroEngine.Mode.COUNTDOWN) {
                 handleFinish();
-                System.out.println(engine.getCurrentState());
             }
         }));
-
-        updateEngineSettings();
-        updateUIFromEngine();
     }
+    //endregion
 
-    private void updateSettingsVisibility(PomodoroEngine.Mode mode) {
-        pomoSettingsPane.setVisible(false);
-        pomoSettingsPane.setManaged(false);
 
-        countdownSettingsPane.setVisible(false);
-        countdownSettingsPane.setManaged(false);
-
-        switch (mode) {
-            case POMODORO -> {
-                pomoSettingsPane.setVisible(true);
-                pomoSettingsPane.setManaged(true);
-            }
-            case COUNTDOWN -> {
-                countdownSettingsPane.setVisible(true);
-                countdownSettingsPane.setManaged(true);
-            }
-            case TIMER -> {
-            }
-        }
-    }
-
-    private void updateModeButtonsAvailability() {
-        if (engine.getCurrentState() != PomodoroEngine.State.MENU) {
-            pomoModeBtn.setDisable(true);
-            timerModeBtn.setDisable(true);
-            countdownModeBtn.setDisable(true);
-            return;
-        }
-
-        pomoModeBtn.setDisable(false);
-        timerModeBtn.setDisable(false);
-        countdownModeBtn.setDisable(false);
-    }
 
     private void resizeCircle() {
         double width = stackpaneCircle.getWidth();
@@ -405,13 +357,13 @@ public class PomodoroController {
         if (clickedBtn == menuBtn) {
             uiManager.switchPanels(getActivePanel(), mainContainer);
         } else if (clickedBtn == plannerBtn) {
-            calendarView.refresh();
+            plannerView.refresh();
             uiManager.switchPanels(getActivePanel(), plannerContainer);
         } else if (clickedBtn == statsBtn) {
             statsDashboard.refresh();
             uiManager.switchPanels(getActivePanel(), statsContainer);
         } else if (clickedBtn == historyBtn) {
-            historyView.resetAndReload();
+            logsView.resetAndReload();
             uiManager.switchPanels(getActivePanel(), historyContainer);
         }
     }
@@ -543,7 +495,7 @@ public class PomodoroController {
     }
 
     @FXML
-    private void toggleSettings() {
+    public void toggleSettings() {
         boolean opening = !settingsPane.isVisible();
         if (opening) {
             Animations.show(settingsPane, settingsBox, null);
@@ -574,7 +526,7 @@ public class PomodoroController {
 
     //region Setup
     @FXML
-    void toggleSetup() {
+    public void toggleSetup() {
         boolean opening = !setupPane.isVisible();
 
         if (opening) {
@@ -611,7 +563,7 @@ public class PomodoroController {
     }
 
     @FXML
-    void handleStartSessionFromSetup() {
+    public void handleStartSessionFromSetup() {
         if(setupManager.getSelectedTag() != null && setupManager.getSelectedTask() != null){
             updateActiveTaskDisplay(setupManager.getSelectedTag(), setupManager.getSelectedTask());
             toggleSetup();
@@ -721,7 +673,6 @@ public class PomodoroController {
         }
     }
 
-
     private void resetFullApp() {
         engine.stop();
         engine.fullReset();
@@ -797,12 +748,6 @@ public class PomodoroController {
         updateUIFromEngine();
     }
 
-    public void showDeleteConfirmation(Session s, HistoryView h) {
-        sessionToDelete = s;
-        historyView = h;
-        toggleConfirmDelete();
-    }
-
     public void toggleConfirmDelete(){
        if(!confirmOverlay.isVisible()){
            Animations.show(confirmOverlay, confirmBox, null);
@@ -813,19 +758,10 @@ public class PomodoroController {
 
     @FXML
     private void onConfirmDeleteClick() {
-        if (sessionToDelete != null) {
-            DatabaseHandler.deleteSession(sessionToDelete.getId());
-            if (historyView != null) {
-                historyView.resetAndReload();
-
-                if (historyView.getHistoryCalendar() != null) {
-                    historyView.getHistoryCalendar().refresh();
-                }
-            }
-            toggleConfirmDelete();
-            sessionToDelete = null;
-            NotificationManager.show("Session Delete", "Successfully deleted the session", NotificationManager.NotificationType.SUCCESS);
+        if (logsView != null && logsView.getLogsController() != null) {
+            logsView.getLogsController().executeDeletion();
         }
+        toggleConfirmDelete();
     }
 
     private void applyStyle(String labelText, String colorVar) {
@@ -835,87 +771,26 @@ public class PomodoroController {
         timerLabel.setStyle("-fx-text-fill: " + colorVar + ";");
     }
 
-    private void setupEditStars() {
-        editStarsContainer.getChildren().clear();
-        editStarNodes.clear();
-        for (int i = 1; i <= 5; i++) {
-            int val = i;
-            FontIcon star = new FontIcon("fas-star");
-            star.setIconSize(30);
-            star.setCursor(javafx.scene.Cursor.HAND);
-            star.setOnMouseClicked(_ -> {
-                editRating = (val == editRating) ? 0 : val;
-                updateEditStarsUI();
-            });
-            editStarNodes.add(star);
-            editStarsContainer.getChildren().add(star);
-        }
-    }
-
-    private void updateEditStarsUI() {
-        for (int i = 0; i < editStarNodes.size(); i++) {
-            editStarNodes.get(i).getStyleClass().removeAll("selectedStar", "unselectedStar");
-            if (i < editRating) {
-                editStarNodes.get(i).getStyleClass().add("selectedStar");
-            } else {
-                editStarNodes.get(i).getStyleClass().add("unselectedStar");
-            }
-        }
-    }
-
     public void openEditSession(Session s) {
-        sessionToEdit = s;
-
-        refreshEditFilters();
-
-        editTitleField.setText(s.getTitle());
-        editDescArea.setText(s.getDescription());
-
-        editTagCombo.setValue(s.getTag());
-
-        updateEditTaskCombo(s.getTag());
-        editTaskCombo.setValue(s.getTask());
-
-        editRating = s.getRating();
-        updateEditStarsUI();
-
+        logsView.getLogsController().populateEditForm(
+                editTitleField, editDescArea, editTagCombo, editTaskCombo, editStarNodes
+        );
         toggleEditSession();
     }
 
     @FXML
     private void handleEditSession() {
-        if (sessionToEdit == null) return;
-
-        String selectedTag = editTagCombo.getValue();
-        String selectedTask = editTaskCombo.getValue();
-
-        if (selectedTag == null || selectedTask == null) {
+        if (editTagCombo.getValue() == null || editTaskCombo.getValue() == null) {
             NotificationManager.show("Error", "Tag and Task are required", NotificationManager.NotificationType.ERROR);
             return;
         }
 
-        int taskId = DatabaseHandler.getOrCreateTask(
-                selectedTag,
-                tagColors.getOrDefault(selectedTag, "#ffffff"),
-                selectedTask
-        );
-        DatabaseHandler.updateSessionEdit(
-                sessionToEdit.getId(),
-                taskId,
+        logsView.getLogsController().saveEdit(
                 editTitleField.getText(),
                 editDescArea.getText(),
-                editRating
+                editTagCombo.getValue(),
+                editTaskCombo.getValue()
         );
-
-        NotificationManager.show("Success", "Session updated", NotificationManager.NotificationType.SUCCESS);
-
-        if (historyView != null) {
-            historyView.resetAndReload();
-
-            if (historyView.getHistoryCalendar() != null) {
-                historyView.getHistoryCalendar().refresh();
-            }
-        }
 
         toggleEditSession();
     }
@@ -929,26 +804,41 @@ public class PomodoroController {
         }
     }
 
-    private void setupEditComboListeners() {
-        editTagCombo.setOnAction(_ -> {
-            String selectedTag = editTagCombo.getValue();
-            if (selectedTag != null) {
-                updateEditTaskCombo(selectedTag);
-                if (sessionToEdit != null && !selectedTag.equals(sessionToEdit.getTag())) {
-                    editTaskCombo.setValue(null);
-                }
+    //region random
+    private void updateSettingsVisibility(PomodoroEngine.Mode mode) {
+        pomoSettingsPane.setVisible(false);
+        pomoSettingsPane.setManaged(false);
+
+        countdownSettingsPane.setVisible(false);
+        countdownSettingsPane.setManaged(false);
+
+        switch (mode) {
+            case POMODORO -> {
+                pomoSettingsPane.setVisible(true);
+                pomoSettingsPane.setManaged(true);
             }
-        });
+            case COUNTDOWN -> {
+                countdownSettingsPane.setVisible(true);
+                countdownSettingsPane.setManaged(true);
+            }
+            case TIMER -> {
+            }
+        }
     }
 
-    private void updateEditTaskCombo(String tagName) {
-        editTaskCombo.getItems().clear();
-        editTaskCombo.getItems().addAll(DatabaseHandler.getTasksByTag(tagName));
-    }
+    private void updateModeButtonsAvailability() {
+        if (engine.getCurrentState() != PomodoroEngine.State.MENU) {
+            pomoModeBtn.setDisable(true);
+            timerModeBtn.setDisable(true);
+            countdownModeBtn.setDisable(true);
+            return;
+        }
 
-    private void refreshEditFilters() {
-        editTagCombo.getItems().clear();
-        editTagCombo.getItems().addAll(DatabaseHandler.getTagColors().keySet());
+        pomoModeBtn.setDisable(false);
+        timerModeBtn.setDisable(false);
+        countdownModeBtn.setDisable(false);
     }
+    //endregion
+
 
 }

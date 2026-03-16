@@ -1,4 +1,4 @@
-package com.frandm.pomodoro;
+package com.frandm.pomodoro.models;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
