@@ -39,16 +39,17 @@ public class PomodoroController {
 
     //region FXML - Componentes de Interfaz
     @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane;
-    @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle, confirmOverlay;
-    @FXML public Region confirmBox;
+    @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle, confirmOverlay,
+            confirmTagOverlay;
     @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer, statsContainer,
             plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage,
             fuzzyResultsContainer, tagsListContainer, activeTaskContainer, pomoSettingsPane,
-            countdownSettingsPane, settingsBox;
+            countdownSettingsPane, settingsBox, confirmTagBox, confirmBox;
     @FXML public HBox starsContainer, editStarsContainer, buttonsHbox;
     @FXML public Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
             alarmVolumeValLabel, widthSliderValLabel, countdownValLabel, circleSizeValLabel,
-            streakLabel, timeThisWeekLabel, timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel;
+            streakLabel, timeThisWeekLabel, timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel,
+            notificationVolumeLabel, masterVolumeLabel, backgroundMusicVolumeLabel;
     @FXML public TextField summaryTitle, editTitleField, tagNameInput, fuzzySearchInput;
     @FXML public TextArea summaryDesc, editDescArea;
     @FXML public ComboBox<String> editTagCombo, editTaskCombo;
@@ -57,7 +58,8 @@ public class PomodoroController {
     @FXML public ToggleButton timerModeBtn, pomoModeBtn, countdownModeBtn;
     @FXML public ToggleSwitch countBreakTime, autoPomoToggle, autoBreakToggle;
     @FXML public Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider,
-            widthSlider, countdownSlider, circleSizeSlider;
+            widthSlider, countdownSlider, circleSizeSlider, notificationVolumeSlider, masterVolumeSlider,
+            backgroundMusicVolumeSlider;
     @FXML public Circle circleMain;
     @FXML public Arc progressArc;
     @FXML public AreaChart<String, Number> weeklyLineChart;
@@ -69,15 +71,6 @@ public class PomodoroController {
     private final PomodoroEngine engine = new PomodoroEngine();
     private final SetupManager setupManager = new SetupManager(this);
     private final UIManager uiManager = new UIManager();
-    public Slider notificationVolumeSlider;
-    public Label notificationVolumeLabel;
-    public Slider masterVolumeSlider;
-    public Label masterVolumeLabel;
-    public Slider backgroundMusicVolumeSlider;
-    public Label backgroundMusicVolumeLabel;
-    public Button musicBtn;
-    public StackPane confirmTagOverlay;
-    public VBox confirmTagBox;
 
     private StatsDashboard statsDashboard;
     private PlannerView plannerView;
@@ -353,6 +346,10 @@ public class PomodoroController {
 
     @FXML
     private void handleSaveSummary() {
+        if(engine.getRealMinutesElapsed() < 1) {
+            NotificationManager.show("Info", "Required 1 min to save session", NotificationManager.NotificationType.INFO);
+            return;
+        }
         int taskId = DatabaseHandler.getOrCreateTask(
                 setupManager.getSelectedTag(),
                 tagColors.getOrDefault(setupManager.getSelectedTag(), "#ffffff"),
@@ -783,6 +780,7 @@ public class PomodoroController {
         updateUIFromEngine();
     }
 
+    @FXML
     public void toggleConfirmDelete(){
        if(!confirmOverlay.isVisible()){
            Animations.show(confirmOverlay, confirmBox, null);
@@ -804,6 +802,7 @@ public class PomodoroController {
         Animations.show(confirmTagOverlay, confirmTagBox, null);
     }
 
+    @FXML
     public void closeConfirmDeleteTag() {
         tagToDelete = null;
         Animations.hide(confirmTagOverlay, confirmTagBox, null);
