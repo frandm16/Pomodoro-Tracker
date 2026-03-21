@@ -332,7 +332,7 @@
 }
 
 .filter-label-icon {
-    -fx-icon-color: -color-accent;
+    -fx-icon-color: -icon-main;
     -fx-icon-size: 20;
 }
 
@@ -578,13 +578,13 @@
 
 .options-icon {
     -fx-icon-size: 30;
-    -fx-icon-color: -text-muted;
+    -fx-icon-color: -icon-main;
     -fx-padding: 0;
 
 }
 
 .options-icon:hover {
-    -fx-icon-color: -color-accent;
+    -fx-icon-color: -icon-main;
 }
 
 
@@ -920,13 +920,13 @@
 
 .selectedStar {
     -fx-icon-size: 30px;
-    -fx-icon-color: #ffc107;
+    -fx-icon-color: -icon-main;
     -fx-effect: dropshadow(three-pass-box, rgba(255,193,7,0.4), 10, 0, 0, 0);
 }
 
 .unselectedStar {
     -fx-icon-size: 30px;
-    -fx-icon-color: -color-fg-secundary;
+    -fx-icon-color: -icon-subtle;
 }
 
 .selectedStar:hover, .unselectedStar:hover {
@@ -936,7 +936,7 @@
 
 .trashIcon {
     -fx-icon-code: "fas-trash-alt";
-    -fx-icon-color: -color-fg-secundary;
+    -fx-icon-color: -icon-subtle;
     -fx-icon-size: 25px;
 }
 
@@ -953,13 +953,13 @@
 
 .selectedStarHistory {
     -fx-icon-size: 12px;
-    -fx-icon-color: #ffc107;
+    -fx-icon-color: -icon-main;
     -fx-effect: dropshadow(three-pass-box, rgba(255,193,7,0.4), 10, 0, 0, 0);
 }
 
 .unselectedStarHistory {
     -fx-icon-size: 12px;
-    -fx-icon-color: -color-fg-secundary;
+    -fx-icon-color: -icon-subtle;
 }
 
 .play-schedule-session {
@@ -968,12 +968,12 @@
 }
 
 .play-icon {
-    -fx-icon-color: -color-fg-muted;
+    -fx-icon-color: -icon-main;
     -fx-icon-size: 20px;
 }
 .play-icon:hover {
     -fx-icon-size: 22px;
-    -fx-icon-color: -color-fg-muted;
+    -fx-icon-color: -icon-subtle;
 }
 
 /* --- notifications --- */
@@ -992,7 +992,7 @@
 }
 
 .notification-toast .font-icon {
-    -fx-icon-color: -color-accent;
+    -fx-icon-color: -icon-main;
 }
 
 .notification-progress {
@@ -1078,7 +1078,7 @@
 
 .menu-icon {
     -fx-icon-size: 75px;
-    -fx-icon-color: -color-border;
+    -fx-icon-color: -icon-main;
 
 }
 
@@ -1315,4 +1315,26 @@
 
 .slider:disabled {
     -fx-opacity: 0.5;
+}
+
+.theme-btn {
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 12 16;
+    -fx-cursor: hand;
+    -fx-min-width: 100;
+    -fx-alignment: CENTER;
+}
+
+.theme-btn:hover {
+    -fx-border-color: -color-accent;
+    -fx-background-color: -color-hover;
+    -fx-effect: dropshadow(three-pass-box, -color-accent-light, 8, 0, 0, 0);
+}
+
+.theme-btn-label {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 20px;
 }
