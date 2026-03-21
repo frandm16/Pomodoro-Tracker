@@ -88,7 +88,7 @@ public class SetupManager {
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setAlignment(Pos.CENTER_LEFT);
         String color = colors.getOrDefault(tag, "#ffffff");
-        btn.setStyle("-fx-border-color: " + color + "; -fx-border-width: 0 0 0 4; -fx-background-color: rgba(255,255,255,0.05);");
+        btn.setStyle("-fx-border-color: " + color + "; -fx-border-width: 0 0 0 4;");
         btn.setOnAction(e -> {
             selectedTask = task;
             selectedTag = tag;

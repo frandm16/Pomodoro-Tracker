@@ -568,19 +568,19 @@
         </rowConstraints>
         <Region onMouseClicked="#toggleSetup" style="-fx-background-color: rgba(0,0,0,0.7);" GridPane.columnSpan="3" GridPane.rowSpan="3"><effect><GaussianBlur radius="15" /></effect></Region>
         <StackPane fx:id="setupBox" GridPane.columnIndex="1" GridPane.rowIndex="1">
-            <HBox spacing="20" styleClass="setup-main-box">
-                <VBox spacing="10" prefWidth="250">
+            <HBox spacing="20" styleClass="setup-main-box" >
+                <VBox spacing="10" prefWidth="250" >
                     <Label text="Tags" alignment="CENTER" styleClass="setup-section-title" />
                     <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="setup-scroll">
                         <VBox fx:id="tagsListContainer" spacing="5" />
                     </ScrollPane>
-                    <Separator />
-                    <TextField fx:id="tagNameInput" promptText="New Tag Name" />
-                    <ColorPicker fx:id="tagColorInput" maxWidth="Infinity" />
+                    <Separator styleClass="separator-setup" />
+                    <TextField fx:id="tagNameInput" styleClass="search-input" promptText="New Tag Name" />
+                    <ColorPicker fx:id="tagColorInput" styleClass="search-input" maxWidth="Infinity" />
                     <Button text="Add Tag" onAction="#handleAddNewTag" maxWidth="Infinity" styleClass="button-secondary" />
                 </VBox>
 
-                <VBox spacing="10" HBox.hgrow="ALWAYS">
+                <VBox spacing="10" HBox.hgrow="ALWAYS" styleClass="separator-setup-vertical">
                     <HBox alignment="CENTER_LEFT">
                         <Label text="Search Tasks" styleClass="setup-section-title" />
                         <Region HBox.hgrow="ALWAYS" />

@@ -640,7 +640,7 @@ public class PomodoroController {
     }
 
     public void updateActiveTaskDisplay(String tagName, String taskName) {
-        uiManager.updateActiveBadge(activeTaskContainer, tagName, taskName, tagColors.getOrDefault(tagName, "#a855f7"), this);
+        uiManager.updateActiveBadge(activeTaskContainer, tagName, taskName, tagColors.getOrDefault(tagName, "-color-accent"), this);
     }
     //endregion
 
