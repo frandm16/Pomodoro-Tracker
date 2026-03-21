@@ -1,0 +1,277 @@
+.root {
+    -icon-red : #ff7a00;
+}
+
+.primer-dark {
+    -color-bg-default: #172640;
+    -color-fg-default: #eaeaea;
+    -color-fg-secundary: #0c1013;
+    -color-fg-muted: #94a3b8;
+    -color-bg-subtle: #161b22;
+    -color-accent: -heatmap-high;
+    -color-accent-secundary: -color-fg-secundary;
+    -color-accent-light: -heatmap-low;
+
+    -color-menu: -color-bg-default;
+    -color-hover: -color-bg-subtle;
+    -bg-panels: -color-bg-subtle;
+    -text-main: -color-fg-default;
+    -text-dark: #e6edf3;
+    -text-muted: -color-fg-muted;
+    -stat-card-normal-bg: rgba(255, 183, 0, 0.1);
+    -stat-card-red-bg: rgba(255, 57, 22, 0.1);
+    -stat-card-secundary-bg: rgba(32, 38, 58, 0.1);
+
+    -heatmap-empty: -stat-card-secundary-bg;
+    -heatmap-very-low: rgba(255, 183, 0, 0.15);
+    -heatmap-low: rgba(255, 183, 0, 0.35);
+    -heatmap-medium: rgba(255, 183, 0, 0.60);
+    -heatmap-high: rgba(255, 183, 0);
+    -heatmap-very-high: #ffc933;
+    -heatmap-extreme: #ffd976;
+
+    -color-work: #0f2a29;
+    -color-work-secundary: #7aefa7;
+    -color-break: #132246;
+    -color-break-secundary: #8dc3fd;
+    -color-long-break: #1a1e43;
+    -color-long-break-secundary: #a2b2fd;
+    -color-border-subtle: rgba(255, 255, 255);
+    -color-border-subtle-light: rgba(255, 255, 255, 0.1);
+    -color-border: #d1d1d1;
+    -shadow-default:  rgba(0, 0, 0, 0.34);
+
+    -color-danger: #ff4757;
+    -color-danger-hover: #ff6b81;
+    -icon-main: #eaeaea;
+    -icon-subtle: #94a3b8;
+}
+
+.primer-light {
+    -color-bg-default: #fdf0f3;
+    -color-fg-default: #4a2030;
+    -color-fg-secundary: #8c8c8c;
+    -color-fg-muted: #9c6070;
+    -color-bg-subtle: #fdf0f3;
+    -color-accent: #e4a3b3;
+    -color-accent-secundary: #ffffff;
+    -color-accent-light: rgba(228, 163, 179, 0.3);
+
+    -color-menu: #fdf0f3;
+    -color-hover: #fae0e6;
+    -bg-panels: #fdf0f3;
+    -text-main: #4a2030;
+    -text-dark: #2d0f1e;
+    -text-muted: #9c6070;
+    -stat-card-normal-bg: rgba(228, 163, 179, 0.12);
+    -stat-card-red-bg: rgba(210, 80, 100, 0.1);
+    -stat-card-secundary-bg: rgba(255, 255, 255, 0.5);
+
+    -heatmap-empty: rgba(228, 163, 179, 0.1);
+    -heatmap-very-low: rgba(228, 163, 179, 0.2);
+    -heatmap-low:      rgba(228, 163, 179, 0.45);
+    -heatmap-medium:   rgba(228, 163, 179, 0.70);
+    -heatmap-high:     #e4a3b3;
+    -heatmap-very-high: #d4788e;
+    -heatmap-extreme:   #c05070;
+
+    -color-work: #fce8ed;
+    -color-work-secundary: #c54867;
+    -color-break: #e8f0fc;
+    -color-break-secundary: #3050b0;
+    -color-long-break: #f0e8fc;
+    -color-long-break-secundary: #7030b0;
+    -color-border-subtle: rgba(228, 163, 179, 0.6);
+    -color-border-subtle-light: rgba(228, 163, 179, 0.2);
+    -color-border: #c07888;
+    -shadow-default: rgba(100, 30, 50, 0.15);
+
+    -color-danger: #d73a49;
+    -color-danger-hover: #cb2431;
+    -icon-main: #4a2030;
+    -icon-subtle: #9c6070;
+}
+
+.primer-electric-blue {
+    -color-bg-default: #000d1f;
+    -color-fg-default: #e0f7ff;
+    -color-fg-secundary: #001529;
+    -color-fg-muted: #00b4ff;
+    -color-bg-subtle: #001529;
+    -color-accent: #00d4ff;
+    -color-accent-secundary: #000d1f;
+    -color-accent-light: rgba(0, 212, 255, 0.3);
+
+    -color-menu: #000d1f;
+    -color-hover: rgba(0, 212, 255, 0.1);
+    -bg-panels: #001529;
+    -text-main: #e0f7ff;
+    -text-dark: #f0fbff;
+    -text-muted: #00b4ff;
+    -stat-card-normal-bg: rgba(0, 212, 255, 0.1);
+    -stat-card-red-bg: rgba(244, 63, 94, 0.15);
+    -stat-card-secundary-bg: rgba(0, 21, 41, 0.5);
+
+    -heatmap-empty: rgba(0, 21, 41, 0.8);
+    -heatmap-very-low: rgba(0, 212, 255, 0.15);
+    -heatmap-low: rgba(0, 212, 255, 0.35);
+    -heatmap-medium: rgba(0, 212, 255, 0.60);
+    -heatmap-high: #00d4ff;
+    -heatmap-very-high: #00e5ff;
+    -heatmap-extreme: #80f0ff;
+
+    -color-work: #002a3a;
+    -color-work-secundary: #00e5ff;
+    -color-break: #001a4a;
+    -color-break-secundary: #60a0ff;
+    -color-long-break: #0a0a3a;
+    -color-long-break-secundary: #a0b0ff;
+    -color-border-subtle: rgba(0, 212, 255, 0.6);
+    -color-border-subtle-light: rgba(0, 212, 255, 0.15);
+    -color-border: #00d4ff;
+    -shadow-default: rgba(0, 0, 0, 0.6);
+
+    -color-danger: #f43f5e;
+    -color-danger-hover: #fb7185;
+    -icon-main: #00b4ff;
+    -icon-subtle: #e0f7ff;
+}
+
+.primer-cappuccino {
+    -color-bg-default: #1e1e2e;
+    -color-fg-default: #cdd6f4;
+    -color-fg-secundary: #11111b;
+    -color-fg-muted: #6c7086;
+    -color-bg-subtle: #181825;
+    -color-accent: #cba6f7;
+    -color-accent-secundary: #1e1e2e;
+    -color-accent-light: rgba(203, 166, 247, 0.3);
+
+    -color-menu: #1e1e2e;
+    -color-hover: #313244;
+    -bg-panels: #181825;
+    -text-main: #cdd6f4;
+    -text-dark: #cdd6f4;
+    -text-muted: #6c7086;
+    -stat-card-normal-bg: rgba(203, 166, 247, 0.08);
+    -stat-card-red-bg: rgba(243, 139, 168, 0.08);
+    -stat-card-secundary-bg: rgba(49, 50, 68, 0.3);
+
+    -heatmap-empty: rgba(49, 50, 68, 0.5);
+    -heatmap-very-low: rgba(166, 227, 161, 0.15);
+    -heatmap-low: rgba(166, 227, 161, 0.35);
+    -heatmap-medium: rgba(166, 227, 161, 0.60);
+    -heatmap-high: #a6e3a1;
+    -heatmap-very-high: #94e2d5;
+    -heatmap-extreme: #89dceb;
+
+    -color-work: #a6e3a1;
+    -color-work-secundary: #315c3f;
+    -color-break: #89dceb;
+    -color-break-secundary: #27385e;
+    -color-long-break: #cba6f7;
+    -color-long-break-secundary: #3b2a51;
+
+    -color-border-subtle: rgba(203, 166, 247, 0.4);
+    -color-border-subtle-light: rgba(203, 166, 247, 0.12);
+    -color-border: #b4befe;
+    -shadow-default: rgba(0, 0, 0, 0.5);
+
+    -color-danger: #f38ba8;
+    -color-danger-hover: #eba0ac;
+
+    -icon-main: #cdd6f4;
+    -icon-subtle: #6c7086;
+}
+
+.primer-sunset {
+    -color-bg-default: #1a0e05;
+    -color-fg-default: #fde8d0;
+    -color-fg-secundary: #0f0802;
+    -color-fg-muted: #a05c30;
+    -color-bg-subtle: #120a03;
+    -color-accent: #ff7c2a;
+    -color-accent-secundary: #1a0e05;
+    -color-accent-light: rgba(255, 124, 42, 0.3);
+
+    -color-menu: #1a0e05;
+    -color-hover: rgba(255, 124, 42, 0.1);
+    -bg-panels: #120a03;
+    -text-main: #fde8d0;
+    -text-dark: #fff3e8;
+    -text-muted: #a05c30;
+    -stat-card-normal-bg: rgba(255, 124, 42, 0.08);
+    -stat-card-red-bg: rgba(220, 50, 50, 0.1);
+    -stat-card-secundary-bg: rgba(18, 10, 3, 0.5);
+
+    -heatmap-empty: rgba(18, 10, 3, 0.8);
+    -heatmap-very-low: rgba(255, 124, 42, 0.15);
+    -heatmap-low: rgba(255, 124, 42, 0.35);
+    -heatmap-medium: rgba(255, 124, 42, 0.60);
+    -heatmap-high: #ff7c2a;
+    -heatmap-very-high: #ffb347;
+    -heatmap-extreme: #ffd700;
+
+    -color-work: #2e1205;
+    -color-work-secundary: #ffb347;
+    -color-break: #2e0a0a;
+    -color-break-secundary: #ff6b6b;
+    -color-long-break: #2e1e05;
+    -color-long-break-secundary: #ffd700;
+
+    -color-border-subtle: rgba(255, 124, 42, 0.4);
+    -color-border-subtle-light: rgba(255, 124, 42, 0.12);
+    -color-border: #ff7c2a;
+    -shadow-default: rgba(0, 0, 0, 0.5);
+
+    -color-danger: #ff4757;
+    -color-danger-hover: #ff6b81;
+
+    -icon-main: #fde8d0;
+    -icon-subtle: #a05c30;
+}
+
+.primer-midnight {
+    -color-bg-default: #12071e;
+    -color-fg-default: #e8d5ff;
+    -color-fg-secundary: #0a0314;
+    -color-fg-muted: #7c5fa0;
+    -color-bg-subtle: #0a0314;
+    -color-accent: #b060ff;
+    -color-accent-secundary: #12071e;
+    -color-accent-light: rgba(176, 96, 255, 0.3);
+
+    -color-menu: #12071e;
+    -color-hover: rgba(176, 96, 255, 0.1);
+    -bg-panels: #0a0314;
+    -text-main: #e8d5ff;
+    -text-dark: #f5eeff;
+    -text-muted: #7c5fa0;
+    -stat-card-normal-bg: rgba(176, 96, 255, 0.1);
+    -stat-card-red-bg: rgba(255, 71, 87, 0.15);
+    -stat-card-secundary-bg: rgba(10, 3, 20, 0.5);
+
+    -heatmap-empty: rgba(10, 3, 20, 0.8);
+    -heatmap-very-low: rgba(176, 96, 255, 0.15);
+    -heatmap-low: rgba(176, 96, 255, 0.35);
+    -heatmap-medium: rgba(176, 96, 255, 0.60);
+    -heatmap-high: #b060ff;
+    -heatmap-very-high: #c87fff;
+    -heatmap-extreme: #e0b0ff;
+
+    -color-work: #1e0a2e;
+    -color-work-secundary: #d080ff;
+    -color-break: #0a1a2e;
+    -color-break-secundary: #80b0ff;
+    -color-long-break: #2e0a1e;
+    -color-long-break-secundary: #ff80c0;
+    -color-border-subtle: rgba(176, 96, 255, 0.5);
+    -color-border-subtle-light: rgba(176, 96, 255, 0.15);
+    -color-border: #b060ff;
+    -shadow-default: rgba(0, 0, 0, 0.6);
+
+    -color-danger: #ff4757;
+    -color-danger-hover: #ff6b81;
+    -icon-main: #e8d5ff;
+    -icon-subtle: #7c5fa0;
+}
