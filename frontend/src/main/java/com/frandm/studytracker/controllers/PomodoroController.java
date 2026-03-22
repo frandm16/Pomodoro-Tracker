@@ -42,7 +42,7 @@ public class PomodoroController {
     @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane;
     @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle, confirmOverlay,
             confirmTagOverlay;
-    @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer, statsContainer,
+    @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer,
             plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage,
             fuzzyResultsContainer, tagsListContainer, activeTaskContainer, pomoSettingsPane,
             countdownSettingsPane, settingsBox, confirmTagBox, confirmBox;
@@ -73,6 +73,7 @@ public class PomodoroController {
     private final SetupManager setupManager = new SetupManager(this);
     private final UIManager uiManager = new UIManager();
     public VBox themeButtonsContainer;
+    public ScrollPane statsContainer;
 
     private StatsDashboard statsDashboard;
     private PlannerView plannerView;
