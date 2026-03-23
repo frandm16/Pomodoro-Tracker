@@ -18,6 +18,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.PieChart;
@@ -33,6 +34,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class PomodoroController {
 
@@ -54,8 +56,8 @@ public class PomodoroController {
     @FXML public TextArea summaryDesc, editDescArea;
     @FXML public ComboBox<String> editTagCombo, editTaskCombo;
     @FXML public ColorPicker tagColorInput;
-    @FXML public Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn, plannerBtn, historyBtn;
-    @FXML public ToggleButton timerModeBtn, pomoModeBtn, countdownModeBtn;
+    @FXML public Button startPauseBtn, skipBtn, finishBtn;
+    @FXML public ToggleButton timerModeBtn, pomoModeBtn, countdownModeBtn, menuBtn, statsBtn, plannerBtn, historyBtn;
     @FXML public ToggleSwitch countBreakTime, autoPomoToggle, autoBreakToggle;
     @FXML public Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider,
             widthSlider, countdownSlider, circleSizeSlider, notificationVolumeSlider, masterVolumeSlider,
@@ -410,11 +412,25 @@ public class PomodoroController {
     //region Navegación
     @FXML
     void handleNavClick(ActionEvent event) {
-        Button clickedBtn = (Button) event.getSource();
-        menuBtn.getStyleClass().remove("active");
-        plannerBtn.getStyleClass().remove("active");
-        statsBtn.getStyleClass().remove("active");
-        historyBtn.getStyleClass().remove("active");
+        ToggleButton clickedBtn = (ToggleButton) event.getSource();
+        Node targetContainer = null;
+
+        if (clickedBtn == menuBtn) {
+            targetContainer = mainContainer;
+        } else if (clickedBtn == plannerBtn) {
+            targetContainer = plannerContainer;
+        } else if (clickedBtn == statsBtn) {
+            targetContainer = statsContainer;
+        } else if (clickedBtn == historyBtn) {
+            targetContainer = historyContainer;
+        }
+
+        if (targetContainer != null && targetContainer == getActivePanel()) {
+            clickedBtn.setSelected(true);
+            return;
+        }
+        Stream.of(menuBtn, plannerBtn, statsBtn, historyBtn)
+                .forEach(btn -> btn.getStyleClass().remove("active"));
         clickedBtn.getStyleClass().add("active");
 
         if (clickedBtn == menuBtn) {

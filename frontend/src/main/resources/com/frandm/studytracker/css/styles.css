@@ -218,6 +218,9 @@
 .default-color3.chart-pie { -fx-pie-color: -heatmap-low; }
 .default-color4.chart-pie { -fx-pie-color: -heatmap-very-high; }
 .default-color5.chart-pie { -fx-pie-color: -heatmap-high; }
+.chart-plot-background {
+    -fx-background-color: -stat-card-secundary-bg;
+}
 
 .chart-series-area-line {
     -fx-stroke: -color-accent;
@@ -1255,22 +1258,23 @@
 
 /* --- segmented buttons settings --- */
 .segmented-button .toggle-button {
-    -fx-background-radius: 0;
+    -fx-background-radius: 18;
     -fx-border-color: -color-border-subtle-light;
     -fx-background-color: transparent;
-    -fx-border-width: 1 0 1 1;
+    -fx-border-width: 1 0 1 0;
     -fx-font-size: 15px;
 }
 
 .segmented-button .left-pill {
-    -fx-background-radius: 18 0 0 18;
+    -fx-background-radius: 18;
     -fx-border-radius: 18 0 0 18;
+    -fx-border-width: 1 0 1 1;
 }
 
 .segmented-button .right-pill {
-    -fx-background-radius: 0 18 18 0;
+    -fx-background-radius: 18;
     -fx-border-radius: 0 18 18 0;
-    -fx-border-width: 1 1 1 1;
+    -fx-border-width: 1 1 1 0;
 }
 
 .segmented-button .toggle-button:hover {
@@ -1454,4 +1458,52 @@
 
 .calendar-button-icon:hover .ikonli-font-icon {
     -fx-icon-color: -color-accent;
+}
+
+/* --- floating deck --- */
+.floating-dock {
+    -fx-background-color: derive(-color-bg-subtle, 10%);
+    -fx-background-radius: 24;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 24;
+    -fx-padding: 10 18 10 18;
+    -fx-effect: dropshadow(three-pass-box, -shadow-default, 20, 0, 0, 10);
+}
+
+.dock-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 14;
+    -fx-cursor: hand;
+}
+
+.dock-icon {
+    -fx-icon-color: -icon-subtle;
+    -fx-icon-size: 28;
+}
+
+.dock-button:hover {
+    -fx-background-color: -color-hover;
+}
+
+.dock-button:hover .dock-icon {
+    -fx-icon-color: -color-accent;
+}
+
+.dock-button:selected {
+    -fx-background-color: -color-accent-light;
+    -fx-effect: dropshadow(two-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 0);
+}
+
+.dock-button:selected .dock-icon {
+    -fx-icon-color: -color-accent;
+}
+
+.floating-dock .separator {
+    -fx-opacity: 0.5;
+    -fx-padding: 0 5 0 5;
+}
+
+.floating-dock .separator .line {
+    -fx-border-color: -text-muted;
+    -fx-border-width: 0 1 0 0;
 }
