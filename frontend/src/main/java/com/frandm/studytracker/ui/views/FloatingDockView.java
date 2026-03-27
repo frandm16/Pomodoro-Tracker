@@ -66,10 +66,10 @@ public class FloatingDockView {
         textGroups.clear();
         subtitleLabels.clear();
 
-        createSectionButton(Section.TIMER, "Focus", "Ready to study", "mdi2t-timer-outline");
-        createSectionButton(Section.PLANNER, "Planner", "Today's roadmap", "mdi2c-calendar-check");
-        createSectionButton(Section.STATS, "Stats", "Progress overview", "mdi2c-chart-bar");
-        createSectionButton(Section.HISTORY, "History", "Past sessions", "mdi2h-history");
+        createSectionButton(Section.TIMER, "Focus", "", "mdi2t-timer-outline");
+        createSectionButton(Section.PLANNER, "Planner", "", "mdi2c-calendar-check");
+        createSectionButton(Section.STATS, "Stats", "", "mdi2c-chart-bar");
+        createSectionButton(Section.HISTORY, "History", "", "mdi2h-history");
 
         Separator separator = new Separator(Orientation.VERTICAL);
         separator.setPrefHeight(24);
@@ -228,10 +228,6 @@ public class FloatingDockView {
         }
     }
 
-    public Section getSelectedSection() {
-        return currentSection;
-    }
-
     private int indexOf(Section section) {
         return switch (section) {
             case TIMER -> 0;
@@ -256,13 +252,14 @@ public class FloatingDockView {
     private String resolveDockSubtitle(Section section, PomodoroEngine engine) {
         return switch (section) {
             case TIMER -> switch (engine.getCurrentState()) {
-                case WORK, SHORT_BREAK, LONG_BREAK -> engine.getCurrentMode() == PomodoroEngine.Mode.POMODORO ? "Pomodoro running" : "Timer in progress";
+                case WORK, SHORT_BREAK, LONG_BREAK -> engine.getCurrentMode() == PomodoroEngine.Mode.POMODORO ? "Pomodoro running" :
+                        engine.getCurrentMode() == PomodoroEngine.Mode.COUNTDOWN ? "Countdown in progress" : "Timer in progress";
                 case WAITING -> "Paused at " + engine.getFormattedTime();
-                default -> engine.getCurrentMode() == PomodoroEngine.Mode.COUNTDOWN ? "Countdown ready" : "Ready to study";
+                default -> "Ready to study";
             };
             case PLANNER -> "Daily and Weekly views";
             case STATS -> "Weekly focus and trends";
-            case HISTORY -> "Archive of completed sessions";
+            case HISTORY -> "Session logger";
         };
     }
 }

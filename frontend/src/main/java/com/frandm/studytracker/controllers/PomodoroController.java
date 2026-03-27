@@ -209,7 +209,6 @@ public class PomodoroController {
                 uiManager.switchPanels(activePanel, historyContainer, direction);
             }
         }
-
         refreshDynamicDock();
     }
 
@@ -823,6 +822,8 @@ public class PomodoroController {
 
         Region colorIndicator = new Region();
         colorIndicator.setPrefSize(4, 20);
+        colorIndicator.setMinWidth(4);
+        colorIndicator.setMaxWidth(4);
         colorIndicator.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 2;");
 
         VBox info = new VBox(2);
@@ -869,6 +870,8 @@ public class PomodoroController {
 
         Region colorIndicator = new Region();
         colorIndicator.setPrefSize(4, 20);
+        colorIndicator.setMinWidth(4);
+        colorIndicator.setMaxWidth(4);
         colorIndicator.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 2;");
 
         VBox info = new VBox(2);

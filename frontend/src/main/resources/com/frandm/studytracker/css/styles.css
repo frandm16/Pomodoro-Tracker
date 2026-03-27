@@ -1584,7 +1584,7 @@
 
 /* --- floating dock --- */
 .floating-dock {
-    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -color-bg-subtle, -stat-card-secundary-bg);
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -color-bg-subtle, -color-bg-default);
     -fx-background-radius: 26;
     -fx-border-color: -color-border-subtle-light;
     -fx-border-radius: 26;
@@ -1634,11 +1634,11 @@
 }
 
 .dock-button:selected {
-    -fx-background-color: linear-gradient(from 0% 0% to 75% 75%, -color-accent-light, transparent);
+    -fx-background-color: linear-gradient(from 0% 0% to 75% 75%, -color-accent-light, -color-bg-default);
     -fx-border-color: -color-accent-light;
     -fx-border-radius: 18;
     -fx-border-width: 1;
-    -fx-effect: dropshadow(two-pass-box, -color-accent-light, 10, 0, 0, 0);
+    -fx-effect: dropshadow(two-pass-box, -color-accent-light, 5, 0, 0, 0);
 }
 
 .dock-button:selected .dock-icon {
