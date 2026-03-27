@@ -26,8 +26,8 @@ public class WeeklyTab extends VBox {
     private Popup activePopup = null;
     private long lastPopupCloseTime = 0;
     private final double ROW_HEIGHT = 60.0;
-    private static final double ALL_DAY_MIN_HEIGHT = 30.0;
-    private static final double DEADLINE_HEIGHT = 28.0;
+    private static final double ALL_DAY_MIN_HEIGHT = 45.0;
+    private static final double DEADLINE_HEIGHT = 45.0;
     private final Pane[] dayColumns = new Pane[7];
     private final Pane[] deadlineLayers = new Pane[7];
     private final VBox[] allDayDeadlineContainers = new VBox[7];

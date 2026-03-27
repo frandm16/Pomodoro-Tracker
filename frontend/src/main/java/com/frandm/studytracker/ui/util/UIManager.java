@@ -4,6 +4,7 @@ import com.frandm.studytracker.controllers.PomodoroController;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.CacheHint;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -13,65 +14,63 @@ import javafx.util.Duration;
 
 public class UIManager {
 
-    private static final Duration SLIDE_OUT_DURATION = Duration.millis(350);
-    private static final Duration SLIDE_IN_DURATION = Duration.millis(400);
-    private static final Duration FADE_OUT_DURATION = Duration.millis(300);
-    private static final Duration FADE_IN_DURATION = Duration.millis(350);
+    private static final Duration SLIDE_DURATION = Duration.millis(300);
+    private static final Duration FADE_DURATION = Duration.millis(250);
 
     public void switchPanels(Region toHide, Region toShow, int direction) {
         if (toHide == null || toShow == null || toHide == toShow) return;
 
         Platform.runLater(() -> {
             double width = toHide.getParent() instanceof Region p ? p.getWidth() : toHide.getWidth();
-            if (width <= 0) width = toHide.getScene() != null ? toHide.getScene().getWidth() : 800;
-
+            if (width <= 0) width = 800;
             double offset = width * direction;
 
-            toShow.setOpacity(0.0);
-            toShow.setTranslateX(offset);
-            toShow.setVisible(true);
-            toShow.setManaged(true);
+            toHide.setCache(true);
+            toHide.setCacheHint(CacheHint.SPEED);
+            toShow.setCache(true);
+            toShow.setCacheHint(CacheHint.SPEED);
 
-            TranslateTransition slideOut = new TranslateTransition(SLIDE_OUT_DURATION, toHide);
-            slideOut.setByX(-offset);
+            TranslateTransition slideOut = new TranslateTransition(SLIDE_DURATION, toHide);
+            slideOut.setByX(-offset * 0.3);
             slideOut.setInterpolator(Interpolator.EASE_BOTH);
 
-            FadeTransition fadeOut = new FadeTransition(FADE_OUT_DURATION, toHide);
+            FadeTransition fadeOut = new FadeTransition(FADE_DURATION, toHide);
             fadeOut.setToValue(0.0);
 
-            TranslateTransition slideIn = new TranslateTransition(SLIDE_IN_DURATION, toShow);
-            slideIn.setFromX(offset);
-            slideIn.setToX(0);
-            slideIn.setInterpolator(Interpolator.EASE_BOTH);
+            ParallelTransition exitTransition = new ParallelTransition(slideOut, fadeOut);
 
-            FadeTransition fadeIn = new FadeTransition(FADE_IN_DURATION, toShow);
-            fadeIn.setToValue(1.0);
-
-            ParallelTransition combined = new ParallelTransition(slideOut, fadeOut, slideIn, fadeIn);
-
-            combined.setOnFinished(e -> {
+            exitTransition.setOnFinished(e -> {
                 toHide.setVisible(false);
                 toHide.setManaged(false);
                 toHide.setTranslateX(0);
-                toHide.setOpacity(1.0);
+
+                toShow.setOpacity(0.0);
+                toShow.setTranslateX(offset * 0.3);
+                toShow.setVisible(true);
+                toShow.setManaged(true);
             });
 
-            combined.play();
+            TranslateTransition slideIn = new TranslateTransition(SLIDE_DURATION, toShow);
+            slideIn.setToX(0);
+            slideIn.setInterpolator(Interpolator.EASE_BOTH);
+
+            FadeTransition fadeIn = new FadeTransition(FADE_DURATION, toShow);
+            fadeIn.setToValue(1.0);
+
+            ParallelTransition enterTransition = new ParallelTransition(slideIn, fadeIn);
+
+            SequentialTransition fullTransition = new SequentialTransition(exitTransition, enterTransition);
+
+            fullTransition.setOnFinished(e -> {
+                toHide.setOpacity(1.0);
+                toHide.setCache(false);
+                toShow.setCache(false);
+                toShow.setMouseTransparent(false);
+            });
+
+            toHide.setMouseTransparent(true);
+            fullTransition.play();
         });
-    }
-
-    private double resolveSlideWidth(Region toHide, Region toShow) {
-        double hideWidth = toHide != null ? toHide.getWidth() : 0;
-        double showWidth = toShow != null ? toShow.getWidth() : 0;
-        double parentWidth = 0;
-
-        if (toHide != null && toHide.getParent() instanceof Region parentRegion) {
-            parentWidth = parentRegion.getWidth();
-        } else if (toShow != null && toShow.getParent() instanceof Region parentRegion) {
-            parentWidth = parentRegion.getWidth();
-        }
-
-        return Math.max(Math.max(hideWidth, showWidth), parentWidth);
     }
 
     public void animateCircleColor(Circle circle, String cssVar) {

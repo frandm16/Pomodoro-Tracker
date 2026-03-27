@@ -1654,3 +1654,7 @@
     -fx-border-color: -text-muted;
     -fx-border-width: 0 1 0 0;
 }
+
+#scheduleListContainer {
+    -fx-padding: 50 30 0 0;
+}

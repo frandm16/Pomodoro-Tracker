@@ -13,16 +13,12 @@ import com.frandm.studytracker.ui.views.FloatingDockView;
 import com.frandm.studytracker.ui.views.planner.PlannerController;
 import com.frandm.studytracker.ui.views.logs.LogsView;
 import com.frandm.studytracker.ui.views.StatsDashboard;
-import javafx.animation.FadeTransition;
-import javafx.animation.ScaleTransition;
-import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.PieChart;
@@ -38,7 +34,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class PomodoroController {
 
@@ -50,7 +45,7 @@ public class PomodoroController {
     @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer,
             plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage,
             fuzzyResultsContainer, tagsListContainer, activeTaskContainer, pomoSettingsPane,
-            countdownSettingsPane, settingsBox, confirmTagBox, confirmBox;
+            countdownSettingsPane, settingsBox, confirmTagBox, confirmBox, themeButtonsContainer;
     @FXML public HBox starsContainer, editStarsContainer, buttonsHbox, floatingDock;
     @FXML public Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
             alarmVolumeValLabel, widthSliderValLabel, countdownValLabel, circleSizeValLabel,
@@ -72,13 +67,13 @@ public class PomodoroController {
     @FXML public CategoryAxis weeksXAxis;
     @FXML public PieChart tagPieChart;
     @FXML public ColumnConstraints colRightStats, colCenterStats, colLeftStats;
+    @FXML public ScrollPane statsContainer;
     //endregion
 
     private final PomodoroEngine engine = new PomodoroEngine();
     private final SetupManager setupManager = new SetupManager(this);
     private final UIManager uiManager = new UIManager();
-    public VBox themeButtonsContainer;
-    public ScrollPane statsContainer;
+
 
     private StatsDashboard statsDashboard;
     private PlannerController plannerController;
@@ -87,20 +82,10 @@ public class PomodoroController {
 
     private double SIZE_FACTOR = 0.25;
     private int currentRating = 0;
-    private boolean isDarkMode = true;
-    private int lastDockDirection = 1;
     private LocalDateTime startDate;
 
     private final List<FontIcon> starNodes = new ArrayList<>();
     private final List<FontIcon> editStarNodes = new ArrayList<>();
-    private final ToggleGroup dockGroup = new ToggleGroup();
-    private final Map<ToggleButton, DockSection> dockSections = new LinkedHashMap<>();
-    private final Map<ToggleButton, VBox> dockTextGroups = new HashMap<>();
-    private final Map<ToggleButton, Label> dockSubtitleLabels = new HashMap<>();
-    private ToggleButton menuBtn;
-    private ToggleButton plannerBtn;
-    private ToggleButton statsBtn;
-    private ToggleButton historyBtn;
     private static final int UPCOMING_DEADLINES_LIMIT = 5;
     private static final DateTimeFormatter MENU_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter MENU_DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM");
@@ -110,13 +95,6 @@ public class PomodoroController {
     private Map<String, List<String>> tagsWithTasksMap = new HashMap<>();
     private Map<String, String> tagColors = new HashMap<>();
     private String tagToDelete = null;
-
-    private enum DockSection {
-        TIMER,
-        PLANNER,
-        STATS,
-        HISTORY
-    }
 
     @FXML
     public void initialize() {
@@ -194,83 +172,6 @@ public class PomodoroController {
         }
     }
 
-    private void refreshDynamicDock(int direction) {
-        dockSections.forEach((button, section) -> {
-            boolean selected = button.isSelected();
-            VBox textBox = dockTextGroups.get(button);
-            Label subtitleLabel = dockSubtitleLabels.get(button);
-
-            if (subtitleLabel != null) {
-                subtitleLabel.setText(resolveDockSubtitle(section));
-            }
-
-            button.getStyleClass().remove("active");
-            if (selected) {
-                button.getStyleClass().add("active");
-            }
-
-            animateDockButton(button, textBox, selected, direction);
-        });
-    }
-
-    private void animateDockButton(ToggleButton button, VBox textBox, boolean selected, int direction) {
-        if (textBox == null) {
-            return;
-        }
-
-        ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(180), button);
-        scaleTransition.setToX(selected ? 1.02 : 1.0);
-        scaleTransition.setToY(selected ? 1.02 : 1.0);
-
-        TranslateTransition buttonShift = new TranslateTransition(Duration.millis(220), button);
-        buttonShift.setFromX(selected ? direction * 8.0 : button.getTranslateX());
-        buttonShift.setToX(0);
-        buttonShift.setInterpolator(javafx.animation.Interpolator.SPLINE(0.22, 1.0, 0.36, 1.0));
-
-        scaleTransition.play();
-        buttonShift.play();
-
-        FadeTransition fadeTransition = new FadeTransition(Duration.millis(180), textBox);
-        TranslateTransition translateTransition = new TranslateTransition(Duration.millis(180), textBox);
-        double textOffset = direction < 0 ? -10 : direction > 0 ? 10 : 0;
-
-        if (selected) {
-            textBox.setManaged(true);
-            textBox.setVisible(true);
-            fadeTransition.setFromValue(textBox.getOpacity());
-            fadeTransition.setToValue(1);
-            translateTransition.setFromX(textOffset);
-            translateTransition.setToX(0);
-        } else {
-            fadeTransition.setFromValue(textBox.getOpacity());
-            fadeTransition.setToValue(0);
-            translateTransition.setFromX(textBox.getTranslateX());
-            translateTransition.setToX(-textOffset * 0.6);
-            fadeTransition.setOnFinished(_ -> {
-                if (!button.isSelected()) {
-                    textBox.setManaged(false);
-                    textBox.setVisible(false);
-                }
-            });
-        }
-
-        fadeTransition.play();
-        translateTransition.play();
-    }
-
-    private String resolveDockSubtitle(DockSection section) {
-        return switch (section) {
-            case TIMER -> switch (engine.getCurrentState()) {
-                case WORK, SHORT_BREAK, LONG_BREAK -> engine.getCurrentMode() == PomodoroEngine.Mode.POMODORO ? "Pomodoro running" : "Timer in progress";
-                case WAITING -> "Paused at " + engine.getFormattedTime();
-                default -> engine.getCurrentMode() == PomodoroEngine.Mode.COUNTDOWN ? "Countdown ready" : "Ready to study";
-            };
-            case PLANNER -> "Today · deadlines and sessions";
-            case STATS -> "Weekly focus and trends";
-            case HISTORY -> "Archive of completed sessions";
-        };
-    }
-
     private void handleDockNavigation(FloatingDockView.Section section, int direction) {
         Region activePanel = getActivePanel();
 
@@ -288,7 +189,7 @@ public class PomodoroController {
                     floatingDockView.setSelectedSection(FloatingDockView.Section.PLANNER, direction);
                     return;
                 }
-                plannerController.refresh();
+                //plannerController.refresh();
                 uiManager.switchPanels(activePanel, plannerContainer, direction);
             }
             case STATS -> {
@@ -572,69 +473,6 @@ public class PomodoroController {
 
     //region Navegación
     @FXML
-    void handleNavClick(ActionEvent event) {
-        ToggleButton clickedBtn = (ToggleButton) event.getSource();
-        Node targetContainer = null;
-        int currentIndex = getDockIndexForActivePanel();
-        int nextIndex = getDockIndex(clickedBtn);
-
-        if (clickedBtn == menuBtn) {
-            targetContainer = mainContainer;
-        } else if (clickedBtn == plannerBtn) {
-            targetContainer = plannerContainer;
-        } else if (clickedBtn == statsBtn) {
-            targetContainer = statsContainer;
-        } else if (clickedBtn == historyBtn) {
-            targetContainer = historyContainer;
-        }
-
-        if (targetContainer != null && targetContainer == getActivePanel()) {
-            clickedBtn.setSelected(true);
-            return;
-        }
-        lastDockDirection = Integer.compare(nextIndex, currentIndex);
-        if (lastDockDirection == 0) {
-            lastDockDirection = 1;
-        }
-        Stream.of(menuBtn, plannerBtn, statsBtn, historyBtn)
-                .forEach(btn -> btn.getStyleClass().remove("active"));
-        clickedBtn.getStyleClass().add("active");
-
-        if (clickedBtn == menuBtn) {
-            refreshSideMenu();
-            uiManager.switchPanels(getActivePanel(), mainContainer, lastDockDirection);
-        } else if (clickedBtn == plannerBtn) {
-            plannerController.refresh();
-            uiManager.switchPanels(getActivePanel(), plannerContainer, lastDockDirection);
-        } else if (clickedBtn == statsBtn) {
-            statsDashboard.refresh();
-            uiManager.switchPanels(getActivePanel(), statsContainer, lastDockDirection);
-        } else if (clickedBtn == historyBtn) {
-            logsView.resetAndReload();
-            uiManager.switchPanels(getActivePanel(), historyContainer, lastDockDirection);
-        }
-
-        refreshDynamicDock(lastDockDirection);
-    }
-
-    private int getDockIndexForActivePanel() {
-        Region activePanel = getActivePanel();
-        if (activePanel == mainContainer) return 0;
-        if (activePanel == plannerContainer) return 1;
-        if (activePanel == statsContainer) return 2;
-        if (activePanel == historyContainer) return 3;
-        return 0;
-    }
-
-    private int getDockIndex(ToggleButton button) {
-        if (button == menuBtn) return 0;
-        if (button == plannerBtn) return 1;
-        if (button == statsBtn) return 2;
-        if (button == historyBtn) return 3;
-        return 0;
-    }
-
-    @FXML
     private void handleResetTimeSettings() {
         workSlider.setValue(25);
         shortSlider.setValue(5);
@@ -647,12 +485,6 @@ public class PomodoroController {
 
         updateEngineSettings();
         ConfigManager.save(engine);
-    }
-
-    @FXML
-    private void toggleTheme() {
-        isDarkMode = !isDarkMode;
-        applyTheme();
     }
 
     @FXML
@@ -1277,11 +1109,6 @@ public class PomodoroController {
         pomoModeBtn.setDisable(false);
         timerModeBtn.setDisable(false);
         countdownModeBtn.setDisable(false);
-    }
-
-    @FXML
-    private void handleMusicToggle() {
-        SoundManager.toggleMusic(SoundManager.SoundType.BACKGROUND_MUSIC);
     }
 
     public String getCurrentTheme() { return engine.getCurrentTheme();}
