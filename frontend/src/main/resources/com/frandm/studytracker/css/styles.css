@@ -8,7 +8,7 @@
 .timer-label {
     -fx-font-size: 100px;
     -fx-font-weight: bold;
-    -fx-text-fill: -text-main;
+    -fx-text-fill: -color-accent;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 3, 0, 2, 2);
     -fx-padding: 0;
 }
@@ -1236,9 +1236,10 @@
 
 .main-vbox {
     -fx-background-color: linear-gradient(from 0% 0% to 50% 50%, -color-bg-subtle, -color-bg-default);
-    -fx-padding: 10 20;
+    -fx-padding: 10 10;
     -fx-max-width: 450px;
     -fx-background-radius: 20;
+    -fx-spacing: 10;
     -fx-border-color: -color-border-subtle-light;
     -fx-border-radius: 20;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 8);
@@ -1649,12 +1650,13 @@
     -fx-background-color: transparent;
     -fx-background-radius: 20;
     -fx-padding: 12 14 12 14;
-    -fx-cursor: hand;
+
 }
 
 .dock-icon {
     -fx-icon-color: -icon-subtle;
     -fx-icon-size: 24;
+    -fx-cursor: hand;
 }
 
 .dock-copy {
@@ -1677,12 +1679,11 @@
 }
 
 .dock-button:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
-    -fx-translate-y: -1;
 }
 
-.dock-button:hover .dock-icon {
+.dock-icon:hover {
     -fx-icon-color: -color-accent;
+    -fx-translate-y: -1;
 }
 
 .dock-button:selected {
@@ -1691,6 +1692,7 @@
     -fx-border-radius: 20;
     -fx-border-width: 1;
     -fx-effect: dropshadow(two-pass-box, -color-accent-light, 5, 0, 0, 0);
+    -fx-cursor: hand;
 }
 
 .dock-button:selected .dock-icon {
@@ -1709,4 +1711,37 @@
 
 #scheduleListContainer {
     -fx-padding: 50 30 0 0;
+}
+
+.timer-description {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 10px;
+}
+
+.timer-name {
+    -fx-text-fill: -text-main;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.timer-vbox {
+    -fx-spacing: 1;
+}
+
+.timer-hbox {
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-padding: 5 10;
+    -fx-background-color: linear-gradient(from 0% 0% to 75% 75%, -color-accent-light, transparent);
+    -fx-border-color: -color-accent-light;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-spacing: 10;
+    -fx-effect: dropshadow(two-pass-box, -color-accent-light, 5, 0, 0, 0);
+    -fx-alignment: CENTER_LEFT;
+}
+
+.timer-icon {
+    -fx-icon-size:14;
+    -fx-icon-color: -color-accent;
 }

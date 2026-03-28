@@ -26,8 +26,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Arc;
-import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import java.time.LocalDate;
@@ -72,6 +70,8 @@ public class PomodoroController {
     private final PomodoroEngine engine = new PomodoroEngine();
     private final SetupManager setupManager = new SetupManager(this);
     private final UIManager uiManager = new UIManager();
+    public Label ModeSubnameLabel;
+    public Label ModeNameLabel;
 
 
     private StatsDashboard statsDashboard;
@@ -141,6 +141,7 @@ public class PomodoroController {
                 tasksLabel, timeLastMonthLabel, weeklyLineChart,
                 tagPieChart, statsPlaceholder
         );
+        statsDashboard.refresh();
     }
 
     private void setupInitialUIState() {
@@ -150,10 +151,10 @@ public class PomodoroController {
         refreshSideMenu();
         updateActiveTaskDisplay("add tag", null);
 
-        stackpaneCircle.widthProperty().addListener((_, _, _) -> resizeCircle());
-        stackpaneCircle.heightProperty().addListener((_, _, _) -> resizeCircle());
+        stackpaneCircle.widthProperty().addListener((_, _, _) -> resizeUI());
+        stackpaneCircle.heightProperty().addListener((_, _, _) -> resizeUI());
         SIZE_FACTOR = engine.getUiSize() * 0.05;
-        resizeCircle();
+        resizeUI();
     }
 
     private void setupDynamicDock() {
@@ -177,7 +178,7 @@ public class PomodoroController {
         switch (section) {
             case TIMER -> {
                 if (activePanel == mainContainer) {
-                    floatingDockView.setSelectedSection(FloatingDockView.Section.TIMER, direction);
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.TIMER);
                     return;
                 }
                 refreshSideMenu();
@@ -185,7 +186,7 @@ public class PomodoroController {
             }
             case PLANNER -> {
                 if (activePanel == plannerContainer) {
-                    floatingDockView.setSelectedSection(FloatingDockView.Section.PLANNER, direction);
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.PLANNER);
                     return;
                 }
                 //plannerController.refresh();
@@ -193,18 +194,18 @@ public class PomodoroController {
             }
             case STATS -> {
                 if (activePanel == statsContainer) {
-                    floatingDockView.setSelectedSection(FloatingDockView.Section.STATS, direction);
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.STATS);
                     return;
                 }
-                statsDashboard.refresh();
+                //statsDashboard.refresh();
                 uiManager.switchPanels(activePanel, statsContainer, direction);
             }
             case HISTORY -> {
                 if (activePanel == historyContainer) {
-                    floatingDockView.setSelectedSection(FloatingDockView.Section.HISTORY, direction);
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.HISTORY);
                     return;
                 }
-                logsView.resetAndReload();
+                //logsView.resetAndReload();
                 uiManager.switchPanels(activePanel, historyContainer, direction);
             }
         }
@@ -231,7 +232,7 @@ public class PomodoroController {
         setupSlider(circleSizeSlider, circleSizeValLabel, engine.getUiSize(), (newVal) -> {
             engine.setUiSize(newVal);
             SIZE_FACTOR = newVal * 0.05;
-            resizeCircle();
+            resizeUI();
         }, " %");
         SoundManager.setEngine(engine);
 
@@ -309,7 +310,7 @@ public class PomodoroController {
 
 
 
-    private void resizeCircle() {
+    private void resizeUI() {
         double width = mainVbox.getWidth();
         double height = mainVbox.getHeight();
         if (width <= 0 || height <= 0) return;
@@ -438,6 +439,8 @@ public class PomodoroController {
                     ApiClient.formatApiTimestamp(LocalDateTime.now()),
                     currentRating
             );
+            statsDashboard.refresh();
+            logsView.resetAndReload();
         } catch (Exception e) {
             System.err.println("Error saving session: " + e.getMessage());
             NotificationManager.show("Error", "Session could not be saved", NotificationManager.NotificationType.ERROR);
@@ -497,6 +500,7 @@ public class PomodoroController {
 
             tagNameInput.clear();
             refreshDatabaseData();
+            logsView.resetAndReload();
 
             setupManager.renderTagsList(tagsListContainer, tagColors, () ->
                     setupManager.updateFuzzyResults(fuzzySearchInput.getText(), fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
@@ -547,16 +551,19 @@ public class PomodoroController {
     }
 
     private void updatePomodoroUI(PomodoroEngine.State logical) {
+        String text = (logical == PomodoroEngine.State.MENU) ? "Pomodoro" : "Pomodoro - #" + (engine.getSessionCounter() + 1);
         switch (logical) {
-            case WORK, MENU -> {
-                String text = (logical == PomodoroEngine.State.MENU) ? "Pomodoro" : "Pomodoro - #" + (engine.getSessionCounter() + 1);
-                applyStyle(text, "-color-accent", true);
+            case MENU -> {
+                applyStyle(text, "Ready to play");
+            }
+            case WORK -> {
+                applyStyle(text, "Working");
             }
             case SHORT_BREAK -> {
-                applyStyle("Short Break", "-color-accent", true);
+                applyStyle("Pomodoro","Short Break");
             }
             case LONG_BREAK -> {
-                applyStyle("Long Break", "-color-accent", true);
+                applyStyle("Pomodoro","Long Break");
             }
         }
     }
@@ -564,10 +571,10 @@ public class PomodoroController {
     private void updateTimerUI(PomodoroEngine.State logical) {
         switch (logical) {
             case MENU -> {
-                applyStyle("Timer", "-color-accent", true);
+                applyStyle("Timer", "Ready to play");
             }
             case WORK -> {
-                applyStyle("Timer", "-color-accent", false);
+                applyStyle("Timer", "Working");
             }
         }
     }
@@ -575,10 +582,10 @@ public class PomodoroController {
     private void updateCountdownUI(PomodoroEngine.State logical) {
         switch (logical) {
             case MENU -> {
-                applyStyle("Countdown", "-color-accent", true);
+                applyStyle("Countdown", "Ready to play");
             }
             case WORK -> {
-                applyStyle("Countdown", "-color-accent", false);
+                applyStyle("Countdown", "Working");
             }
         }
     }
@@ -875,8 +882,8 @@ public class PomodoroController {
     public void refreshSideMenu() {
         if (scheduleListContainer != null) {
             scheduleListContainer.getChildren().clear();
-            scheduleListContainer.getChildren().add(createTodaySchedulesList());
             scheduleListContainer.getChildren().add(createUpcomingDeadlinesList());
+            scheduleListContainer.getChildren().add(createTodaySchedulesList());
         }
         refreshDynamicDock();
     }
@@ -1008,12 +1015,9 @@ public class PomodoroController {
         }
     }
 
-    private void applyStyle(String labelText, String colorVar, boolean opacity) {
-        stateLabel.setText(labelText);
-        stateLabel.setStyle("-fx-text-fill: " + colorVar + ";");
-        stateLabel.setVisible(opacity);
-        stateLabel.setManaged(opacity);
-        timerLabel.setStyle("-fx-text-fill: " + colorVar + ";");
+    private void applyStyle(String labelName, String labelSubname) {
+        ModeNameLabel.setText(labelName);
+        ModeSubnameLabel.setText(labelSubname);
     }
 
     public void openEditSession(Session s) {

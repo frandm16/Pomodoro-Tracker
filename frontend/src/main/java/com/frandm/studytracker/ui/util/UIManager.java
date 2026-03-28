@@ -16,8 +16,8 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 public class UIManager {
 
-    private static final Duration SLIDE_DURATION = Duration.millis(300);
-    private static final Duration FADE_DURATION = Duration.millis(250);
+    private static final Duration SLIDE_DURATION = Duration.millis(100);
+    private static final Duration FADE_DURATION = Duration.millis(100);
 
     public void switchPanels(Region toHide, Region toShow, int direction) {
         if (toHide == null || toShow == null || toHide == toShow) return;
@@ -78,9 +78,6 @@ public class UIManager {
     public void updateActiveBadge(HBox container, String tag, String task, String color, PomodoroController controller) {
         container.getChildren().clear();
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
         HBox tagBox = new HBox(5);
         tagBox.getStyleClass().add("selected-tag-box");
 
@@ -92,19 +89,34 @@ public class UIManager {
             colorCircle.setStyle("-fx-fill: " + color + ";");
             colorCircle.getStyleClass().add("selected-tag-circle-color");
             tagBox.getChildren().addAll(colorCircle, tagLabel);
+
+            HBox taskBox = new HBox(5);
+            taskBox.getStyleClass().add("selected-tag-box");
+
+            Label taskLabel = new Label(task);
+            taskLabel.getStyleClass().add("selected-tag-label");
+
+            taskBox.getChildren().addAll(taskLabel);
+
+            tagBox.setOnMouseClicked(_ -> controller.toggleSetup());
+            taskBox.setOnMouseClicked(_ -> controller.toggleSetup());
+
+            container.getChildren().addAll(taskBox, tagBox);
         } else {
             FontIcon taskIcon = new FontIcon("mdi2t-tag-outline");
             taskIcon.getStyleClass().add("selected-tag-icon");
             tagBox.getChildren().addAll(taskIcon, tagLabel);
+
+            tagBox.setOnMouseClicked(_ -> controller.toggleSetup());
+
+            container.getChildren().addAll(tagBox);
         }
 
 
 
 
 
-        tagBox.setOnMouseClicked(_ -> controller.toggleSetup());
 
-        container.getChildren().addAll(spacer, tagBox);
 
     }
 }
