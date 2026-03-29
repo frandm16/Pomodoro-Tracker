@@ -220,6 +220,13 @@ public class PomodoroController {
         refreshDynamicDock();
     }
 
+    public void openPlannerPanel() {
+        if (getActivePanel() == plannerContainer) return;
+        if (floatingDockView != null) {
+            floatingDockView.triggerSection(FloatingDockView.Section.PLANNER);
+        }
+    }
+
     private void setupSettingsPanel() {
         setupSlider(workSlider, workValLabel, engine.getWorkMins(), engine::setWorkMins, " min");
         setupSlider(shortSlider, shortValLabel, engine.getShortMins(), engine::setShortMins, " min");
@@ -738,7 +745,7 @@ public class PomodoroController {
         container.getStyleClass().add("menu-today-container");
 
         Label title = new Label("TODAY'S SCHEDULED");
-        title.setStyle("-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: -color-fg-muted;");
+        title.getStyleClass().add("menu-section-title");
 
         VBox list = new VBox(5);
         List<Map<String, Object>> todaySessions;
@@ -753,7 +760,7 @@ public class PomodoroController {
 
         if (todaySessions.isEmpty()) {
             Label empty = new Label("No scheduled sessions for today");
-            empty.setStyle("-fx-font-style: italic; -fx-opacity: 0.6;");
+            empty.getStyleClass().add("menu-empty-text");
             list.getChildren().add(empty);
         } else {
             todaySessions.sort(Comparator.comparing(this::extractSessionStartTime, Comparator.nullsLast(Comparator.naturalOrder())));
@@ -773,7 +780,7 @@ public class PomodoroController {
         container.getStyleClass().add("menu-today-container");
 
         Label title = new Label("UPCOMING DEADLINES");
-        title.setStyle("-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: -color-fg-muted;");
+        title.getStyleClass().add("menu-section-title");
 
         VBox list = new VBox(5);
         List<Map<String, Object>> upcomingDeadlines;
@@ -806,11 +813,42 @@ public class PomodoroController {
 
         if (upcomingDeadlines.isEmpty()) {
             Label empty = new Label("No upcoming deadlines");
-            empty.setStyle("-fx-font-style: italic; -fx-opacity: 0.6;");
+            empty.getStyleClass().add("menu-empty-text");
             list.getChildren().add(empty);
         } else {
             for (Map<String, Object> deadline : upcomingDeadlines) {
                 list.getChildren().add(createMiniDeadlineItem(deadline));
+            }
+        }
+
+        container.getChildren().addAll(title, list);
+        return container;
+    }
+
+    private VBox createTodayTodosList() {
+        VBox container = new VBox(10);
+        container.setPadding(new Insets(15));
+        container.getStyleClass().add("menu-today-container");
+
+        Label title = new Label("TODAY'S TO-DO");
+        title.getStyleClass().add("menu-section-title");
+
+        VBox list = new VBox(5);
+        List<Map<String, Object>> todos;
+        try {
+            todos = ApiClient.getTodosByDate(LocalDate.now());
+        } catch (Exception e) {
+            System.err.println("Error loading today's todos: " + e.getMessage());
+            todos = new ArrayList<>();
+        }
+
+        if (todos.isEmpty()) {
+            Label empty = new Label("No to-dos for today");
+            empty.getStyleClass().add("menu-empty-text");
+            list.getChildren().add(empty);
+        } else {
+            for (Map<String, Object> todo : todos) {
+                list.getChildren().add(createMiniTodoItem(todo));
             }
         }
 
@@ -826,7 +864,7 @@ public class PomodoroController {
 
         Map<?, ?> task = (Map<?, ?>) session.get("task");
         Map<?, ?> tag = task != null ? (Map<?, ?>) task.get("tag") : null;
-        String color = tag != null ? (String) tag.get("color") : "#ffffff";
+        String color = tag != null ? (String) tag.get("color") : null;
         String tagName = tag != null ? (String) tag.get("name") : null;
         String taskName = task != null ? (String) task.get("name") : null;
 
@@ -834,11 +872,14 @@ public class PomodoroController {
         colorIndicator.setPrefSize(4, 20);
         colorIndicator.setMinWidth(4);
         colorIndicator.setMaxWidth(4);
-        colorIndicator.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 2;");
+        colorIndicator.getStyleClass().add("menu-color-indicator");
+        if (color != null && !color.isBlank()) {
+            colorIndicator.setStyle("-menu-tag-color: " + color + ";");
+        }
 
         VBox info = new VBox(2);
         Label lblTitle = new Label((String) session.get("title"));
-        lblTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        lblTitle.getStyleClass().add("menu-item-title");
 
         LocalDateTime start = extractSessionStartTime(session);
         LocalDateTime end = ApiClient.parseApiTimestamp(session.get("endTime"));
@@ -846,7 +887,7 @@ public class PomodoroController {
         String timeText = (start != null && end != null) ?
                 start.format(MENU_TIME_FORMAT) + " - " + end.format(MENU_TIME_FORMAT) : "";
         Label lblTime = new Label(timeText);
-        lblTime.setStyle("-fx-font-size: 13px; -fx-opacity: 0.7;");
+        lblTime.getStyleClass().add("menu-item-meta");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -854,7 +895,6 @@ public class PomodoroController {
 
         Button btnPlay = new Button();
         FontIcon playIcon = new FontIcon("fas-play");
-        playIcon.setIconColor(Color.web(color));
         playIcon.getStyleClass().add("play-icon");
 
         btnPlay.setGraphic(playIcon);
@@ -873,20 +913,25 @@ public class PomodoroController {
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(8));
         item.getStyleClass().add("menu-session-item");
+        item.setCursor(javafx.scene.Cursor.HAND);
+        item.setOnMouseClicked(_ -> openPlannerPanel());
 
         Map<?, ?> task = (Map<?, ?>) deadline.get("task");
         Map<?, ?> tag = task != null ? (Map<?, ?>) task.get("tag") : null;
-        String color = tag != null ? (String) tag.get("color") : "#ef4444";
+        String color = tag != null ? (String) tag.get("color") : null;
 
         Region colorIndicator = new Region();
         colorIndicator.setPrefSize(4, 20);
         colorIndicator.setMinWidth(4);
         colorIndicator.setMaxWidth(4);
-        colorIndicator.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 2;");
+        colorIndicator.getStyleClass().add("menu-color-indicator");
+        if (color != null && !color.isBlank()) {
+            colorIndicator.setStyle("-menu-tag-color: " + color + ";");
+        }
 
         VBox info = new VBox(2);
         Label lblTitle = new Label(String.valueOf(deadline.getOrDefault("title", "Deadline")));
-        lblTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        lblTitle.getStyleClass().add("menu-item-title");
 
         LocalDateTime dueDate = extractDeadlineDueDate(deadline);
 
@@ -899,14 +944,47 @@ public class PomodoroController {
         String urgency = String.valueOf(deadline.getOrDefault("urgency", "Medium"));
 
         Label lblTime = new Label(timeText + (timeText.isEmpty() ? "" : " • ") + urgency);
-        lblTime.setStyle("-fx-font-size: 13px; -fx-opacity: 0.7;");
+        lblTime.getStyleClass().add("menu-item-meta");
 
         FontIcon deadlineIcon = new FontIcon("mdi2a-alarm");
-        deadlineIcon.setIconColor(Color.web(color));
         deadlineIcon.setIconSize(16);
+        if (color != null && !color.isBlank()) {
+            deadlineIcon.setIconColor(Color.web(color));
+        }
 
         info.getChildren().addAll(lblTitle, lblTime);
         item.getChildren().addAll(colorIndicator, deadlineIcon, info);
+        return item;
+    }
+
+    private HBox createMiniTodoItem(Map<String, Object> todo) {
+        HBox item = new HBox(10);
+        item.setAlignment(Pos.CENTER_LEFT);
+        item.setPadding(new Insets(8));
+        item.getStyleClass().add("menu-session-item");
+        item.setCursor(javafx.scene.Cursor.HAND);
+        item.setOnMouseClicked(_ -> openPlannerPanel());
+
+        boolean completed = ApiClient.parseBooleanFlag(todo.get("completed"));
+
+        FontIcon todoIcon = new FontIcon(completed ? "mdi2c-check-circle" : "mdi2c-checkbox-blank-circle-outline");
+        todoIcon.setIconSize(16);
+        todoIcon.setIconColor(completed ? Color.web("#9ca3af") : Color.web("#f59e0b"));
+
+        VBox info = new VBox(2);
+        Label lblTitle = new Label(String.valueOf(todo.getOrDefault("text", "To-Do")));
+        lblTitle.getStyleClass().add("menu-item-title");
+
+        Label lblStatus = new Label(completed ? "Completed" : "Pending");
+        lblStatus.getStyleClass().add("menu-item-meta");
+
+        if (completed) {
+            lblTitle.setOpacity(0.65);
+            lblStatus.setOpacity(0.5);
+        }
+
+        info.getChildren().addAll(lblTitle, lblStatus);
+        item.getChildren().addAll(todoIcon, info);
         return item;
     }
 
@@ -914,6 +992,7 @@ public class PomodoroController {
         if (scheduleListContainer != null) {
             scheduleListContainer.getChildren().clear();
             scheduleListContainer.getChildren().add(createUpcomingDeadlinesList());
+            scheduleListContainer.getChildren().add(createTodayTodosList());
             scheduleListContainer.getChildren().add(createTodaySchedulesList());
         }
         refreshDynamicDock();

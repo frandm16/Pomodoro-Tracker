@@ -478,6 +478,10 @@ public class ApiClient {
         put("/todos/" + id, Map.of("completed", completed));
     }
 
+    public static void updateTodo(long id, String text, boolean completed) throws Exception {
+        put("/todos/" + id, Map.of("text", text, "completed", completed));
+    }
+
     public static void deleteTodo(long id) throws Exception {
         delete("/todos/" + id);
     }

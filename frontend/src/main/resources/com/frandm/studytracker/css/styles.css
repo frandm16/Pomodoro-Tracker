@@ -1104,8 +1104,7 @@
     -fx-icon-size: 20px;
 }
 .play-icon:hover {
-    -fx-icon-size: 22px;
-    -fx-icon-color: -icon-subtle;
+    -fx-icon-color: -color-accent;
 }
 
 /* --- notifications --- */
@@ -1584,6 +1583,32 @@
     -fx-text-fill: -text-muted;
 }
 
+.daily-note-text {
+    -fx-background-color: -color-bg-subtle;
+    -fx-background-radius: 10;
+    -fx-padding: 16 18;
+    -fx-content-display: left;
+    -fx-graphic-text-gap: 12;
+    -fx-cursor: hand;
+}
+
+
+.daily-note-text-icon {
+    -fx-icon-color: -icon-subtle;
+    -fx-icon-size: 16;
+}
+
+.daily-note-text-empty {
+    -fx-background-color: transparent;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-style: segments(5);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-content-display: top;
+    -fx-graphic-text-gap: 10;
+    -fx-alignment: center;
+}
+
 .daily-container {
     -fx-spacing: 10;
 }
@@ -1598,7 +1623,6 @@
     -fx-background-radius: 10;
     -fx-padding: 15;
     -fx-spacing: 15;
-    -fx-effect: dropshadow(three-pass-box, -shadow-default, 10, 0, 0, 0);
 }
 
 .row-info-container {
@@ -1617,11 +1641,22 @@
 }
 
 .empty-state-label {
+    -fx-background-color: transparent;
     -fx-padding: 30;
     -fx-border-color: -color-border-subtle-light;
-    -fx-border-style: dashed;
-    -fx-border-radius: 8;
+    -fx-border-style: segments(5);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
     -fx-text-fill: -text-muted;
+    -fx-content-display: top;
+    -fx-graphic-text-gap: 10;
+    -fx-text-alignment: center;
+}
+
+.empty-state-label .ikonli-font-icon,
+.daily-note-text .ikonli-font-icon {
+    -fx-icon-color: -icon-subtle;
+    -fx-icon-size: 22;
 }
 
 .planner-badge {
@@ -1649,22 +1684,22 @@
 
 .badge-urgency-high {
     -fx-background-color: transparent;
-    -fx-border-color: #ff4a4a;
-    -fx-text-fill: #ff4a4a;
+    -fx-border-color: -planner-urgency-high;
+    -fx-text-fill: -planner-urgency-high;
     -fx-border-radius: 15;
 }
 
 .badge-urgency-medium {
     -fx-background-color: transparent;
-    -fx-border-color: #ff892b;
-    -fx-text-fill: #ff892b;
+    -fx-border-color: -planner-urgency-medium;
+    -fx-text-fill: -planner-urgency-medium;
     -fx-border-radius: 15;
 }
 
 .badge-urgency-low {
     -fx-background-color: transparent;
-    -fx-border-color: #2cff7c;
-    -fx-text-fill: #2cff7c;
+    -fx-border-color: -planner-urgency-low;
+    -fx-text-fill: -planner-urgency-low;
     -fx-border-radius: 15;
 }
 
@@ -1683,6 +1718,8 @@
 .event-row {
     -fx-border-width: 0 0 0 4;
     -fx-background-radius: 8;
+    -event-tag-color: -color-accent;
+    -fx-border-color: transparent transparent transparent -event-tag-color;
 }
 
 .calendar-button-icon {
@@ -1691,6 +1728,11 @@
 
 .calendar-button-icon .ikonli-font-icon {
     -fx-icon-color: -icon-subtle;
+}
+
+.calendar-button-icon .planner-complete-icon {
+    -fx-icon-color: -icon-subtle;
+    -fx-icon-size: 18px;
 }
 
 .calendar-button-icon:hover .ikonli-font-icon {
@@ -1844,11 +1886,11 @@
 }
 
 .close-btn:ht-close {
-    -fx-background-color: #e81123;
+    -fx-background-color: -planner-window-close-bg;
 }
 
 .close-btn:ht-close .window-icon {
-    -fx-icon-color: white;
+    -fx-icon-color: -bg-panels;
 }
 
 .window-btn:ht-max {
@@ -1869,12 +1911,12 @@
 }
 
 .todo-row {
-    -fx-padding: 8 12;
+    -fx-padding: 15;
+    -fx-spacing: 15;
     -fx-background-color: -color-bg-subtle;
-    -fx-background-radius: 8;
-    -fx-border-color: -color-border-muted;
-    -fx-border-width: 1;
+    -fx-background-radius: 10;
     -fx-transition: all 0.2s ease-in-out;
+    -fx-cursor: hand;
 }
 
 
@@ -1884,10 +1926,9 @@
     -fx-cursor: hand;
 }
 
-.todo-completed {
-    -fx-text-fill: -color-fg-muted;
-    -fx-strikethrough: true;
-    -fx-opacity: 0.6;
+.todo-row-icon {
+    -fx-icon-color: -icon-main;
+    -fx-icon-size: 16;
 }
 
 .todo-add-field {
@@ -1904,22 +1945,53 @@
     -fx-background-color: -color-accent-fg;
 }
 
-.todo-delete-btn {
-    -fx-background-color: transparent;
-    -fx-text-fill: -color-danger-emphasis;
-    -fx-padding: 4;
+.todo-delete-action {
+    -fx-background-color: -planner-delete-bg;
+    -fx-text-fill: -bg-panels;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
     -fx-cursor: hand;
-    -fx-opacity: 0;
 }
 
-.todo-row:hover .todo-delete-btn {
-    -fx-opacity: 1;
+.todo-delete-action:hover {
+    -fx-background-color: -planner-delete-bg-hover;
 }
 
-.todo-delete-btn:hover {
-    -fx-background-color: -color-danger-subtle;
-    -fx-background-radius: 4;
+.menu-section-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
 }
+
+.menu-empty-text {
+    -fx-font-style: italic;
+    -fx-opacity: 0.6;
+    -fx-text-fill: -text-muted;
+}
+
+.menu-item-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: -text-main;
+}
+
+.menu-item-meta {
+    -fx-font-size: 13px;
+    -fx-opacity: 0.7;
+    -fx-text-fill: -text-muted;
+}
+
+.menu-color-indicator {
+    -fx-background-radius: 2;
+    -menu-tag-color: -color-accent;
+    -fx-background-color: -menu-tag-color;
+}
+
+.daily-empty-day-label {
+    -fx-font-size: 1.2em;
+    -fx-padding: 40 0 0 0;
+}
+
 
 
 

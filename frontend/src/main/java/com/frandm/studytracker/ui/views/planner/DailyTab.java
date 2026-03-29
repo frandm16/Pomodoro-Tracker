@@ -31,10 +31,11 @@ public class DailyTab extends VBox {
     private final VBox dayEventsContainer = new VBox(10);
     private final VBox todoListContainer = new VBox(6);
     private final VBox content = new VBox(20);
+    private final Label notesPreviewText = new Label();
 
     private final TextArea noteArea = new TextArea();
-    private final TextField todoAddField = new TextField();
     private final Label lblDeadlinesHeader = new Label("Deadlines");
+    private final Label lblTodoHeader = new Label("To-Do List");
     private final Label overlayTitle = new Label();
 
     private final PomodoroController pomodoroController;
@@ -64,6 +65,10 @@ public class DailyTab extends VBox {
         showDeadlinePopup(new LinkedHashMap<>(), screenX, screenY);
     }
 
+    public void openCreateTodo() {
+        showTodoCreatePanel();
+    }
+
     private void initLayout() {
         deadlinesContainer.getStyleClass().add("daily-container");
         dayEventsContainer.getStyleClass().add("daily-container");
@@ -77,58 +82,18 @@ public class DailyTab extends VBox {
         scroll.getStyleClass().addAll(Styles.FLAT, "planner-scroll-pane");
         VBox.setVgrow(scroll, Priority.ALWAYS);
         getChildren().add(scroll);
+        rebuildUI();
     }
 
     private void rebuildUI() {
         content.getChildren().clear();
-
-        boolean hasDeadlines = !deadlinesContainer.getChildren().isEmpty() &&
-                !(deadlinesContainer.getChildren().get(0) instanceof Label && ((Label)deadlinesContainer.getChildren().get(0)).getStyleClass().contains("empty-state-label"));
-        boolean hasEvents = !dayEventsContainer.getChildren().isEmpty() &&
-                !(dayEventsContainer.getChildren().get(0) instanceof Label && ((Label)dayEventsContainer.getChildren().get(0)).getStyleClass().contains("empty-state-label"));
-        boolean hasTodos = !todoListContainer.getChildren().isEmpty();
-        boolean hasNote = noteArea.getText() != null && !noteArea.getText().trim().isEmpty();
-
-        if (!hasDeadlines && !hasEvents && !hasTodos && !hasNote) {
-            renderEmptyState();
-        } else {
-            renderFullState();
-        }
-    }
-
-    private void renderEmptyState() {
-        VBox emptyBox = new VBox(15);
-        emptyBox.setAlignment(Pos.CENTER);
-        emptyBox.setPadding(new Insets(100, 0, 0, 0));
-
-        emptyBox.getChildren().addAll(createHeader("Daily Notes"), createNotesPreviewButton());
-        content.getChildren().add(emptyBox);
-    }
-
-    private void renderFullState() {
-        Button btnOpenNotes = createNotesPreviewButton();
-
-        HBox deadlinesHeader = createReadOnlySectionHeader(lblDeadlinesHeader);
-        HBox scheduledHeader = createReadOnlySectionHeader(new Label("Scheduled Sessions"));
-        HBox todoHeader = createSectionHeader(new Label("To-Do List"), _ -> showTodoCreatePanel());
-
-        // To-Do Input Row
-        todoAddField.setPromptText("Add a task…");
-        todoAddField.getStyleClass().add("todo-add-field");
-        todoAddField.setOnAction(_ -> handleAddTodo());
-        Button btnAddTodo = new Button();
-        btnAddTodo.setGraphic(new FontIcon("mdi2p-plus"));
-        btnAddTodo.getStyleClass().add("todo-add-button");
-        btnAddTodo.setOnAction(_ -> handleAddTodo());
-        HBox todoInputRow = new HBox(8, todoAddField, btnAddTodo);
-        todoInputRow.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(todoAddField, Priority.ALWAYS);
+        ensureIndependentEmptyStates();
 
         content.getChildren().addAll(
-                createHeader("Daily Notes"), btnOpenNotes,
-                deadlinesHeader, deadlinesContainer,
-                todoHeader, todoListContainer,
-                scheduledHeader, dayEventsContainer
+                createHeader("Notes"), createNotesPreviewNode(),
+                createReadOnlySectionHeader(lblDeadlinesHeader), deadlinesContainer,
+                createReadOnlySectionHeader(lblTodoHeader), todoListContainer,
+                createReadOnlySectionHeader(new Label("Scheduled Sessions")), dayEventsContainer
         );
     }
 
@@ -154,20 +119,94 @@ public class DailyTab extends VBox {
         return header;
     }
 
-    private Button createNotesPreviewButton() {
+    private void ensureIndependentEmptyStates() {
+        ensureContainerPlaceholder(deadlinesContainer, "No deadlines", "mdi2a-alarm");
+        ensureContainerPlaceholder(dayEventsContainer, "No scheduled sessions", "mdi2c-clock-outline");
+        ensureTodoPlaceholder();
+        updateTodoHeaderCount();
+    }
+
+    private void ensureContainerPlaceholder(VBox container, String emptyMessage, String iconLiteral) {
+        if (container.getChildren().isEmpty()) {
+            container.getChildren().setAll(createEmptyStateLabel(emptyMessage, iconLiteral));
+        }
+    }
+
+    private void ensureTodoPlaceholder() {
+        List<Node> todoRows = todoListContainer.getChildren().stream()
+                .filter(node -> !(node instanceof Label && node.getStyleClass().contains("empty-state-label")))
+                .collect(Collectors.toList());
+
+        if (todoRows.isEmpty()) {
+            todoListContainer.getChildren().setAll(createEmptyStateLabel("No todo list", "mdi2f-format-list-checks"));
+        } else {
+            todoListContainer.getChildren().setAll(todoRows);
+        }
+    }
+
+    private Label createEmptyStateLabel(String text, String iconLiteral) {
+        Label empty = new Label(text);
+        empty.getStyleClass().add("empty-state-label");
+        empty.setMaxWidth(Double.MAX_VALUE);
+        empty.setAlignment(Pos.CENTER);
+        empty.setContentDisplay(ContentDisplay.TOP);
+        empty.setGraphic(new FontIcon(iconLiteral));
+        return empty;
+    }
+
+    private Node createEmptyContent(String text) {
+        return switch (text) {
+            case "No deadlines" -> createEmptyStateLabel(text, "mdi2a-alarm");
+            case "No scheduled sessions" -> createEmptyStateLabel(text, "mdi2c-clock-outline");
+            case "No todo list" -> createEmptyStateLabel(text, "mdi2f-format-list-checks");
+            default -> createEmptyStateLabel(text, "mdi2i-information-outline");
+        };
+    }
+
+    private Node createNotesPreviewNode() {
+        if (notesPreviewText.getGraphic() == null) {
+            notesPreviewText.setWrapText(true);
+            notesPreviewText.setMaxWidth(Double.MAX_VALUE);
+            notesPreviewText.setGraphic(new FontIcon("mdi2n-notebook-edit-outline"));
+            notesPreviewText.getStyleClass().add("daily-note-text");
+            notesPreviewText.setOnMouseClicked(_ -> showNotesPanel());
+            notesPreviewText.setCursor(javafx.scene.Cursor.HAND);
+        }
+        updateNotesPreview();
+        return notesPreviewText;
+    }
+
+    private void updateNotesPreview() {
         String noteText = noteArea.getText() == null ? "" : noteArea.getText().trim();
         String preview = noteText.isEmpty() ? "No plan for this day yet." : noteText;
-        if (preview.length() > 180) preview = preview.substring(0, 177) + "...";
+        notesPreviewText.setText(preview);
+        notesPreviewText.getStyleClass().remove("daily-note-preview-empty");
+        notesPreviewText.getStyleClass().remove("daily-note-text-empty");
+        if (noteText.isEmpty()) {
+            notesPreviewText.getStyleClass().add("daily-note-preview-empty");
+            notesPreviewText.getStyleClass().add("daily-note-text-empty");
+            notesPreviewText.setContentDisplay(ContentDisplay.TOP);
+            notesPreviewText.setAlignment(Pos.CENTER);
+            notesPreviewText.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        } else {
+            notesPreviewText.setContentDisplay(ContentDisplay.LEFT);
+            notesPreviewText.setAlignment(Pos.TOP_LEFT);
+            notesPreviewText.setTextAlignment(javafx.scene.text.TextAlignment.LEFT);
+        }
+    }
 
-        Button button = new Button(preview);
-        button.setWrapText(true);
-        button.setMaxWidth(Double.MAX_VALUE);
-        button.setAlignment(Pos.CENTER_LEFT);
-        button.setGraphic(new FontIcon("mdi2n-notebook-edit-outline"));
-        button.getStyleClass().add("daily-note-preview");
-        if (noteText.isEmpty()) button.getStyleClass().add("daily-note-preview-empty");
-        button.setOnAction(_ -> showNotesPanel());
-        return button;
+    private void updateTodoHeaderCount() {
+        List<HBox> todoRows = todoListContainer.getChildren().stream()
+                .filter(HBox.class::isInstance)
+                .map(HBox.class::cast)
+                .toList();
+
+        long total = todoRows.size();
+        long completed = todoRows.stream()
+                .filter(row -> Boolean.TRUE.equals(row.getProperties().get("todoCompleted")))
+                .count();
+
+        lblTodoHeader.setText(total == 0 ? "To-Do List" : "To-Do List  " + completed + "/" + total + " completed");
     }
 
     private void showNotesPanel() {
@@ -176,17 +215,16 @@ public class DailyTab extends VBox {
 
         TextArea editArea = new TextArea(noteArea.getText());
         editArea.setWrapText(true);
-        editArea.setPrefRowCount(20);
+        editArea.setPrefRowCount(14);
         editArea.setPromptText("Type ...");
-        VBox.setVgrow(editArea, Priority.ALWAYS);
 
         Button btnSave = new Button("Save Notes");
         btnSave.getStyleClass().addAll(Styles.ACCENT, Styles.BUTTON_OUTLINED);
         btnSave.setMaxWidth(Double.MAX_VALUE);
         btnSave.setOnAction(_ -> {
             noteArea.setText(editArea.getText());
+            updateNotesPreview();
             saveCurrentNote();
-            rebuildUI();
             closeOverlay();
         });
 
@@ -212,6 +250,60 @@ public class DailyTab extends VBox {
         Platform.runLater(todoField::requestFocus);
     }
 
+    private void showTodoEditPanel(Map<String, Object> data, HBox row) {
+        long id = ((Number) data.get("id")).longValue();
+        boolean completed = ApiClient.parseBooleanFlag(data.get("completed"));
+
+        Label subtitle = new Label("Edit this to-do.");
+        subtitle.getStyleClass().add(Styles.TEXT_MUTED);
+
+        TextField todoField = new TextField(String.valueOf(data.getOrDefault("text", "")));
+        todoField.setPromptText("Write your task here...");
+        todoField.getStyleClass().add("todo-add-field");
+
+        Button btnSave = new Button("Save");
+        btnSave.getStyleClass().add("todo-add-button");
+        btnSave.setMaxWidth(Double.MAX_VALUE);
+        btnSave.setOnAction(_ -> {
+            String text = todoField.getText().trim();
+            if (text.isEmpty()) return;
+
+            new Thread(() -> {
+                try {
+                    ApiClient.updateTodo(id, text, completed);
+                    data.put("text", text);
+                    Platform.runLater(() -> {
+                        replaceTodoRow(row, data);
+                        closeOverlay();
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, "todo-save-thread").start();
+        });
+
+        Button btnDelete = new Button("Delete");
+        btnDelete.getStyleClass().add("todo-delete-action");
+        btnDelete.setMaxWidth(Double.MAX_VALUE);
+        btnDelete.setOnAction(_ -> {
+            todoListContainer.getChildren().remove(row);
+            ensureTodoPlaceholder();
+            updateTodoHeaderCount();
+            closeOverlay();
+
+            new Thread(() -> {
+                try {
+                    ApiClient.deleteTodo(id);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, "todo-delete-thread").start();
+        });
+
+        setOverlayContent("Edit To-Do", subtitle, todoField, btnSave, btnDelete);
+        Platform.runLater(todoField::requestFocus);
+    }
+
     private void setOverlayContent(String title, Node... nodes) {
         overlayTitle.setText(title);
         overlayTitle.getStyleClass().setAll("section-header", "planner-overlay-title");
@@ -220,6 +312,7 @@ public class DailyTab extends VBox {
         overlayCard.getStyleClass().add("planner-overlay-card");
         overlayCard.setPrefWidth(900);
         overlayCard.setMaxWidth(960);
+        overlayCard.setMaxHeight(Region.USE_PREF_SIZE);
         overlayCard.setOnMouseClicked(e -> e.consume());
 
         Button closeButton = new Button();
@@ -235,7 +328,6 @@ public class DailyTab extends VBox {
 
         VBox body = new VBox(12);
         body.getChildren().addAll(nodes);
-        VBox.setVgrow(body, Priority.ALWAYS);
 
         overlayCard.getChildren().setAll(header, body);
 
@@ -263,10 +355,6 @@ public class DailyTab extends VBox {
         }, "note-save-thread").start();
     }
 
-    private void handleAddTodo() {
-        handleAddTodo(todoAddField);
-    }
-
     private void handleAddTodo(TextField todoField) {
         String text = todoField.getText().trim();
         if (text.isEmpty()) return;
@@ -276,8 +364,9 @@ public class DailyTab extends VBox {
             try {
                 Map<String, Object> created = ApiClient.createTodo(currentDate, text);
                 Platform.runLater(() -> {
+                    todoListContainer.getChildren().removeIf(node -> node instanceof Label && node.getStyleClass().contains("empty-state-label"));
                     todoListContainer.getChildren().add(createTodoRow(created));
-                    rebuildUI();
+                    updateTodoHeaderCount();
                     closeOverlay();
                 });
             } catch (Exception e) { e.printStackTrace(); }
@@ -288,36 +377,70 @@ public class DailyTab extends VBox {
         long id = ((Number) data.get("id")).longValue();
         String text = (String) data.get("text");
         boolean completed = ApiClient.parseBooleanFlag(data.get("completed"));
-
-        CheckBox cb = new CheckBox(text);
-        cb.setSelected(completed);
-        cb.getStyleClass().add("todo-checkbox");
-        updateTodoStyle(cb, completed);
-
-        cb.selectedProperty().addListener((_, _, checked) -> {
-            updateTodoStyle(cb, checked);
-            new Thread(() -> {
-                try { ApiClient.updateTodoCompleted(id, checked); }
-                catch (Exception e) { e.printStackTrace(); }
-            }).start();
-        });
-
-        Button delBtn = new Button();
-        delBtn.setGraphic(new FontIcon("mdi2t-trash-can-outline"));
-        delBtn.getStyleClass().add("todo-delete-btn");
-
-        HBox row = new HBox(10, cb, delBtn);
+        HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("todo-row");
-        HBox.setHgrow(cb, Priority.ALWAYS);
+        row.getProperties().put("todoCompleted", completed);
 
-        delBtn.setOnAction(_ -> {
-            todoListContainer.getChildren().remove(row);
+        VBox info = new VBox(2);
+        info.getStyleClass().add("row-info-container");
+
+        Label title = new Label(text);
+        title.getStyleClass().add("row-title");
+
+        Label status = new Label(completed ? "Completed" : "Pending");
+        status.getStyleClass().addAll(Styles.TEXT_MUTED, Styles.TEXT_SMALL);
+        info.getChildren().addAll(title, status);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button completedButton = new Button();
+        completedButton.getStyleClass().add("calendar-button-icon");
+        FontIcon completedIcon = new FontIcon();
+        completedIcon.getStyleClass().add("planner-complete-icon");
+        completedButton.setGraphic(completedIcon);
+        FontIcon todoIcon = new FontIcon("mdi2f-format-list-checks");
+        todoIcon.getStyleClass().add("todo-row-icon");
+
+        applyTodoCompletedState(row, completedIcon, todoIcon, info, completed);
+
+        completedButton.setOnAction(e -> {
+            completedButton.setDisable(true);
+            e.consume();
+            boolean previousState = Boolean.TRUE.equals(row.getProperties().get("todoCompleted"));
+            boolean nextState = !previousState;
+
+            row.getProperties().put("todoCompleted", nextState);
+            data.put("completed", nextState);
+            status.setText(nextState ? "Completed" : "Pending");
+            applyTodoCompletedState(row, completedIcon, todoIcon, info, nextState);
+            updateTodoHeaderCount();
+
             new Thread(() -> {
-                try { ApiClient.deleteTodo(id); }
-                catch (Exception e) { e.printStackTrace(); }
-            }).start();
+                try {
+                    ApiClient.updateTodoCompleted(id, nextState);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                    Platform.runLater(() -> {
+                        row.getProperties().put("todoCompleted", previousState);
+                        data.put("completed", previousState);
+                        status.setText(previousState ? "Completed" : "Pending");
+                        applyTodoCompletedState(row, completedIcon, todoIcon, info, previousState);
+                        updateTodoHeaderCount();
+                    });
+                } finally {
+                    Platform.runLater(() -> completedButton.setDisable(false));
+                }
+            }, "todo-update-thread").start();
         });
+
+        row.getChildren().addAll(completedButton, todoIcon, info, spacer);
+        row.setOnMouseClicked(e -> {
+            showTodoEditPanel(data, row);
+            e.consume();
+        });
+        row.setCursor(javafx.scene.Cursor.HAND);
 
         return row;
     }
@@ -330,22 +453,38 @@ public class DailyTab extends VBox {
         if (!hasData) {
             content.getChildren().clear();
             Label lblEmpty = new Label("No plan for this day yet.");
-            lblEmpty.getStyleClass().add(Styles.TEXT_MUTED);
-            lblEmpty.setStyle("-fx-font-size: 1.2em; -fx-padding: 40 0 0 0;");
+            lblEmpty.getStyleClass().addAll(Styles.TEXT_MUTED, "daily-empty-day-label");
             content.getChildren().add(lblEmpty);
         }
     }
 
-    private void updateTodoStyle(CheckBox cb, boolean completed) {
-        if (completed) cb.getStyleClass().add("todo-completed");
-        else cb.getStyleClass().remove("todo-completed");
+    private void applyTodoCompletedState(HBox row, FontIcon completedIcon, FontIcon todoIcon, VBox info, boolean completed) {
+        completedIcon.setIconLiteral(completed ? "mdi2c-check-circle" : "mdi2c-checkbox-blank-circle-outline");
+        row.setOpacity(completed ? 0.75 : 1.0);
+        info.setOpacity(completed ? 0.5 : 1.0);
+        todoIcon.setOpacity(completed ? 0.5 : 1.0);
+    }
+
+    private void replaceTodoRow(HBox oldRow, Map<String, Object> data) {
+        int index = todoListContainer.getChildren().indexOf(oldRow);
+        HBox newRow = createTodoRow(data);
+        if (index >= 0) {
+            todoListContainer.getChildren().set(index, newRow);
+        } else {
+            todoListContainer.getChildren().add(newRow);
+        }
+        updateTodoHeaderCount();
     }
 
     public void updateHeaderDate(LocalDate date) {
         this.currentDate = date;
         noteArea.setText("");
+        updateNotesPreview();
+        deadlinesContainer.getChildren().clear();
+        dayEventsContainer.getChildren().clear();
         todoListContainer.getChildren().clear();
         closeOverlay();
+        rebuildUI();
 
         new Thread(() -> {
             try {
@@ -353,12 +492,53 @@ public class DailyTab extends VBox {
                 List<Map<String, Object>> todos = ApiClient.getTodosByDate(date);
                 Platform.runLater(() -> {
                     noteArea.setText(note);
+                    updateNotesPreview();
                     if (todos != null) {
                         todos.forEach(t -> todoListContainer.getChildren().add(createTodoRow(t)));
                     }
+                    ensureTodoPlaceholder();
+                    updateTodoHeaderCount();
                 });
             } catch (Exception e) { e.printStackTrace(); }
         }, "daily-data-loader").start();
+    }
+
+    public void updateDayContent(LocalDate date,
+                                 String note,
+                                 List<Map<String, Object>> todos,
+                                 List<Map<String, Object>> scheduled,
+                                 List<Map<String, Object>> deadlines) {
+        this.currentDate = date;
+        noteArea.setText(note != null ? note : "");
+        updateNotesPreview();
+        closeOverlay();
+
+        todoListContainer.getChildren().clear();
+        if (todos != null) {
+            todos.forEach(t -> todoListContainer.getChildren().add(createTodoRow(t)));
+        }
+        ensureTodoPlaceholder();
+        updateTodoHeaderCount();
+
+        List<Map<String, Object>> sortedDeadlines = deadlines == null ? List.of() : deadlines.stream()
+                .sorted(Comparator
+                        .comparing((Map<String, Object> item) -> !Boolean.TRUE.equals(item.get("allDay")))
+                        .thenComparing(item -> {
+                            LocalDateTime due = extractDeadlineDate(item);
+                            return due != null ? due : LocalDateTime.MAX;
+                        }))
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> sortedScheduled = scheduled == null ? List.of() : scheduled.stream()
+                .sorted(Comparator.comparing(item -> {
+                    LocalDateTime start = extractScheduledStart(item);
+                    return start != null ? start : LocalDateTime.MAX;
+                }))
+                .collect(Collectors.toList());
+
+        fill(deadlinesContainer, sortedDeadlines, "No deadlines", this::createDeadlineRow);
+        fill(dayEventsContainer, sortedScheduled, "No scheduled sessions", this::createEventRow);
+        updateDeadlineHeaderCount();
     }
 
     public void refreshData(List<Map<String, Object>> scheduled, List<Map<String, Object>> deadlines) {
@@ -378,11 +558,10 @@ public class DailyTab extends VBox {
             }))
             .collect(Collectors.toList());
 
-        fill(deadlinesContainer, sortedDeadlines, "No deadlines for this day.", this::createDeadlineRow);
-        fill(dayEventsContainer, sortedScheduled, "No events scheduled.", this::createEventRow);
+        fill(deadlinesContainer, sortedDeadlines, "No deadlines", this::createDeadlineRow);
+        fill(dayEventsContainer, sortedScheduled, "No scheduled sessions", this::createEventRow);
 
         updateDeadlineHeaderCount();
-        rebuildUI();
     }
 
     public String getHeaderTitle() {
@@ -394,11 +573,7 @@ public class DailyTab extends VBox {
     private void fill(VBox container, List<Map<String, Object>> data, String msg, Function<Map<String, Object>, Node> mapper) {
         container.getChildren().clear();
         if (data == null || data.isEmpty()) {
-            Label empty = new Label(msg);
-            empty.getStyleClass().add("empty-state-label");
-            empty.setMaxWidth(Double.MAX_VALUE);
-            empty.setAlignment(Pos.CENTER);
-            container.getChildren().add(empty);
+            container.getChildren().add(createEmptyContent(msg));
             return;
         }
         for (Map<String, Object> item : data) {
@@ -446,7 +621,7 @@ public class DailyTab extends VBox {
         Button completedButton = new Button();
         completedButton.getStyleClass().add("calendar-button-icon");
         FontIcon completedIcon = new FontIcon();
-        completedIcon.setIconSize(18);
+        completedIcon.getStyleClass().add("planner-complete-icon");
         completedButton.setGraphic(completedIcon);
         final boolean[] completedState = {isCompleted};
         applyDeadlineCompletedState(row, completedIcon, info, badges, completedState[0]);
@@ -496,8 +671,10 @@ public class DailyTab extends VBox {
         HBox row = baseRow();
         row.getStyleClass().add("event-row");
 
-        String tagColor = String.valueOf(data.getOrDefault("tagColor", "#3b82f6"));
-        row.setStyle("-fx-border-color: transparent transparent transparent " + tagColor + "; -fx-border-width: 0 0 0 4;");
+        Object rawTagColor = data.get("tagColor");
+        if (rawTagColor instanceof String tagColor && !tagColor.isBlank()) {
+            row.setStyle("-event-tag-color: " + tagColor + ";");
+        }
 
         LocalDateTime start = parse(data.get("start_time"));
         LocalDateTime end = parse(data.get("end_time"));
