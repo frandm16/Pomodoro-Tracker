@@ -473,6 +473,7 @@
             </HBox>
         </StackPane>
     </GridPane>
+
     <GridPane fx:id="summaryPane" visible="false" managed="false" maxHeight="Infinity" maxWidth="Infinity">
         <columnConstraints>
             <ColumnConstraints percentWidth="35" />

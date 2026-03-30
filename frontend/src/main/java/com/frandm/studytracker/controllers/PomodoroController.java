@@ -41,17 +41,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class PomodoroController {
-    private static final String BACKGROUND_NONE = "none";
-    private static final String DEFAULT_BACKGROUND = "classpath:/com/frandm/studytracker/videos/raindrops2.mp4";
-    private static final List<BackgroundOption> BACKGROUND_PRESETS = List.of(
-            new BackgroundOption("No background", BACKGROUND_NONE),
-            new BackgroundOption("Raindrops Soft", "classpath:/com/frandm/studytracker/videos/raindrops2.mp4"),
-            new BackgroundOption("Raindrops Classic", "classpath:/com/frandm/studytracker/videos/raindrops.mp4"),
-            new BackgroundOption("Loop 01", "classpath:/com/frandm/studytracker/videos/bg-video-1.mp4"),
-            new BackgroundOption("Loop 02", "classpath:/com/frandm/studytracker/videos/bg-video-2.mp4"),
-            new BackgroundOption("Dashboard", "classpath:/com/frandm/studytracker/videos/dashboard-12.mp4")
-    );
-
 
     //region FXML - Componentes de Interfaz
     @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane;
@@ -115,6 +104,8 @@ public class PomodoroController {
     private Map<String, String> tagColors = new HashMap<>();
     private String tagToDelete = null;
 
+    private BackgroundManager backgroundManager;
+
     @FXML
     public void initialize() {
         initializeCoreSystems();
@@ -147,97 +138,18 @@ public class PomodoroController {
             return;
         }
 
+        backgroundManager = new BackgroundManager(backgroundVideoView, backgroundVideoOverlay, engine);
+
         backgroundVideoView.fitWidthProperty().bind(rootPane.widthProperty());
         backgroundVideoView.fitHeightProperty().bind(rootPane.heightProperty());
-        applyBackgroundVideo(engine.getBackgroundVideoSource(), false);
+
+        backgroundManager.applyBackground(engine.getBackgroundVideoSource(), false);
 
         rootPane.sceneProperty().addListener((_, oldScene, newScene) -> {
-            if (oldScene != null && newScene == null && backgroundVideoPlayer != null) {
-                backgroundVideoPlayer.stop();
-                backgroundVideoPlayer.dispose();
-                backgroundVideoPlayer = null;
+            if (oldScene != null && newScene == null) {
+                backgroundManager.disposeCurrentPlayer();
             }
         });
-    }
-
-    private void applyBackgroundVideo(String source, boolean persist) {
-        String normalizedSource = normalizeBackgroundSource(source);
-
-        if (backgroundVideoPlayer != null) {
-            backgroundVideoPlayer.stop();
-            backgroundVideoPlayer.dispose();
-            backgroundVideoPlayer = null;
-        }
-
-        if (BACKGROUND_NONE.equals(normalizedSource)) {
-            backgroundVideoView.setMediaPlayer(null);
-            backgroundVideoView.setVisible(false);
-            if (backgroundVideoOverlay != null) {
-                backgroundVideoOverlay.setVisible(false);
-            }
-            engine.setBackgroundVideoSource(normalizedSource);
-            if (persist) {
-                ConfigManager.save(engine);
-            }
-            return;
-        }
-
-        URL videoResource = resolveBackgroundResource(normalizedSource);
-        if (videoResource == null) {
-            if (!Objects.equals(normalizedSource, DEFAULT_BACKGROUND)) {
-                applyBackgroundVideo(DEFAULT_BACKGROUND, persist);
-            }
-            NotificationManager.show("Background unavailable", "Could not load the selected video", NotificationManager.NotificationType.WARNING);
-            return;
-        }
-
-        try {
-            backgroundVideoPlayer = new MediaPlayer(new Media(videoResource.toExternalForm()));
-            backgroundVideoPlayer.setCycleCount(MediaPlayer.INDEFINITE);
-            backgroundVideoPlayer.setMute(true);
-            backgroundVideoPlayer.setAutoPlay(true);
-
-            backgroundVideoView.setMediaPlayer(backgroundVideoPlayer);
-            backgroundVideoView.setVisible(true);
-            if (backgroundVideoOverlay != null) {
-                backgroundVideoOverlay.setVisible(true);
-            }
-            engine.setBackgroundVideoSource(normalizedSource);
-            if (persist) {
-                ConfigManager.save(engine);
-            }
-        } catch (RuntimeException ex) {
-            System.err.println("Error loading background video: " + ex.getMessage());
-            NotificationManager.show("Background error", "The selected file could not be played", NotificationManager.NotificationType.ERROR);
-        }
-    }
-
-    private String normalizeBackgroundSource(String source) {
-        if (source == null || source.isBlank()) {
-            return DEFAULT_BACKGROUND;
-        }
-        return source;
-    }
-
-    private URL resolveBackgroundResource(String source) {
-        if (source == null || source.isBlank() || BACKGROUND_NONE.equals(source)) {
-            return null;
-        }
-
-        if (source.startsWith("classpath:")) {
-            return getClass().getResource(source.substring("classpath:".length()));
-        }
-
-        File file = new File(source);
-        if (!file.exists()) {
-            return null;
-        }
-
-        try {
-            return file.toURI().toURL();
-        } catch (Exception ex) {
-            return null;
-        }
     }
 
     private void setupGeneratorsDEVELOP() {
@@ -690,7 +602,7 @@ public class PomodoroController {
 
         header.getChildren().addAll(titleGroup, spacer, closeButton);
 
-        Label currentSourceLabel = new Label("Current: " + getBackgroundLabel(engine.getBackgroundVideoSource()));
+        Label currentSourceLabel = new Label("Current: " + backgroundManager.getLabel(engine.getBackgroundVideoSource()));
         currentSourceLabel.getStyleClass().add("background-current-label");
 
         TilePane presetGrid = new TilePane();
@@ -699,8 +611,13 @@ public class PomodoroController {
         presetGrid.setVgap(12);
         presetGrid.getStyleClass().add("background-selector-grid");
 
-        for (BackgroundOption preset : BACKGROUND_PRESETS) {
-            presetGrid.getChildren().add(createBackgroundOptionButton(preset));
+        for (BackgroundManager.BackgroundOption preset : backgroundManager.getDynamicPresets()) {
+            Button btn = backgroundManager.createOptionButton(
+                    preset,
+                    engine.getBackgroundVideoSource(),
+                    this::openBackgroundSelector
+            );
+            presetGrid.getChildren().add(btn);
         }
 
         Button addFileButton = new Button("Add file");
@@ -712,37 +629,6 @@ public class PomodoroController {
         showPlannerOverlay(overlay);
     }
 
-    private Button createBackgroundOptionButton(BackgroundOption option) {
-        Button button = new Button();
-        button.getStyleClass().add("background-option-button");
-        button.setMaxWidth(Double.MAX_VALUE);
-        button.setPrefWidth(220);
-
-        VBox content = new VBox(6);
-        Label title = new Label(option.label());
-        title.getStyleClass().add("background-option-title");
-
-        Label meta = new Label(option.source().startsWith("classpath:") ? "Preset" : "Custom file");
-        if (BACKGROUND_NONE.equals(option.source())) {
-            meta.setText("Solid app background");
-        }
-        meta.getStyleClass().add("background-option-meta");
-
-        content.getChildren().addAll(title, meta);
-        button.setGraphic(content);
-        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-
-        if (Objects.equals(normalizeBackgroundSource(engine.getBackgroundVideoSource()), option.source())) {
-            button.getStyleClass().add("background-option-button-active");
-        }
-
-        button.setOnAction(_ -> {
-            applyBackgroundVideo(option.source(), true);
-            openBackgroundSelector();
-        });
-
-        return button;
-    }
 
     private void chooseCustomBackgroundFile() {
         Window window = rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null;
@@ -755,24 +641,9 @@ public class PomodoroController {
             return;
         }
 
-        applyBackgroundVideo(selectedFile.getAbsolutePath(), true);
+        backgroundManager.applyBackground(selectedFile.getAbsolutePath(), true);
         hidePlannerOverlay();
         NotificationManager.show("Background updated", selectedFile.getName(), NotificationManager.NotificationType.SUCCESS);
-    }
-
-    private String getBackgroundLabel(String source) {
-        String normalized = normalizeBackgroundSource(source);
-        for (BackgroundOption option : BACKGROUND_PRESETS) {
-            if (Objects.equals(option.source(), normalized)) {
-                return option.label();
-            }
-        }
-
-        if (BACKGROUND_NONE.equals(normalized)) {
-            return "No background";
-        }
-
-        return new File(normalized).getName();
     }
 
     private Region getActivePanel() {
@@ -1233,7 +1104,7 @@ public class PomodoroController {
             scheduleListContainer.getChildren().add(createTodayTodosList());
             scheduleListContainer.getChildren().add(createTodaySchedulesList());
         }
-        refreshDynamicDock();
+        //refreshDynamicDock();
     }
 
     private LocalDateTime extractSessionStartTime(Map<String, Object> session) {
