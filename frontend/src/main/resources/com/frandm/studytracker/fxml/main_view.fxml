@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.media.MediaView?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.chart.PieChart?>
 <?import javafx.scene.chart.CategoryAxis?>
@@ -18,6 +19,12 @@
            styleClass="root-pane"
            xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.frandm.studytracker.controllers.PomodoroController">
+
+    <MediaView fx:id="backgroundVideoView"
+               mouseTransparent="true"
+               preserveRatio="false"
+               smooth="true"
+               StackPane.alignment="CENTER" />
 
     <VBox >
         <HBox fx:id="titleBar" alignment="CENTER_RIGHT" minHeight="40.0" prefHeight="40.0" styleClass="custom-title-bar">
