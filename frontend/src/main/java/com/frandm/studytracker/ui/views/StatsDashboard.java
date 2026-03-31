@@ -15,6 +15,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
 
@@ -24,6 +25,7 @@ public class StatsDashboard {
     private final AreaChart<String, Number> weeklyLineChart;
     private final PieChart tagPieChart;
     private final VBox statsPlaceholder, streakVBox, streakImage;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private GridPane heatmapGrid;
     private GridPane monthLabelContainer;
@@ -95,13 +97,7 @@ public class StatsDashboard {
         tasksLabel.setText(String.valueOf(sessions.size()));
     }
     private void calculateStreak(ObservableList<Session> s) {
-        Set<LocalDate> dates = new HashSet<>();
-        s.forEach(sess -> {
-            LocalDate sessionDate = extractSessionDate(sess);
-            if (sessionDate != null) {
-                dates.add(sessionDate);
-            }
-        });
+        Set<LocalDate> dates = new HashSet<>(); s.forEach(sess -> dates.add(LocalDate.parse(sess.getStartDate(), DATE_FORMATTER)));
         int streak = 0; LocalDate c = LocalDate.now(); if (!dates.contains(c)) c = c.minusDays(1);
         while (dates.contains(c)) { streak++; c = c.minusDays(1); }
         streakLabel.setText(streak + " Days");
@@ -111,19 +107,15 @@ public class StatsDashboard {
     }
     private void updateBestDay(ObservableList<Session> s) {
         if (s.isEmpty()) { bestDayLabel.setText("-"); return; }
-        String best = s.stream()
-                .filter(sess -> extractSessionDate(sess) != null)
-                .collect(java.util.stream.Collectors.groupingBy(sess -> extractSessionDate(sess).getDayOfWeek(), java.util.stream.Collectors.summingInt(Session::getTotalMinutes)))
+        String best = s.stream().collect(java.util.stream.Collectors.groupingBy(sess -> LocalDate.parse(sess.getStartDate(), DATE_FORMATTER).getDayOfWeek(), java.util.stream.Collectors.summingInt(Session::getTotalMinutes)))
                 .entrySet().stream().max(Comparator.comparingInt(Map.Entry::getValue)).map(e -> e.getKey().getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())).orElse("-");
         bestDayLabel.setText(best.substring(0, 1).toUpperCase() + best.substring(1));
     }
     private void updateTimeThisWeek(ObservableList<Session> s) {
         LocalDate start = LocalDate.now().with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
         double mins = s.stream().filter(sess ->
-                {
-                    LocalDate sessionDate = extractSessionDate(sess);
-                    return sessionDate != null && !sessionDate.isBefore(start);
-                }).mapToDouble(Session::getTotalMinutes).sum();
+                !LocalDate.parse(sess.getStartDate(),
+                        DATE_FORMATTER).isBefore(start)).mapToDouble(Session::getTotalMinutes).sum();
 
         timeThisWeekLabel.setText(String.format("%.1fh", mins / 60));
     }
@@ -131,8 +123,7 @@ public class StatsDashboard {
         LocalDate start = LocalDate.now().minusMonths(1).withDayOfMonth(1);
         LocalDate end = start.with(java.time.temporal.TemporalAdjusters.lastDayOfMonth());
         double mins = s.stream().filter(sess -> {
-            LocalDate d = extractSessionDate(sess);
-            if (d == null) return false;
+            LocalDate d = LocalDate.parse(sess.getStartDate(), DATE_FORMATTER);
             return !d.isBefore(start) && !d.isAfter(end);
         }).mapToDouble(Session::getTotalMinutes).sum();
 
@@ -160,8 +151,7 @@ public class StatsDashboard {
 
             double totalMins = sessions.stream()
                     .filter(s -> {
-                        LocalDate d = extractSessionDate(s);
-                        if (d == null) return false;
+                        LocalDate d = LocalDate.parse(s.getStartDate(), DATE_FORMATTER);
                         return !d.isBefore(startOfWeek) && !d.isAfter(endOfWeek);
                     })
                     .mapToDouble(Session::getTotalMinutes)
@@ -410,12 +400,6 @@ public class StatsDashboard {
     private String capitalize(String s) {
         if (s == null || s.isEmpty()) return "";
         return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
-    }
-
-    private LocalDate extractSessionDate(Session session) {
-        return session != null && session.getStartDateTime() != null
-                ? session.getStartDateTime().toLocalDate()
-                : null;
     }
 //endregion
 
