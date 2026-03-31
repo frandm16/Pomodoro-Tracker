@@ -10,6 +10,9 @@
     -planner-delete-bg: -color-danger;
     -planner-delete-bg-hover: -color-danger-hover;
     -planner-window-close-bg: #c22b1c;
+    -color-border: #d1d1d1;
+    -bg-panels: #161b22;
+    -color-accent: rgba(255, 183, 0);
 }
 
 .primer-dark {

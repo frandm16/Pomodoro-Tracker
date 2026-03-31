@@ -1,11 +1,14 @@
 package com.frandm.studytracker.ui.views.logs;
 
 import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.ui.views.FloatingDockView;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
-import javafx.scene.control.*;
+import javafx.scene.Node;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
+
+import java.util.List;
 
 public class LogsView extends StackPane {
 
@@ -14,26 +17,19 @@ public class LogsView extends StackPane {
     private final FocusTab focusTab;
     private final CalendarTab calendarTab;
 
-    private final Button btnGlobalHistory;
-    private final Button btnFocusAreas;
-    private final Button btnCalendarHistory;
     private final StackPane contentArea;
+    private String currentTabId;
 
     public LogsView(PomodoroController pomodoroController) {
         this.logsController = new LogsController(pomodoroController);
 
-        HBox navigationBar = new HBox();
-        navigationBar.getStyleClass().add("history-nav-bar");
+        HBox tabBarContainer = new HBox();
 
-        btnGlobalHistory = new Button("History");
-        btnFocusAreas = new Button("Focus");
-        btnCalendarHistory = new Button("Calendar");
-
-        btnGlobalHistory.getStyleClass().add("title-button");
-        btnFocusAreas.getStyleClass().add("title-button");
-        btnCalendarHistory.getStyleClass().add("title-button");
-
-        navigationBar.getChildren().addAll(btnGlobalHistory, btnFocusAreas, btnCalendarHistory);
+        FloatingDockView tabBar = new FloatingDockView(tabBarContainer, List.of(
+                new FloatingDockView.DockItem("history", "History", "All sessions", "mdi2h-history"),
+                new FloatingDockView.DockItem("focus", "Focus", "Focus areas", "mdi2f-focus-field"),
+                new FloatingDockView.DockItem("calendar", "Calendar", "Calendar view", "mdi2c-calendar")
+        ));
 
         historyTab = new HistoryTab(logsController);
         focusTab = new FocusTab(logsController);
@@ -43,70 +39,68 @@ public class LogsView extends StackPane {
 
         contentArea = new StackPane();
         VBox.setVgrow(contentArea, Priority.ALWAYS);
+        contentArea.getChildren().addAll(historyTab, focusTab, calendarTab);
 
-        btnGlobalHistory.setOnAction(_ -> switchTab(1));
-        btnFocusAreas.setOnAction(_ -> switchTab(2));
-        btnCalendarHistory.setOnAction(_ -> switchTab(3));
+        historyTab.setVisible(true);
+        historyTab.setManaged(true);
+        focusTab.setVisible(false);
+        focusTab.setManaged(false);
+        calendarTab.setVisible(false);
+        calendarTab.setManaged(false);
 
-        VBox layout = new VBox(navigationBar, contentArea);
+        tabBar.setOnTabChanged(this::switchTab);
+
+        VBox layout = new VBox(tabBarContainer, contentArea);
         layout.getStyleClass().add("history-view-layout");
         this.getChildren().add(layout);
 
-        switchTab(1);
+        currentTabId = "history";
+        historyTab.resetAndReload();
     }
 
-    private void switchTab(int tabIndex) {
-        btnGlobalHistory.getStyleClass().remove("active");
-        btnFocusAreas.getStyleClass().remove("active");
-        btnCalendarHistory.getStyleClass().remove("active");
+    private void switchTab(String tabId) {
+        if (tabId.equals(currentTabId)) return;
 
-        StackPane oldContent = new StackPane();
-        if (!contentArea.getChildren().isEmpty()) {
-            oldContent.getChildren().addAll(contentArea.getChildren());
-        }
+        Node oldNode = getTabNode(currentTabId);
+        Node newNode = getTabNode(tabId);
 
-        contentArea.getChildren().clear();
+        oldNode.setVisible(false);
+        oldNode.setManaged(false);
 
-        switch (tabIndex) {
-            case 1 -> {
-                btnGlobalHistory.getStyleClass().add("active");
-                contentArea.getChildren().add(historyTab);
-                historyTab.resetAndReload();
-            }
-            case 2 -> {
-                btnFocusAreas.getStyleClass().add("active");
-                contentArea.getChildren().add(focusTab);
-                focusTab.refreshFocusAreasGrid();
-            }
-            case 3 -> {
-                btnCalendarHistory.getStyleClass().add("active");
-                contentArea.getChildren().add(calendarTab);
+        newNode.setVisible(true);
+        newNode.setManaged(true);
+        currentTabId = tabId;
+
+        newNode.setOpacity(0);
+        newNode.setTranslateY(10);
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), newNode);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        TranslateTransition slideIn = new TranslateTransition(Duration.millis(200), newNode);
+        slideIn.setFromY(10);
+        slideIn.setToY(0);
+        fadeIn.play();
+        slideIn.play();
+/*
+        switch (tabId) {
+            case "history" -> historyTab.resetAndReload();
+            case "focus" -> focusTab.refreshFocusAreasGrid();
+            case "calendar" -> {
                 calendarTab.loadWeekSessions();
                 calendarTab.refresh();
             }
         }
 
-        if (!oldContent.getChildren().isEmpty()) {
-            FadeTransition fadeOut = new FadeTransition(Duration.millis(150), oldContent);
-            fadeOut.setFromValue(1.0);
-            fadeOut.setToValue(0.0);
-            fadeOut.setOnFinished(_ -> contentArea.getChildren().remove(oldContent));
-            fadeOut.play();
-        }
+ */
+    }
 
-        if (!contentArea.getChildren().isEmpty()) {
-            var newContent = contentArea.getChildren().getFirst();
-            newContent.setOpacity(0);
-            newContent.setTranslateY(10);
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(200), newContent);
-            fadeIn.setFromValue(0.0);
-            fadeIn.setToValue(1.0);
-            TranslateTransition slideIn = new TranslateTransition(Duration.millis(200), newContent);
-            slideIn.setFromY(10);
-            slideIn.setToY(0);
-            fadeIn.play();
-            slideIn.play();
-        }
+    private Node getTabNode(String tabId) {
+        return switch (tabId) {
+            case "history" -> historyTab;
+            case "focus" -> focusTab;
+            case "calendar" -> calendarTab;
+            default -> throw new IllegalArgumentException("Unknown tab: " + tabId);
+        };
     }
 
     public void resetAndReload() {

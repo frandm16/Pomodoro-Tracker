@@ -1,43 +1,43 @@
 package com.frandm.studytracker.ui.views.logs;
 
 import com.frandm.studytracker.client.ApiClient;
+import com.frandm.studytracker.core.TagEventBus;
+import com.frandm.studytracker.ui.util.Animations;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class FocusTab extends StackPane {
+public class FocusTab extends VBox {
     private final LogsController logsController;
     private final VBox focusAreasRoot;
     private final VBox detailRoot;
     private final VBox tasksSummaryContainer;
     private final Label detailTitleLabel;
     private final Label totalStatsLabel;
-    private final HBox tagActionBar;
-    private final Button btnAddTag;
     private final ComboBox<String> archiveFilterCombo;
 
     public FocusTab(LogsController logsController) {
         this.logsController = logsController;
+        this.getStyleClass().add("focus-tab-root");
 
         focusAreasRoot = new VBox();
-        focusAreasRoot.getStyleClass().add("focus-areas-root");
+        focusAreasRoot.getStyleClass().add("calendar-root");
 
-        tagActionBar = new HBox();
+        HBox tagActionBar = new HBox();
         tagActionBar.getStyleClass().add("tag-action-bar");
         tagActionBar.setAlignment(Pos.CENTER_LEFT);
         tagActionBar.setSpacing(10);
-
-        btnAddTag = new Button("Add Tag");
-        btnAddTag.getStyleClass().add("button-secondary");
-        btnAddTag.setGraphic(new FontIcon("mdi2p-plus"));
-        btnAddTag.setOnAction(_ -> showAddTagDialog());
 
         archiveFilterCombo = new ComboBox<>();
         archiveFilterCombo.getItems().addAll("Active", "Archived", "Favorites", "All");
@@ -48,10 +48,10 @@ public class FocusTab extends StackPane {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        tagActionBar.getChildren().addAll(btnAddTag, archiveFilterCombo, spacer);
+        tagActionBar.getChildren().addAll(archiveFilterCombo, spacer);
 
         detailRoot = new VBox();
-        detailRoot.getStyleClass().add("history-detail-root");
+        detailRoot.getStyleClass().add("calendar-root");
         detailRoot.setVisible(false);
         detailRoot.setManaged(false);
 
@@ -86,6 +86,10 @@ public class FocusTab extends StackPane {
         VBox.setVgrow(focusAreasRoot.getChildren().get(1), Priority.ALWAYS);
 
         this.getChildren().addAll(focusAreasRoot, detailRoot);
+
+        TagEventBus.getInstance().subscribe(event -> refreshFocusAreasGrid());
+
+        refreshFocusAreasGrid();
     }
 
     private void showGrid() {
@@ -148,15 +152,25 @@ public class FocusTab extends StackPane {
         }
 
         Map<String, Integer> tagTotals = new LinkedHashMap<>();
-        for (String tagName : filteredTags.keySet()) {
-            try {
-                Map<String, Integer> summary = ApiClient.getSummaryByTag(tagName);
-                int total = summary.values().stream().mapToInt(Integer::intValue).sum();
-                tagTotals.put(tagName, total);
-            } catch (Exception e) {
-                tagTotals.put(tagName, 0);
-            }
+        List<String> tagNames = new ArrayList<>(filteredTags.keySet());
+        List<java.util.concurrent.CompletableFuture<Void>> futures = new ArrayList<>();
+        for (String tagName : tagNames) {
+            java.util.concurrent.CompletableFuture<Void> future = java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    Map<String, Integer> summary = ApiClient.getSummaryByTag(tagName);
+                    int total = summary.values().stream().mapToInt(Integer::intValue).sum();
+                    synchronized (tagTotals) {
+                        tagTotals.put(tagName, total);
+                    }
+                } catch (Exception e) {
+                    synchronized (tagTotals) {
+                        tagTotals.put(tagName, 0);
+                    }
+                }
+            });
+            futures.add(future);
         }
+        java.util.concurrent.CompletableFuture.allOf(futures.toArray(new java.util.concurrent.CompletableFuture[0])).join();
 
         int maxTotal = tagTotals.values().stream().mapToInt(Integer::intValue).max().orElse(1);
         if (maxTotal == 0) maxTotal = 1;
@@ -185,7 +199,29 @@ public class FocusTab extends StackPane {
                 row++;
             }
         }
+
+        grid.add(createAddTagCard(), col, row);
+
         focusAreasRoot.getChildren().add(grid);
+    }
+
+    private StackPane createAddTagCard() {
+        StackPane card = new StackPane();
+        card.getStyleClass().add("tag-explorer-card");
+        card.getStyleClass().add("tag-add-card");
+        card.setCursor(javafx.scene.Cursor.HAND);
+
+        VBox content = new VBox(8);
+        content.setAlignment(Pos.CENTER);
+        FontIcon plusIcon = new FontIcon("mdi2p-plus");
+        plusIcon.setIconSize(28);
+        Label label = new Label("Add Tag");
+        label.getStyleClass().add("tag-add-label");
+        content.getChildren().addAll(plusIcon, label);
+        card.getChildren().add(content);
+
+        card.setOnMouseClicked(_ -> logsController.openAddTagOverlay());
+        return card;
     }
 
     private VBox createTagCard(String name, String color, int totalMinutes, int maxTotal, long tagId, boolean isArchived, boolean isFavorite) {
@@ -215,33 +251,41 @@ public class FocusTab extends StackPane {
         btnFavorite.getStyleClass().add("tag-action-btn");
         FontIcon favIcon = new FontIcon(isFavorite ? "fas-star" : "far-star");
         favIcon.setIconSize(14);
-        favIcon.setStyle(isFavorite ? "-fx-icon-color: #fbbf24;" : "-fx-icon-color: -text-muted;");
         btnFavorite.setGraphic(favIcon);
         Tooltip.install(btnFavorite, new Tooltip(isFavorite ? "Unfavorite" : "Favorite"));
         btnFavorite.setOnAction(e -> {
             e.consume();
-            try {
-                ApiClient.patchTag(tagId, Map.of("isFavorite", !isFavorite));
-                refreshFocusAreasGrid();
-            } catch (Exception ex) {
-                System.err.println("Error toggling favorite: " + ex.getMessage());
-            }
+            btnFavorite.setDisable(true);
+            final boolean previousState = isFavorite;
+            new Thread(() -> {
+                try {
+                    ApiClient.patchTag(tagId, Map.of("isFavorite", !isFavorite));
+                } catch (Exception ex) {
+                    System.err.println("Error toggling favorite: " + ex.getMessage());
+                } finally {
+                    Platform.runLater(() -> btnFavorite.setDisable(false));
+                }
+            }, "tag-favorite-thread").start();
         });
 
         Button btnArchive = new Button();
         btnArchive.getStyleClass().add("tag-action-btn");
-        FontIcon archIcon = new FontIcon(isArchived ? "mdi2u-unarchive" : "mdi2a-archive");
+        FontIcon archIcon = new FontIcon(isArchived ? "mdi2a-archive-off-outline" : "mdi2a-archive-outline");
         archIcon.setIconSize(14);
         btnArchive.setGraphic(archIcon);
         Tooltip.install(btnArchive, new Tooltip(isArchived ? "Unarchive" : "Archive"));
         btnArchive.setOnAction(e -> {
             e.consume();
-            try {
-                ApiClient.patchTag(tagId, Map.of("isArchived", !isArchived));
-                refreshFocusAreasGrid();
-            } catch (Exception ex) {
-                System.err.println("Error toggling archive: " + ex.getMessage());
-            }
+            btnArchive.setDisable(true);
+            new Thread(() -> {
+                try {
+                    ApiClient.patchTag(tagId, Map.of("isArchived", !isArchived));
+                } catch (Exception ex) {
+                    System.err.println("Error toggling archive: " + ex.getMessage());
+                } finally {
+                    Platform.runLater(() -> btnArchive.setDisable(false));
+                }
+            }, "tag-archive-thread").start();
         });
 
         Button btnDelete = new Button();
@@ -252,18 +296,7 @@ public class FocusTab extends StackPane {
         Tooltip.install(btnDelete, new Tooltip("Delete"));
         btnDelete.setOnAction(e -> {
             e.consume();
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Delete tag '" + name + "'? This will also delete all its tasks and sessions.", ButtonType.OK, ButtonType.CANCEL);
-            confirm.setTitle("Delete Tag");
-            confirm.showAndWait().ifPresent(btn -> {
-                if (btn == ButtonType.OK) {
-                    try {
-                        ApiClient.deleteTag(tagId);
-                        refreshFocusAreasGrid();
-                    } catch (Exception ex) {
-                        System.err.println("Error deleting tag: " + ex.getMessage());
-                    }
-                }
-            });
+            logsController.openDeleteTagOverlay(tagId, name);
         });
 
         actionsRow.getChildren().addAll(btnFavorite, btnArchive, btnDelete);
@@ -315,51 +348,6 @@ public class FocusTab extends StackPane {
         return card;
     }
 
-    private void showAddTagDialog() {
-        Dialog<Map<String, String>> dialog = new Dialog<>();
-        dialog.setTitle("Add Tag");
-        dialog.setHeaderText("Create a new tag");
-
-        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-
-        TextField nameField = new TextField();
-        nameField.setPromptText("Tag name");
-        ColorPicker colorPicker = new ColorPicker(javafx.scene.paint.Color.web("#4A90D9"));
-        colorPicker.setMaxWidth(Double.MAX_VALUE);
-
-        grid.add(new Label("Name:"), 0, 0);
-        grid.add(nameField, 1, 0);
-        grid.add(new Label("Color:"), 0, 1);
-        grid.add(colorPicker, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == addButtonType) {
-                String name = nameField.getText().trim();
-                if (name.isEmpty()) return null;
-                String color = colorPicker.getValue().toString().replace("0x", "#");
-                return Map.of("name", name, "color", color);
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(result -> {
-            try {
-                ApiClient.createTag(result.get("name"), result.get("color"));
-                refreshFocusAreasGrid();
-            } catch (Exception e) {
-                System.err.println("Error creating tag: " + e.getMessage());
-            }
-        });
-    }
-
     private void loadTagSummary(String tagName, String tagColor) {
         tasksSummaryContainer.getChildren().clear();
         Map<String, Integer> summary;
@@ -372,7 +360,7 @@ public class FocusTab extends StackPane {
 
         int totalMinutes = summary.values().stream().mapToInt(Integer::intValue).sum();
         int sessions = summary.size();
-        final int maxMinutes = Math.max(summary.values().stream().mapToInt(Integer::intValue).max().orElse(1), 1);
+        final int maxMinutes = Math.max(summary.values().stream().mapToInt(Integer::intValue).sum(), 1);
 
         String timeText;
         if (totalMinutes >= 60) {
@@ -413,18 +401,33 @@ public class FocusTab extends StackPane {
             Label time = new Label(taskTimeText);
             time.getStyleClass().add("summary-task-time");
 
-            Region taskBar = new Region();
-            taskBar.getStyleClass().add("summary-task-bar");
-            taskBar.setMaxWidth(120);
-
-            double fillPercent = (double) minutes / maxMinutes;
-            Region taskBarFill = new Region();
-            taskBarFill.getStyleClass().add("summary-task-bar-fill");
-            taskBarFill.setStyle("-fx-background-color: " + tagColor + "; -fx-pref-width: " + (fillPercent * 100) + "%;");
-
             StackPane barContainer = new StackPane();
             barContainer.setAlignment(Pos.CENTER_LEFT);
-            barContainer.getChildren().addAll(taskBar, taskBarFill);
+
+            Region barBg = new Region();
+            barBg.getStyleClass().add("summary-task-bar");
+            barBg.setMinWidth(120);
+            barBg.setPrefWidth(120);
+            barBg.setMaxWidth(120);
+            barBg.setMinHeight(8);
+            barBg.setPrefHeight(8);
+            barBg.setMaxHeight(8);
+
+            double fillWidth = ((double) minutes / maxMinutes) * 120;
+            Region barFill = new Region();
+            barFill.setStyle("-fx-background-color: " + tagColor + "; -fx-background-radius: 6;");
+            barFill.setMinWidth(fillWidth);
+            barFill.setPrefWidth(fillWidth);
+            barFill.setMaxWidth(fillWidth);
+            barFill.setMinHeight(8);
+            barFill.setPrefHeight(8);
+            barFill.setMaxHeight(8);
+
+            barContainer.getChildren().addAll(barBg, barFill);
+
+            Label percentLabel = new Label(String.format("%.0f%%", (double) minutes / maxMinutes * 100));
+            percentLabel.getStyleClass().add("summary-task-percent");
+            HBox.setMargin(percentLabel, new Insets(0, 0, 0, 8));
 
             Button btnPlayTask = new Button();
             btnPlayTask.setGraphic(new FontIcon("fas-play"));
@@ -440,7 +443,7 @@ public class FocusTab extends StackPane {
             ttPlay.getStyleClass().add("heatmap-tooltip");
             btnPlayTask.setTooltip(ttPlay);
 
-            row.getChildren().addAll(name, spacer, time, barContainer, btnPlayTask);
+            row.getChildren().addAll(name, spacer, time, barContainer, percentLabel, btnPlayTask);
             tasksSummaryContainer.getChildren().add(row);
         });
     }

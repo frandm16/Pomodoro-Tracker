@@ -73,12 +73,15 @@ public class DeadlineController {
 
     @PatchMapping("/{id}")
     public Deadline patch(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        LocalDateTime dueDate = body.get("dueDate") != null
+                ? DateTimeUtils.parseApiTimestamp((String) body.get("dueDate"))
+                : null;
         return deadlineService.partialUpdate(
                 id,
                 (String) body.get("title"),
                 (String) body.get("description"),
                 (String) body.get("urgency"),
-                DateTimeUtils.parseApiTimestamp((String) body.get("dueDate")),
+                dueDate,
                 (Boolean) body.get("allDay"),
                 (Boolean) body.get("isCompleted")
         );

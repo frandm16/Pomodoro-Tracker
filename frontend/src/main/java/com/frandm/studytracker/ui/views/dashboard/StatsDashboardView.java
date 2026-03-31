@@ -299,6 +299,44 @@ public class StatsDashboardView {
         applyFiltersAndRender();
     }
 
+    public void refreshSessionsOnly() {
+        allSessions = loadSessions();
+
+        tasksByTag.clear();
+        try {
+            for (Map<String, Object> tagMap : ApiClient.getTags()) {
+                String tagName = String.valueOf(tagMap.get("name"));
+                List<String> tasks = tasksByTag.computeIfAbsent(tagName, _ -> new ArrayList<>());
+                try {
+                    for (Map<String, Object> taskMap : ApiClient.getTasks(tagName)) {
+                        String taskName = String.valueOf(taskMap.get("name"));
+                        if (!tasks.contains(taskName)) tasks.add(taskName);
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
+
+        allSessions.forEach(session -> {
+            String tag = normalizeLabel(session.getTag(), "No tag");
+            String task = normalizeLabel(session.getTask(), "No task");
+            tasksByTag.computeIfAbsent(tag, _ -> new ArrayList<>());
+            if (!tasksByTag.get(tag).contains(task)) {
+                tasksByTag.get(tag).add(task);
+            }
+        });
+
+        syncFilterOptions();
+
+        Map<LocalDate, Integer> globalHeatmapMinutes = new TreeMap<>();
+        for (Session s : allSessions) {
+            LocalDate date = extractSessionDate(s);
+            if (date != null) globalHeatmapMinutes.merge(date, s.getTotalMinutes(), Integer::sum);
+        }
+        updateHeatmap(globalHeatmapMinutes);
+
+        applyFiltersAndRender();
+    }
+
     private List<Session> loadSessions() {
         try {
             return ApiClient.getAllSessions().stream()

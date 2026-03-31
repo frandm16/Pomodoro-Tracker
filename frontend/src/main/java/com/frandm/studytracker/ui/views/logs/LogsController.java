@@ -142,12 +142,16 @@ public class LogsController {
         }
     }
 
-    public void refreshAll() {
+    public void refreshSessionData() {
         if (historyTab != null) historyTab.resetAndReload();
         if (calendarTab != null) {
             calendarTab.loadWeekSessions();
             calendarTab.refresh();
         }
+    }
+
+    public void refreshAll() {
+        refreshSessionData();
         if (focusTab != null) focusTab.refreshFocusAreasGrid();
     }
 
@@ -170,5 +174,14 @@ public class LogsController {
 
     public Session getSessionToEdit() {
         return sessionToEdit;
+    }
+
+    public void openAddTagOverlay() {
+        mainController.switchToTimer();
+        mainController.toggleSetup();
+    }
+
+    public void openDeleteTagOverlay(long tagId, String tagName) {
+        mainController.openConfirmDeleteTag(tagId);
     }
 }

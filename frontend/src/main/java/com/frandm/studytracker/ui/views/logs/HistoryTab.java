@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -107,7 +108,7 @@ public class HistoryTab extends VBox {
 
         ScrollPane historyScroll = new ScrollPane(scrollContent);
         historyScroll.setFitToWidth(true);
-        historyScroll.getStyleClass().add("setup-scroll");
+        historyScroll.getStyleClass().add("calendar-root");
         VBox.setVgrow(historyScroll, Priority.ALWAYS);
 
         this.getChildren().addAll(filterBar, historyScroll);
@@ -269,6 +270,19 @@ public class HistoryTab extends VBox {
         return sorted;
     }
 
+    private Map<LocalDate, List<Session>> groupSessionsByDate(List<Session> sessions) {
+        Map<LocalDate, List<Session>> grouped = new LinkedHashMap<>();
+        for (Session s : sessions) {
+            LocalDate date = extractSessionDate(s);
+            if (date == null) continue;
+            grouped.computeIfAbsent(date, _ -> new ArrayList<>()).add(s);
+        }
+        for (List<Session> daySessions : grouped.values()) {
+            daySessions.sort(Comparator.comparing((Session s) -> s.getStartDateTime()));
+        }
+        return grouped;
+    }
+
     private void loadMore() {
         if (!hasMoreData) return;
 
@@ -350,20 +364,19 @@ public class HistoryTab extends VBox {
             createNewDayBlock(today, 0, "No sessions registered for today");
         }
 
-        for (Session s : filteredSessions) {
-            LocalDate sessionDate = extractSessionDate(s);
-            if (sessionDate == null) continue;
+        Map<LocalDate, List<Session>> grouped = groupSessionsByDate(filteredSessions);
 
-            if (!sessionDate.equals(lastDate)) {
-                long totalMinutes = filteredSessions.stream()
-                        .filter(se -> sessionDate.equals(extractSessionDate(se)))
-                        .mapToLong(Session::getTotalMinutes)
-                        .sum();
-                createNewDayBlock(sessionDate, totalMinutes, null);
-                lastDate = sessionDate;
-            }
-            if (lastSessionsContainer != null) {
-                lastSessionsContainer.getChildren().add(createTimelineCard(s));
+        List<LocalDate> sortedDates = new ArrayList<>(grouped.keySet());
+        sortedDates.sort(Comparator.reverseOrder());
+
+        for (LocalDate date : sortedDates) {
+            List<Session> daySessions = grouped.get(date);
+            long totalMinutes = daySessions.stream().mapToLong(Session::getTotalMinutes).sum();
+            createNewDayBlock(date, totalMinutes, null);
+            for (Session s : daySessions) {
+                if (lastSessionsContainer != null) {
+                    lastSessionsContainer.getChildren().add(createTimelineCard(s));
+                }
             }
         }
     }

@@ -21,6 +21,7 @@ public class CalendarTab extends VBox {
     private GridPane calendarGrid;
     private GridPane headerGrid;
     private ScrollPane scrollPane;
+    private HBox headerBar;
     private LocalDate currentWeekStart;
     private final LogsController logsController;
     private final double ROW_HEIGHT = 60.0;
@@ -28,13 +29,87 @@ public class CalendarTab extends VBox {
     private final Pane[] dayColumns = new Pane[7];
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
     private List<Map<String, Object>> weekSessions = new ArrayList<>();
+    private Label lblMonth;
 
     public CalendarTab(LogsController logsController) {
         this.currentWeekStart = LocalDate.now().with(DayOfWeek.MONDAY);
         this.logsController = logsController;
-        this.getStyleClass().add("calendar-root");
+        this.getStyleClass().add("planner-view");
         VBox.setVgrow(this, Priority.ALWAYS);
         initializeUI();
+    }
+
+    private void initializeUI() {
+        headerBar = new HBox(15);
+        headerBar.setAlignment(Pos.CENTER_LEFT);
+        headerBar.setPadding(new Insets(10, 30, 10, 30));
+        headerBar.getStyleClass().add("planner-nav-bar");
+
+        Button btnPrev = new Button();
+        Button btnNext = new Button();
+        Button btnToday = new Button("Today");
+
+        logsController.updateIcon(btnPrev, "calendar-icon", "mdi2c-chevron-left", "Previous week");
+        logsController.updateIcon(btnNext, "calendar-icon", "mdi2c-chevron-right", "Next week");
+
+        btnPrev.getStyleClass().add("calendar-button-icon");
+        btnNext.getStyleClass().add("calendar-button-icon");
+        btnToday.getStyleClass().add("calendar-button-today");
+
+        lblMonth = new Label();
+        lblMonth.getStyleClass().add("calendar-month-label");
+        updateMonthLabel();
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        btnPrev.setOnAction(_ -> {
+            currentWeekStart = currentWeekStart.minusWeeks(1);
+            updateMonthLabel();
+            loadAndRefresh();
+        });
+        btnNext.setOnAction(_ -> {
+            currentWeekStart = currentWeekStart.plusWeeks(1);
+            updateMonthLabel();
+            loadAndRefresh();
+        });
+        btnToday.setOnAction(_ -> {
+            currentWeekStart = LocalDate.now().with(DayOfWeek.MONDAY);
+            updateMonthLabel();
+            loadAndRefresh();
+            Platform.runLater(this::scrollToCurrentTime);
+        });
+
+        headerBar.getChildren().addAll(btnToday, btnPrev, btnNext, lblMonth, spacer);
+
+
+        headerGrid = new GridPane();
+        headerGrid.getStyleClass().add("calendar-header-grid");
+
+        calendarGrid = new GridPane();
+        calendarGrid.getStyleClass().add("calendar-grid");
+
+        scrollPane = new ScrollPane(calendarGrid);
+        scrollPane.getStyleClass().add("main-scroll");
+        scrollPane.setFitToWidth(true);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+        VBox content = new VBox(headerGrid, scrollPane);
+        content.getStyleClass().add("calendar-root");
+
+        this.getChildren().addAll(headerBar, content);
+        loadAndRefresh();
+        Platform.runLater(this::scrollToCurrentTime);
+    }
+
+    private void updateMonthLabel() {
+        String m = currentWeekStart.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
+        lblMonth.setText(m.substring(0, 1).toUpperCase() + m.substring(1) + " " + currentWeekStart.getYear());
+    }
+
+    private void loadAndRefresh() {
+        loadWeekSessions();
+        refresh();
     }
 
     public void refresh() {
@@ -43,20 +118,6 @@ public class CalendarTab extends VBox {
         renderBaseGrid();
         drawContent(weekSessions);
         drawTimeIndicator();
-    }
-
-    private void initializeUI() {
-        headerGrid = new GridPane();
-        headerGrid.getStyleClass().add("calendar-header-grid");
-        calendarGrid = new GridPane();
-        calendarGrid.getStyleClass().add("calendar-grid");
-        scrollPane = new ScrollPane(calendarGrid);
-        scrollPane.getStyleClass().add("main-scroll");
-        scrollPane.setFitToWidth(true);
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
-        this.getChildren().addAll(headerGrid, scrollPane);
-        refresh();
-        Platform.runLater(this::scrollToCurrentTime);
     }
 
     private void setupGridConstraints() {
@@ -141,10 +202,9 @@ public class CalendarTab extends VBox {
             String startStr = getStartTime(s);
             if (startStr == null) continue;
             LocalDateTime start = parseDateValue(startStr);
+            if (start == null) continue;
             String endStr = getEndTime(s);
             LocalDateTime end = endStr != null ? parseDateValue(endStr) : start.plusHours(1);
-            if (start == null) continue;
-            if (end == null) end = start.plusHours(1);
 
             Map<String, Object> sessionData = new HashMap<>(s);
             sessionData.put("task_name", getTaskName(s));
@@ -390,7 +450,8 @@ public class CalendarTab extends VBox {
                     currentWeekStart.plusDays(6).atTime(23, 59, 59).toString()
             );
         } catch (Exception e) {
-            System.err.println("Error loading calendar sessions: " + e.getMessage());
+            System.err.println("[CalendarTab] Error loading sessions: " + e.getMessage());
+            e.printStackTrace();
             weekSessions = new ArrayList<>();
         }
     }

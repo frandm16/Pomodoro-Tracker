@@ -118,9 +118,16 @@ public class PomodoroController {
         setupModeSystem();
         setupFuzzySearch();
         setupEngineCallbacks();
+        subscribeToTagEvents();
 
         updateEngineSettings();
         updateUIFromEngine();
+    }
+
+    private void subscribeToTagEvents() {
+        TagEventBus.getInstance().subscribe(event -> {
+            refreshTagsAndTasksAsync();
+        });
     }
 
     //region initialize
@@ -377,19 +384,23 @@ public class PomodoroController {
 
     //region data
     public void refreshDatabaseData() {
+        refreshTagsAndTasks();
+        if (statsDashboard != null) {
+            statsDashboard.refresh();
+        }
+    }
+
+    public void refreshTagsAndTasks() {
         try {
             final Map<String, String> colors = new java.util.LinkedHashMap<>();
             final Map<String, Long> ids = new java.util.LinkedHashMap<>();
-            ApiClient.getTags().forEach(t -> {
-                colors.put((String) t.get("name"), (String) t.get("color"));
-                ids.put((String) t.get("name"), ((Number) t.get("id")).longValue());
-            });
-            tagColors = colors;
-            tagIds = ids;
-
             final Map<String, List<String>> map = new java.util.LinkedHashMap<>();
-            ApiClient.getTags().forEach(t -> {
+
+            List<Map<String, Object>> tags = ApiClient.getTags();
+            tags.forEach(t -> {
                 String tagName = (String) t.get("name");
+                colors.put(tagName, (String) t.get("color"));
+                ids.put(tagName, ((Number) t.get("id")).longValue());
                 try {
                     List<String> tasks = ApiClient.getTasks(tagName).stream()
                             .map(task -> (String) task.get("name"))
@@ -399,6 +410,8 @@ public class PomodoroController {
                     map.put(tagName, new ArrayList<>());
                 }
             });
+            tagColors = colors;
+            tagIds = ids;
             tagsWithTasksMap = map;
         } catch (Exception e) {
             System.err.println("Error refreshing data: " + e.getMessage());
@@ -409,9 +422,45 @@ public class PomodoroController {
         );
 
         setupManager.updateFuzzyResults("", fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected);
-        if (statsDashboard != null) {
-            statsDashboard.refresh();
-        }
+    }
+
+    private void refreshTagsAndTasksAsync() {
+        new Thread(() -> {
+            try {
+                final Map<String, String> colors = new java.util.LinkedHashMap<>();
+                final Map<String, Long> ids = new java.util.LinkedHashMap<>();
+                final Map<String, List<String>> map = new java.util.LinkedHashMap<>();
+
+                List<Map<String, Object>> tags = ApiClient.getTags();
+                tags.forEach(t -> {
+                    String tagName = (String) t.get("name");
+                    colors.put(tagName, (String) t.get("color"));
+                    ids.put(tagName, ((Number) t.get("id")).longValue());
+                    try {
+                        List<String> tasks = ApiClient.getTasks(tagName).stream()
+                                .map(task -> (String) task.get("name"))
+                                .collect(java.util.stream.Collectors.toList());
+                        map.put(tagName, tasks);
+                    } catch (Exception ex) {
+                        map.put(tagName, new ArrayList<>());
+                    }
+                });
+
+                Platform.runLater(() -> {
+                    tagColors = colors;
+                    tagIds = ids;
+                    tagsWithTasksMap = map;
+
+                    setupManager.renderTagsList(tagsListContainer, tagColors, tagIds, () ->
+                            setupManager.updateFuzzyResults(fuzzySearchInput.getText(), fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
+                    );
+
+                    setupManager.updateFuzzyResults("", fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected);
+                });
+            } catch (Exception e) {
+                System.err.println("Error refreshing tags async: " + e.getMessage());
+            }
+        }, "tag-refresh-thread").start();
     }
 
     private void updateEngineSettings() {
@@ -491,15 +540,14 @@ public class PomodoroController {
                     ApiClient.formatApiTimestamp(LocalDateTime.now()),
                     currentRating
             );
-            statsDashboard.refresh();
-            logsView.resetAndReload();
         } catch (Exception e) {
             System.err.println("Error saving session: " + e.getMessage());
             NotificationManager.show("Error", "Session could not be saved", NotificationManager.NotificationType.ERROR);
             return;
         }
 
-        refreshDatabaseData();
+        statsDashboard.refresh();
+        logsView.getLogsController().refreshSessionData();
         currentRating=0;
         updateStarsUI();
 
@@ -544,19 +592,15 @@ public class PomodoroController {
                     (int)(selectedColor.getGreen() * 255),
                     (int)(selectedColor.getBlue() * 255));
 
-            try {
-                ApiClient.createTag(newTagName, hexColor);
-            } catch (Exception e) {
-                System.err.println("Error creating tag: " + e.getMessage());
-            }
-
             tagNameInput.clear();
-            refreshDatabaseData();
-            logsView.resetAndReload();
 
-            setupManager.renderTagsList(tagsListContainer, tagColors, tagIds, () ->
-                    setupManager.updateFuzzyResults(fuzzySearchInput.getText(), fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
-            );
+            new Thread(() -> {
+                try {
+                    ApiClient.createTag(newTagName, hexColor);
+                } catch (Exception e) {
+                    System.err.println("Error creating tag: " + e.getMessage());
+                }
+            }, "tag-create-thread").start();
         }
     }
 
@@ -1236,15 +1280,25 @@ public class PomodoroController {
     @FXML
     private void onConfirmDeleteTagClick() {
         if (tagToDelete != null) {
-            try {
-                ApiClient.deleteTag(tagToDelete);
-                resetFullApp();
-            } catch (Exception e) {
-                System.err.println("Error deleting tag: " + e.getMessage());
-            }
+            boolean wasSelectedTag = tagIds.entrySet().stream()
+                    .anyMatch(e -> e.getValue().equals(tagToDelete) && e.getKey().equals(setupManager.getSelectedTag()));
+
+            final Long tagIdToDelete = tagToDelete;
             closeConfirmDeleteTag();
-            refreshDatabaseData();
-            NotificationManager.show("Tag Deleted", "Success", NotificationManager.NotificationType.SUCCESS);
+
+            new Thread(() -> {
+                try {
+                    ApiClient.deleteTag(tagIdToDelete);
+                    Platform.runLater(() -> {
+                        if (wasSelectedTag) {
+                            resetFullApp();
+                        }
+                        NotificationManager.show("Tag Deleted", "Success", NotificationManager.NotificationType.SUCCESS);
+                    });
+                } catch (Exception e) {
+                    System.err.println("Error deleting tag: " + e.getMessage());
+                }
+            }, "tag-delete-thread").start();
         }
     }
 

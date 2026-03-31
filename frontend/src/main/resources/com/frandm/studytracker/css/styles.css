@@ -574,6 +574,7 @@
 .history-view-layout {
     -fx-padding: 24;
     -fx-spacing: 18;
+    -fx-alignment: center;
 }
 
 .history-nav-bar {
@@ -582,7 +583,7 @@
 }
 
 .history-content-root {
-    -fx-spacing: 0;
+    -fx-spacing: 20;
 }
 
 .sessions-main-container {
@@ -599,12 +600,9 @@
 .history-filter-bar {
     -fx-alignment: CENTER_LEFT;
     -fx-spacing: 10;
-    -fx-padding: 8 8 14 16;
-    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.02), rgba(255,255,255,0.04));
-    -fx-background-radius: 16;
-    -fx-border-color: -color-border-subtle-light;
-    -fx-border-radius: 16;
-    -fx-border-width: 1;
+    -fx-padding: 16;
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -bg-dashboard, -fg-dashboard);
+    -fx-background-radius: 20;
 }
 
 .history-filter-bar .text-field {
@@ -940,6 +938,12 @@
     -fx-font-size: 13px;
 }
 
+.summary-task-percent {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 12px;
+    -fx-min-width: 40;
+}
+
 .summary-task-bar {
     -fx-background-color: rgba(255,255,255,0.06);
     -fx-background-radius: 6;
@@ -966,7 +970,12 @@
     -fx-border-width: 1;
 }
 
+.history-detail-root {
+    -fx-background-color: rgba(255, 255, 255, 0.5);
+}
+
 .focus-areas-root {
+    -fx-background-color: #ff0000;
     -fx-padding: 20 0;
     -fx-spacing: 16;
 }
@@ -1057,6 +1066,32 @@
     -fx-icon-color: -color-accent;
     -fx-scale-x: 1.15;
     -fx-scale-y: 1.15;
+}
+
+.tag-add-card {
+    -fx-background-color: transparent;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-style: segments(6, 4);
+    -fx-border-width: 2;
+    -fx-border-radius: 16;
+    -fx-background-radius: 16;
+    -fx-min-height: 110;
+}
+
+.tag-add-card:hover {
+    -fx-border-color: -color-accent;
+    -fx-translate-y: -5;
+    -fx-effect: dropshadow(three-pass-box, -color-accent-light, 18, 0.4, 0, 0);
+}
+
+.tag-add-label {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.tag-add-card:hover .tag-add-label {
+    -fx-text-fill: -color-accent;
 }
 
 .tag-action-bar {
@@ -1261,10 +1296,6 @@
     -fx-background-radius: 8;
     -fx-cursor: hand;
     -fx-padding: 6;
-    -fx-border-color: -session-color;
-    -fx-border-width: 1;
-    -fx-border-radius: 8;
-    -fx-border-opacity: 0.3;
     -fx-transition: all 0.2s ease;
 }
 
@@ -2055,6 +2086,7 @@
 
 .planner-view{
     -fx-spacing: 20;
+    -fx-alignment: center;
 }
 
 .planner-nav-bar {
