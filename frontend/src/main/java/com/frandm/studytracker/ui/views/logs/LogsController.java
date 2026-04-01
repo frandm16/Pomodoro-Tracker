@@ -143,7 +143,7 @@ public class LogsController {
     }
 
     public void refreshSessionData() {
-        if (historyTab != null) historyTab.resetAndReload();
+        if (historyTab != null) historyTab.reload();
         if (calendarTab != null) {
             calendarTab.loadWeekSessions();
             calendarTab.refresh();

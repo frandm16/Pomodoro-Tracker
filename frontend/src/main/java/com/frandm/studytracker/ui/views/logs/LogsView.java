@@ -54,7 +54,7 @@ public class LogsView extends StackPane {
         this.getChildren().add(layout);
 
         currentTabId = "history";
-        historyTab.resetAndReload();
+        historyTab.reload();
     }
 
     private void switchTab(String tabId) {

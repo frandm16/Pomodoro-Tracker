@@ -21,22 +21,8 @@ import java.util.stream.Collectors;
 public class HistoryTab extends VBox {
     private final LogsController logsController;
     private final VBox sessionsContainer;
-    private final ComboBox<String> tagFilterCombo;
-    private final ComboBox<String> taskFilterCombo;
-    private final TextField searchField;
-    private final DatePicker dateFromPicker;
-    private final DatePicker dateToPicker;
-    private final ComboBox<String> ratingFilterCombo;
-    private final ComboBox<String> sortCombo;
     private final Button loadMoreBtn;
-    private final Button resetFiltersBtn;
-    private final Label resultsCounter;
-    private String currentTag = null;
-    private String currentTask = null;
-    private LocalDate dateFrom = null;
-    private LocalDate dateTo = null;
-    private int minRating = 0;
-    private String currentSort = "newest";
+
     private int currentOffset = 0;
     private final int PAGE_SIZE = 50;
     private VBox lastSessionsContainer = null;
@@ -46,54 +32,6 @@ public class HistoryTab extends VBox {
     public HistoryTab(LogsController logsController) {
         this.logsController = logsController;
         this.getStyleClass().add("history-content-root");
-
-        HBox filterBar = new HBox();
-        filterBar.getStyleClass().add("history-filter-bar");
-
-        FontIcon searchIcon = new FontIcon("mdi2m-magnify");
-        searchIcon.getStyleClass().add("filter-label-icon");
-
-        searchField = new TextField();
-        searchField.setPromptText("Search sessions...");
-
-        dateFromPicker = new DatePicker();
-        dateFromPicker.setPromptText("From");
-        dateFromPicker.setMaxWidth(130);
-
-        dateToPicker = new DatePicker();
-        dateToPicker.setPromptText("To");
-        dateToPicker.setMaxWidth(130);
-
-        ratingFilterCombo = new ComboBox<>();
-        ratingFilterCombo.setPromptText("Rating");
-        ratingFilterCombo.getItems().addAll("All", "1+", "2+", "3+", "4+", "5");
-        ratingFilterCombo.setValue("All");
-        ratingFilterCombo.setMaxWidth(80);
-
-        tagFilterCombo = new ComboBox<>();
-        tagFilterCombo.setPromptText("All Tags");
-        tagFilterCombo.setMaxWidth(140);
-
-        taskFilterCombo = new ComboBox<>();
-        taskFilterCombo.setPromptText("All Tasks");
-        taskFilterCombo.setDisable(true);
-        taskFilterCombo.setMaxWidth(140);
-
-        sortCombo = new ComboBox<>();
-        sortCombo.setPromptText("Sort");
-        sortCombo.getItems().addAll("Newest", "Oldest", "Longest", "Shortest", "Highest Rated");
-        sortCombo.setValue("Newest");
-        sortCombo.setMaxWidth(130);
-
-        resetFiltersBtn = new Button("Reset");
-        resetFiltersBtn.getStyleClass().add("filter-reset-button");
-        resetFiltersBtn.setGraphic(new FontIcon("mdi2r-refresh"));
-        resetFiltersBtn.setVisible(false);
-
-        resultsCounter = new Label();
-        resultsCounter.getStyleClass().add("results-counter");
-
-        filterBar.getChildren().addAll(searchIcon, searchField, dateFromPicker, dateToPicker, ratingFilterCombo, tagFilterCombo, taskFilterCombo, sortCombo, resetFiltersBtn, resultsCounter);
 
         sessionsContainer = new VBox();
         sessionsContainer.getStyleClass().add("sessions-main-container");
@@ -110,9 +48,7 @@ public class HistoryTab extends VBox {
         historyScroll.getStyleClass().add("calendar-root");
         VBox.setVgrow(historyScroll, Priority.ALWAYS);
 
-        this.getChildren().addAll(filterBar, historyScroll);
-        setupFilterListeners();
-        refreshFilters();
+        this.getChildren().addAll(historyScroll);
     }
 
     private static LocalDateTime parseDate(Session session) {
@@ -124,101 +60,13 @@ public class HistoryTab extends VBox {
         return dateTime != null ? dateTime.toLocalDate() : null;
     }
 
-    private void setupFilterListeners() {
-        searchField.textProperty().addListener((_, _, _) -> applyFiltersAndRender());
 
-        dateFromPicker.valueProperty().addListener((_, _, newVal) -> {
-            dateFrom = newVal;
-            applyFiltersAndRender();
-        });
 
-        dateToPicker.valueProperty().addListener((_, _, newVal) -> {
-            dateTo = newVal;
-            applyFiltersAndRender();
-        });
 
-        ratingFilterCombo.setOnAction(_ -> {
-            String selected = ratingFilterCombo.getValue();
-            if (selected == null || selected.equals("All")) {
-                minRating = 0;
-            } else {
-                minRating = Integer.parseInt(selected.replace("+", ""));
-            }
-            applyFiltersAndRender();
-        });
 
-        tagFilterCombo.setOnAction(_ -> {
-            String selected = tagFilterCombo.getValue();
-            if (selected == null || selected.equals("All Tags")) {
-                currentTag = null;
-                currentTask = null;
-                taskFilterCombo.setValue("All Tasks");
-                taskFilterCombo.setDisable(true);
-            } else {
-                currentTag = selected;
-                currentTask = null;
-                updateTaskFilterCombo(currentTag);
-                taskFilterCombo.setValue("All Tasks");
-                taskFilterCombo.setDisable(false);
-            }
-            resetAndReload();
-        });
 
-        taskFilterCombo.setOnAction(_ -> {
-            String selected = taskFilterCombo.getValue();
-            currentTask = (selected == null || selected.equals("All Tasks")) ? null : selected;
-            resetAndReload();
-        });
 
-        sortCombo.setOnAction(_ -> {
-            String selected = sortCombo.getValue();
-            if (selected != null) {
-                currentSort = selected.toLowerCase().replace(" ", "_");
-            }
-            applyFiltersAndRender();
-        });
-
-        resetFiltersBtn.setOnAction(_ -> {
-            searchField.clear();
-            dateFromPicker.setValue(null);
-            dateToPicker.setValue(null);
-            ratingFilterCombo.setValue("All");
-            tagFilterCombo.setValue("All Tags");
-            taskFilterCombo.setValue("All Tasks");
-            taskFilterCombo.setDisable(true);
-            sortCombo.setValue("Newest");
-            currentTag = null;
-            currentTask = null;
-            dateFrom = null;
-            dateTo = null;
-            minRating = 0;
-            currentSort = "newest";
-            resetFiltersBtn.setVisible(false);
-            resetAndReload();
-        });
-    }
-
-    private void updateTaskFilterCombo(String tagName) {
-        taskFilterCombo.getItems().clear();
-        taskFilterCombo.getItems().add("All Tasks");
-        try {
-            ApiClient.getTasks(tagName).forEach(t -> taskFilterCombo.getItems().add((String) t.get("name")));
-        } catch (Exception e) {
-            System.err.println("Error loading tasks: " + e.getMessage());
-        }
-    }
-
-    private void refreshFilters() {
-        tagFilterCombo.getItems().clear();
-        tagFilterCombo.getItems().add("All Tags");
-        try {
-            ApiClient.getTags().forEach(t -> tagFilterCombo.getItems().add((String) t.get("name")));
-        } catch (Exception e) {
-            System.err.println("Error loading tags: " + e.getMessage());
-        }
-    }
-
-    public void resetAndReload() {
+    public void reload() {
         currentOffset = 0;
         allLoadedSessions.clear();
         sessionsContainer.getChildren().clear();
@@ -228,39 +76,11 @@ public class HistoryTab extends VBox {
         loadMore();
     }
 
-    private boolean matchesFilters(Session s) {
-        String searchText = searchField.getText();
-        if (searchText != null && !searchText.trim().isEmpty()) {
-            String lowerSearch = searchText.toLowerCase();
-            boolean matchesTitle = s.getTitle() != null && s.getTitle().toLowerCase().contains(lowerSearch);
-            boolean matchesDesc = s.getDescription() != null && s.getDescription().toLowerCase().contains(lowerSearch);
-            boolean matchesTag = s.getTag() != null && s.getTag().toLowerCase().contains(lowerSearch);
-            boolean matchesTask = s.getTask() != null && s.getTask().toLowerCase().contains(lowerSearch);
-            if (!matchesTitle && !matchesDesc && !matchesTag && !matchesTask) return false;
-        }
 
-        if (dateFrom != null) {
-            LocalDate sessionDate = extractSessionDate(s);
-            if (sessionDate == null || sessionDate.isBefore(dateFrom)) return false;
-        }
-
-        if (dateTo != null) {
-            LocalDate sessionDate = extractSessionDate(s);
-            if (sessionDate == null || sessionDate.isAfter(dateTo)) return false;
-        }
-
-        return minRating <= 0 || s.getRating() >= minRating;
-    }
 
     private List<Session> sortSessions(List<Session> sessions) {
         List<Session> sorted = new ArrayList<>(sessions);
-        switch (currentSort) {
-            case "oldest" -> sorted.sort(Comparator.comparing(Session::getStartDateTime));
-            case "longest" -> sorted.sort(Comparator.comparingInt(Session::getTotalMinutes).reversed());
-            case "shortest" -> sorted.sort(Comparator.comparingInt(Session::getTotalMinutes));
-            case "highest_rated" -> sorted.sort(Comparator.comparingInt(Session::getRating).reversed());
-            default -> sorted.sort(Comparator.comparing(Session::getStartDateTime).reversed());
-        }
+        sorted.sort(Comparator.comparing(Session::getStartDateTime).reversed());
         return sorted;
     }
 
@@ -282,7 +102,7 @@ public class HistoryTab extends VBox {
 
         List<Session> newSessions;
         try {
-            List<Map<String, Object>> content = ApiClient.getSessions(currentTag, currentTask, currentOffset / PAGE_SIZE);
+            List<Map<String, Object>> content = ApiClient.getSessions(null, null, currentOffset / PAGE_SIZE);
             newSessions = content.stream().map(m -> {
                 Map<?, ?> task = (Map<?, ?>) m.get("task");
                 Map<?, ?> tag = (Map<?, ?>) task.get("tag");
@@ -312,23 +132,11 @@ public class HistoryTab extends VBox {
         currentOffset += PAGE_SIZE;
 
         applyFiltersAndRender();
-
-        boolean hasActiveFilters = (searchField.getText() != null && !searchField.getText().trim().isEmpty())
-                || dateFrom != null || dateTo != null || minRating > 0;
-        resetFiltersBtn.setVisible(hasActiveFilters);
     }
 
     private void applyFiltersAndRender() {
-        List<Session> filteredSessions = allLoadedSessions.stream()
-                .filter(this::matchesFilters)
-                .collect(Collectors.toList());
-
-        filteredSessions = sortSessions(filteredSessions);
-
-        renderSessions(filteredSessions);
-
-        resultsCounter.setText(filteredSessions.size() + " session" + (filteredSessions.size() != 1 ? "s" : ""));
-
+        List<Session> sortedSessions = sortSessions(allLoadedSessions);
+        renderSessions(sortedSessions);
         loadMoreBtn.setVisible(hasMoreData);
     }
 
@@ -339,21 +147,15 @@ public class HistoryTab extends VBox {
         LocalDate today = LocalDate.now();
 
         if (filteredSessions.isEmpty()) {
-            if (allLoadedSessions.isEmpty()) {
-                Label noSessions = new Label("No sessions found");
-                noSessions.getStyleClass().add("no-sessions-label");
-                sessionsContainer.getChildren().add(noSessions);
-            } else {
-                Label noMatch = new Label("No sessions match your filters");
-                noMatch.getStyleClass().add("no-sessions-label");
-                sessionsContainer.getChildren().add(noMatch);
-            }
+            Label noSessions = new Label("No sessions found");
+            noSessions.getStyleClass().add("no-sessions-label");
+            sessionsContainer.getChildren().add(noSessions);
             return;
         }
 
         LocalDate firstSessionDate = extractSessionDate(filteredSessions.getFirst());
         boolean hasTodaySessions = today.equals(firstSessionDate);
-        if (!hasTodaySessions && currentOffset <= PAGE_SIZE && dateFrom == null && dateTo == null) {
+        if (!hasTodaySessions && currentOffset <= PAGE_SIZE) {
             createNewDayBlock(today, 0, "No sessions registered for today");
         }
 
