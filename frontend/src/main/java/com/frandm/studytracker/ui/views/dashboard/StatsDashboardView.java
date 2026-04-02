@@ -1,6 +1,7 @@
 package com.frandm.studytracker.ui.views.dashboard;
 
 import com.frandm.studytracker.client.ApiClient;
+import com.frandm.studytracker.core.TagEventBus;
 import com.frandm.studytracker.models.Session;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -88,6 +89,7 @@ public class StatsDashboardView {
     private final VBox heatmapCard;
 
     private final Map<String, List<String>> tasksByTag = new LinkedHashMap<>();
+    private final java.util.Set<String> archivedTagNames = new java.util.HashSet<>();
     private List<Session> allSessions = List.of();
     private boolean filtersBound;
     private boolean updatingFilterState;
@@ -278,9 +280,11 @@ public class StatsDashboardView {
         host.setContent(root);
         host.setFitToWidth(true);
         host.getStyleClass().add("dashboard-scroll");
+        TagEventBus.getInstance().subscribe(_ -> Platform.runLater(this::refresh));
     }
 
     public void refresh() {
+        loadArchivedTags();
         allSessions = loadSessions();
         loadCatalogs();
         syncFilterOptions();
@@ -299,6 +303,10 @@ public class StatsDashboardView {
     private List<Session> loadSessions() {
         try {
             return ApiClient.getAllSessions().stream()
+                    .filter(sessionMap -> {
+                        String tagName = (String) sessionMap.get("tag");
+                        return tagName == null || !archivedTagNames.contains(tagName);
+                    })
                     .map(sessionMap -> {
                         Session session = new Session(
                                 ((Number) sessionMap.get("id")).intValue(),
@@ -347,6 +355,20 @@ public class StatsDashboardView {
                 tasksByTag.get(tag).add(task);
             }
         });
+    }
+
+    private void loadArchivedTags() {
+        archivedTagNames.clear();
+        try {
+            for (Map<String, Object> tag : ApiClient.getAllTags()) {
+                boolean isArchived = Boolean.TRUE.equals(tag.get("archived")) || Boolean.TRUE.equals(tag.get("isArchived"));
+                if (isArchived) {
+                    archivedTagNames.add((String) tag.get("name"));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading archived tags: " + e.getMessage());
+        }
     }
 
     private void syncFilterOptions() {

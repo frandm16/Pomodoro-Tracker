@@ -222,7 +222,6 @@ public class FocusTab extends VBox {
     private VBox createTagCard(String name, String color, int totalMinutes, int maxTotal, long tagId, boolean isArchived, boolean isFavorite) {
         VBox card = new VBox();
         card.getStyleClass().add("tag-explorer-card");
-        if (isArchived) card.setOpacity(0.5);
 
         HBox topRow = new HBox();
         topRow.getStyleClass().add("tag-card-header");

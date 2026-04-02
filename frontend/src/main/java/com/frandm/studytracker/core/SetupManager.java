@@ -115,9 +115,9 @@ public class SetupManager {
 
             Button deleteBtn = new Button();
             deleteBtn.getStyleClass().add("card-options-button");
-            FontIcon optionsIcon = new FontIcon("mdi2d-dots-horizontal");
-            optionsIcon.getStyleClass().add("options-icon");
-            deleteBtn.setGraphic(optionsIcon);
+            FontIcon deleteIcon = new FontIcon("mdi2t-trash-can-outline");
+            deleteIcon.getStyleClass().add("options-icon");
+            deleteBtn.setGraphic(deleteIcon);
 
             deleteBtn.setOnAction(e -> {
                 e.consume();

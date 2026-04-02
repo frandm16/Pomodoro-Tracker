@@ -1283,16 +1283,12 @@
 }
 
 .options-icon {
-    -fx-icon-size: 28;
-    -fx-icon-color: -icon-main;
-    -fx-padding: 0;
-    -fx-transition: all 0.2s ease;
+    -fx-icon-size: 18;
+    -fx-icon-color: -icon-subtle;
 }
 
 .options-icon:hover {
     -fx-icon-color: -color-accent;
-    -fx-scale-x: 1.15;
-    -fx-scale-y: 1.15;
 }
 
 .tag-add-card {
