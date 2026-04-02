@@ -50,13 +50,12 @@ public class TodoItemController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Void> patch(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        todoItemService.partialUpdate(
+    public TodoItem patch(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return todoItemService.partialUpdate(
                 id,
                 (String) body.get("text"),
                 (Boolean) body.get("completed")
         );
-        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")

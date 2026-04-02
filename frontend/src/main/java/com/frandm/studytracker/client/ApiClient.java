@@ -681,8 +681,7 @@ public class ApiClient {
         Map<String, Object> body = new LinkedHashMap<>();
         if (text != null) body.put("text", text);
         if (completed != null) body.put("completed", completed);
-        mapper.readValue(patch("/todos/" + id, body), new TypeReference<>() {
-        });
+        patch("/todos/" + id, body);
     }
 
     public static void updateTodoCompleted(long id, boolean completed) throws Exception {
