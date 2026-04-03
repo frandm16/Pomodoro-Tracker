@@ -526,6 +526,20 @@
                         </VBox>
                     </ScrollPane>
                 </Tab>
+                <Tab text="Shortcuts">
+                    <ScrollPane fitToWidth="true">
+                        <VBox spacing="16" style="-fx-padding: 22 25 22 25;">
+                            <VBox spacing="14" styleClass="settings-card">
+                                <Label text="Keyboard Shortcuts" styleClass="settings-card-title"/>
+                                <Label text="Customize your timer and UI shortcuts. Press Edit and then type the new combination."
+                                       wrapText="true" styleClass="settings-danger-desc"/>
+                                <Label fx:id="shortcutCaptureStatusLabel" text="Shortcuts only work when no control has focus. The menu shortcut is configurable here too."
+                                       wrapText="true" styleClass="shortcut-help-label"/>
+                            </VBox>
+                            <VBox fx:id="shortcutSettingsListContainer" spacing="12"/>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
                 <Tab text="About">
                     <ScrollPane fitToWidth="true">
                         <VBox spacing="16" style="-fx-padding: 22 25 22 25;" alignment="TOP_CENTER">
@@ -551,6 +565,39 @@
                     </ScrollPane>
                 </Tab>
             </TabPane>
+        </VBox>
+    </GridPane>
+
+    <GridPane fx:id="shortcutMenuPane" visible="false" managed="false" maxHeight="Infinity" maxWidth="Infinity">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="35" />
+            <ColumnConstraints percentWidth="30" />
+            <ColumnConstraints percentWidth="35" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints percentHeight="25" />
+            <RowConstraints percentHeight="50" />
+            <RowConstraints percentHeight="25" />
+        </rowConstraints>
+
+        <Region onMouseClicked="#toggleShortcutMenu" style="-fx-background-color: rgba(0,0,0,0.5);" GridPane.columnSpan="3" GridPane.rowSpan="3">
+            <effect><GaussianBlur radius="15" /></effect>
+        </Region>
+
+        <VBox fx:id="shortcutMenuBox" visible="false" managed="false" GridPane.columnIndex="1" GridPane.rowIndex="1"
+              spacing="16" styleClass="settings-sidebar">
+            <HBox alignment="CENTER_LEFT" style="-fx-padding: 18 25 12 25;">
+                <VBox spacing="4">
+                    <Label text="SHORTCUTS" styleClass="sidebar-title" />
+                    <Label text="Quick reference and action launcher" styleClass="shortcut-help-label" />
+                </VBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button onAction="#toggleShortcutMenu" text="x" styleClass="close-button" />
+            </HBox>
+            <Separator />
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+                <VBox fx:id="shortcutMenuListContainer" spacing="12" style="-fx-padding: 20 24 24 24;"/>
+            </ScrollPane>
         </VBox>
     </GridPane>
 

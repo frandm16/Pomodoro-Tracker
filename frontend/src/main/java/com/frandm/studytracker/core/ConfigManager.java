@@ -1,6 +1,8 @@
 package com.frandm.studytracker.core;
 
 import java.io.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class ConfigManager {
@@ -22,9 +24,35 @@ public class ConfigManager {
         return new File(configDir, FILE_NAME);
     }
 
+    private static Properties loadAllProperties() {
+        Properties props = new Properties();
+        File configFile = getConfigFile();
+
+        if (!configFile.exists()) {
+            return props;
+        }
+
+        try (InputStream in = new FileInputStream(configFile)) {
+            props.load(in);
+        } catch (IOException e) {
+            System.err.println("Error ConfigManager.loadAllProperties: " + e.getMessage());
+        }
+
+        return props;
+    }
+
+    private static void storeProperties(Properties props) {
+        File configFile = getConfigFile();
+
+        try (OutputStream out = new FileOutputStream(configFile)) {
+            props.store(out, "Study Tracker Settings");
+        } catch (IOException e) {
+            System.err.println("Error ConfigManager.storeProperties: " + e.getMessage());
+        }
+    }
 
     public static void save(TrackerEngine engine) {
-        Properties props = new Properties();
+        Properties props = loadAllProperties();
         props.setProperty("workMins", String.valueOf(engine.getWorkMins()));
         props.setProperty("shortMins", String.valueOf(engine.getShortMins()));
         props.setProperty("longMins", String.valueOf(engine.getLongMins()));
@@ -51,14 +79,7 @@ public class ConfigManager {
         props.setProperty("notificationSoundInfo", engine.getNotificationSoundInfo());
         props.setProperty("customAlarmSoundPath", engine.getCustomAlarmSoundPath());
         props.setProperty("selectedAlarmPreset", engine.getSelectedAlarmPreset());
-
-        File configFile = getConfigFile();
-
-        try (OutputStream out = new FileOutputStream(configFile)) {
-            props.store(out, "Study Tracker Settings");
-        } catch (IOException e) {
-            System.err.println("Error ConfigManager.save: " + e.getMessage());
-        }
+        storeProperties(props);
     }
 
     public static void load(TrackerEngine engine) {
@@ -68,10 +89,8 @@ public class ConfigManager {
             return;
         }
 
-        Properties props = new Properties();
-        try (InputStream in = new FileInputStream(configFile)) {
-            props.load(in);
-
+        Properties props = loadAllProperties();
+        try {
             engine.updateSettings(
                     Integer.parseInt(props.getProperty("workMins", String.valueOf(engine.getWorkMins()))),
                     Integer.parseInt(props.getProperty("shortMins", String.valueOf(engine.getShortMins()))),
@@ -102,9 +121,34 @@ public class ConfigManager {
                 props.getProperty("customAlarmSoundPath", engine.getCustomAlarmSoundPath()),
                 props.getProperty("selectedAlarmPreset", engine.getSelectedAlarmPreset())
             );
-        } catch (IOException | NumberFormatException e) {
+        } catch (NumberFormatException e) {
             System.err.println("Error ConfigManager.load: " + e.getMessage());
         }
+    }
+
+    public static Map<String, String> loadShortcutProperties() {
+        Properties props = loadAllProperties();
+        Map<String, String> shortcuts = new LinkedHashMap<>();
+        for (String key : props.stringPropertyNames()) {
+            if (key.startsWith("shortcut.")) {
+                shortcuts.put(key.substring("shortcut.".length()), props.getProperty(key, ""));
+            }
+        }
+        return shortcuts;
+    }
+
+    public static void saveShortcutProperties(Map<String, String> shortcuts) {
+        Properties props = loadAllProperties();
+        props.stringPropertyNames().stream()
+                .filter(key -> key.startsWith("shortcut."))
+                .toList()
+                .forEach(props::remove);
+
+        for (Map.Entry<String, String> entry : shortcuts.entrySet()) {
+            props.setProperty("shortcut." + entry.getKey(), entry.getValue());
+        }
+
+        storeProperties(props);
     }
 
 }

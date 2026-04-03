@@ -193,6 +193,49 @@
     -fx-text-fill: -text-dark;
 }
 
+.shortcut-help-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -text-muted;
+}
+
+.shortcut-combo-label {
+    -fx-background-color: -bg-panels;
+    -fx-background-radius: 999;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 999;
+    -fx-padding: 6 10;
+    -fx-text-fill: -text-main;
+    -fx-font-weight: bold;
+}
+
+.shortcut-menu-box {
+    -fx-max-width: 640;
+    -fx-padding: 0 0 8 0;
+}
+
+.shortcut-menu-row {
+    -fx-background-color: -color-bg-subtle;
+    -fx-background-radius: 14;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 14;
+    -fx-padding: 14 16;
+    -fx-text-fill: -text-main;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.shortcut-menu-row:hover {
+    -fx-background-color: -color-hover;
+}
+
+.shortcut-menu-row:pressed {
+    -fx-background-color: -color-accent-muted;
+}
+
+.shortcut-menu-row > .label {
+    -fx-text-fill: -text-main;
+}
+
 .settings-field-label {
     -fx-font-size: 12px;
     -fx-font-weight: 600;

@@ -3,6 +3,7 @@ package com.frandm.studytracker;
 import atlantafx.base.theme.PrimerDark;
 import com.frandm.studytracker.controllers.TrackerController;
 import com.frandm.studytracker.core.NotificationManager;
+import com.frandm.studytracker.core.ShortcutManager;
 import fr.brouillard.oss.cssfx.CSSFX;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
@@ -11,8 +12,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -94,11 +93,20 @@ public class App extends Application {
             });
         }
 
-        scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-            if (KeyCode.F11.equals(event.getCode())) {
-                finalStage.setFullScreen(!finalStage.isFullScreen());
-            }
-        });
+        ShortcutManager shortcutManager = new ShortcutManager();
+        if (controller != null) {
+            controller.setShortcutManager(shortcutManager);
+            controller.setFullscreenToggleAction(() -> finalStage.setFullScreen(!finalStage.isFullScreen()));
+            shortcutManager.setActionHandler("toggle_start_pause", controller::toggleStartPauseAction);
+            shortcutManager.setActionHandler("skip_session", controller::triggerSkipAction);
+            shortcutManager.setActionHandler("finish_session", controller::triggerFinishAction);
+            shortcutManager.setActionHandler("toggle_settings", controller::toggleSettings);
+            shortcutManager.setActionHandler("open_setup", controller::openSetupAction);
+            shortcutManager.setActionHandler("toggle_fullscreen", controller::toggleFullscreenAction);
+            shortcutManager.setActionHandler("toggle_shortcut_menu", controller::toggleShortcutMenu);
+            shortcutManager.configureShortcutMenuState(controller::isShortcutMenuVisible, controller::closeShortcutMenu);
+        }
+        shortcutManager.install(scene);
 
         URL iconUrl = getClass().getResource("/com/frandm/studytracker/images/SZlogo.png");
 
@@ -113,6 +121,8 @@ public class App extends Application {
                 finalStage.setMaximized(true);
             } catch (Exception ignored) {
             }
+
+            root.requestFocus();
 
             CSSFX.start();
 

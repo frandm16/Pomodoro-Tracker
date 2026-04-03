@@ -92,7 +92,7 @@ public class HistoryTab extends VBox {
             grouped.computeIfAbsent(date, _ -> new ArrayList<>()).add(s);
         }
         for (List<Session> daySessions : grouped.values()) {
-            daySessions.sort(Comparator.comparing(Session::getStartDateTime));
+            daySessions.sort(Comparator.comparing(Session::getStartDateTime).reversed());
         }
         return grouped;
     }

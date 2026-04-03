@@ -36,13 +36,14 @@ public class TrackerController {
 
     public static final String PROJECT_VERSION = "v1.3.0";
 
-    @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane;
+    @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane, shortcutMenuPane;
     @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle,
             confirmOverlay, confirmTagOverlay, plannerOverlayLayer;
     @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer,
             plannerContainer, historyContainer, fuzzyResultsContainer, tagsListContainer,
             pomoSettingsPane, countdownSettingsPane, settingsBox, confirmTagBox,
-            confirmBox, mainVbox;
+            confirmBox, mainVbox, shortcutMenuBox, shortcutSettingsListContainer,
+            shortcutMenuListContainer;
     @FXML public HBox starsContainer, editStarsContainer, buttonsHbox, floatingDock, activeTaskContainer;
     @FXML public HBox themeButtonsContainer;
     @FXML public Label timerLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
@@ -63,7 +64,7 @@ public class TrackerController {
 
     @FXML public ToggleSwitch enableToastToggle;
     @FXML public Slider notifDurationSlider;
-    @FXML public Label notifDurationLabel, appVersionLabel;
+    @FXML public Label notifDurationLabel, appVersionLabel, shortcutCaptureStatusLabel;
 
     @FXML public ComboBox<String> alarmPresetComboBox;
     @FXML public ComboBox<String> fontComboBox;
@@ -100,6 +101,8 @@ public class TrackerController {
     private PlannerController plannerController;
     private LogsView logsView;
     private FloatingDockView floatingDockView;
+    private ShortcutManager shortcutManager;
+    private Runnable fullscreenToggleAction = () -> {};
 
     private double SIZE_FACTOR = 0.05;
     private int currentRating = 0;
@@ -316,6 +319,7 @@ public class TrackerController {
         setupBackgroundSelector();
         setupFontSelector();
         appearanceManager.updateThemeSelection(themeButtonsContainer, engine.getCurrentTheme());
+        refreshShortcutViews();
     }
 
     private void setupFontSelector() {
@@ -584,6 +588,23 @@ public class TrackerController {
     @FXML
     private void handleSkip() { engine.skip(); }
 
+    public void toggleStartPauseAction() {
+        handleMainAction();
+    }
+
+    public void triggerSkipAction() {
+        if (skipBtn.isVisible()) {
+            handleSkip();
+            updateUIFromEngine();
+        }
+    }
+
+    public void triggerFinishAction() {
+        if (finishBtn.isVisible()) {
+            handleFinish();
+        }
+    }
+
     @FXML
     private void handleSaveSummary() {
         if(engine.getRealMinutesElapsed() < 1) {
@@ -701,8 +722,13 @@ public class TrackerController {
         if (warningSoundField != null) warningSoundField.clear();
         if (infoSoundField != null) infoSoundField.clear();
 
+        if (shortcutManager != null) {
+            shortcutManager.resetAllShortcuts();
+        }
+
         updateEngineSettings();
         ConfigManager.save(engine);
+        refreshShortcutViews();
         NotificationManager.show("Settings Reset", "All settings have been restored to defaults.", NotificationManager.NotificationType.INFO);
     }
 
@@ -853,6 +879,9 @@ public class TrackerController {
             Animations.hide(settingsPane, settingsBox, () -> {
                 updateEngineSettings();
                 ConfigManager.save(engine);
+                if (rootPane != null) {
+                    rootPane.requestFocus();
+                }
             });
         }
     }
@@ -875,7 +904,11 @@ public class TrackerController {
 
             Animations.show(setupPane, setupBox, () -> Platform.runLater(fuzzySearchInput::requestFocus));
         } else {
-            Animations.hide(setupPane, setupBox, null);
+            Animations.hide(setupPane, setupBox, () -> {
+                if (rootPane != null) {
+                    rootPane.requestFocus();
+                }
+            });
         }
     }
 
@@ -908,6 +941,56 @@ public class TrackerController {
 
     public void updateActiveTaskDisplay(String tagName, String taskName) {
         uiManager.updateActiveBadge(activeTaskContainer, tagName, taskName, tagColors.getOrDefault(tagName, "-color-accent"), this);
+    }
+
+    public void openSetupAction() {
+        if (!setupPane.isVisible()) {
+            toggleSetup();
+        } else {
+            Platform.runLater(fuzzySearchInput::requestFocus);
+        }
+    }
+
+    public void setShortcutManager(ShortcutManager shortcutManager) {
+        this.shortcutManager = shortcutManager;
+        refreshShortcutViews();
+    }
+
+    public void setFullscreenToggleAction(Runnable fullscreenToggleAction) {
+        this.fullscreenToggleAction = fullscreenToggleAction != null ? fullscreenToggleAction : () -> {};
+    }
+
+    public void toggleFullscreenAction() {
+        fullscreenToggleAction.run();
+    }
+
+    public boolean isShortcutMenuVisible() {
+        return shortcutMenuPane != null && shortcutMenuPane.isVisible();
+    }
+
+    public void closeShortcutMenu() {
+        if (isShortcutMenuVisible()) {
+            toggleShortcutMenu();
+        }
+    }
+
+    @FXML
+    public void toggleShortcutMenu() {
+        if (shortcutMenuPane == null || shortcutMenuBox == null) {
+            return;
+        }
+
+        boolean opening = !shortcutMenuPane.isVisible();
+        if (opening) {
+            refreshShortcutViews();
+            Animations.show(shortcutMenuPane, shortcutMenuBox, null);
+        } else {
+            Animations.hide(shortcutMenuPane, shortcutMenuBox, () -> {
+                if (rootPane != null) {
+                    rootPane.requestFocus();
+                }
+            });
+        }
     }
     //endregion
 
@@ -1588,6 +1671,152 @@ public class TrackerController {
         }
 
         setupAlarmPresetComboBox();
+    }
+
+    private void refreshShortcutViews() {
+        updateShortcutCaptureLabel();
+        rebuildShortcutSettingsList();
+        rebuildShortcutMenuList();
+    }
+
+    private void updateShortcutCaptureLabel() {
+        if (shortcutCaptureStatusLabel == null) {
+            return;
+        }
+        if (shortcutManager == null) {
+            shortcutCaptureStatusLabel.setText("Shortcut manager unavailable.");
+            return;
+        }
+        if (shortcutManager.isCaptureActive()) {
+            shortcutCaptureStatusLabel.setText("Press a new combination now. Press Esc to cancel.");
+        } else {
+            shortcutCaptureStatusLabel.setText("Shortcuts only work when no control has focus. The menu shortcut is configurable here too.");
+        }
+    }
+
+    private void rebuildShortcutSettingsList() {
+        if (shortcutSettingsListContainer == null || shortcutManager == null) {
+            return;
+        }
+
+        shortcutSettingsListContainer.getChildren().clear();
+        for (ShortcutManager.ShortcutDefinition definition : shortcutManager.getDefinitions()) {
+            shortcutSettingsListContainer.getChildren().add(createShortcutSettingsRow(definition));
+        }
+
+        Button resetAllButton = new Button("Reset All Shortcuts");
+        resetAllButton.getStyleClass().add("settings-danger-btn");
+        resetAllButton.setMaxWidth(Double.MAX_VALUE);
+        resetAllButton.setOnAction(_ -> {
+            if (shortcutManager.isCaptureActive()) {
+                shortcutManager.cancelCapture();
+            }
+            shortcutManager.resetAllShortcuts();
+            refreshShortcutViews();
+            NotificationManager.show("Shortcuts Reset", "Default shortcuts restored.", NotificationManager.NotificationType.INFO);
+        });
+        shortcutSettingsListContainer.getChildren().add(resetAllButton);
+    }
+
+    private Node createShortcutSettingsRow(ShortcutManager.ShortcutDefinition definition) {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("settings-card");
+
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        VBox textBox = new VBox(4);
+        Label label = new Label(definition.label());
+        label.getStyleClass().add("settings-card-title");
+        Label value = new Label(shortcutManager.getShortcutDisplay(definition.id()));
+        value.getStyleClass().add("shortcut-combo-label");
+        textBox.getChildren().addAll(label, value);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button editButton = new Button(shortcutManager.isCapturing(definition.id()) ? "Listening..." : "Edit");
+        editButton.getStyleClass().add("settings-browse-btn");
+        editButton.setOnAction(_ -> {
+            if (shortcutManager.isCapturing(definition.id())) {
+                shortcutManager.cancelCapture();
+                refreshShortcutViews();
+                return;
+            }
+
+            shortcutManager.beginCapture(definition.id(), result -> Platform.runLater(() -> {
+                refreshShortcutViews();
+                if (result.success()) {
+                    NotificationManager.show("Shortcut Updated", result.message(), NotificationManager.NotificationType.SUCCESS);
+                } else if (!result.cancelled()) {
+                    NotificationManager.show("Shortcut Not Updated", result.message(), NotificationManager.NotificationType.WARNING);
+                }
+            }));
+            if (rootPane != null) {
+                Platform.runLater(rootPane::requestFocus);
+            }
+            refreshShortcutViews();
+        });
+
+        Button resetButton = new Button("Reset");
+        resetButton.getStyleClass().add("settings-reset-btn");
+        resetButton.setOnAction(_ -> {
+            if (shortcutManager.isCaptureActive()) {
+                shortcutManager.cancelCapture();
+            }
+            shortcutManager.resetShortcut(definition.id());
+            refreshShortcutViews();
+        });
+
+        row.getChildren().addAll(textBox, spacer, editButton, resetButton);
+        card.getChildren().add(row);
+        return card;
+    }
+
+    private void rebuildShortcutMenuList() {
+        if (shortcutMenuListContainer == null || shortcutManager == null) {
+            return;
+        }
+
+        shortcutMenuListContainer.getChildren().clear();
+        for (ShortcutManager.ShortcutDefinition definition : shortcutManager.getDefinitions()) {
+            shortcutMenuListContainer.getChildren().add(createShortcutMenuRow(
+                    definition.label(),
+                    shortcutManager.getShortcutDisplay(definition.id()),
+                    definition.id()
+            ));
+        }
+    }
+
+    private Node createShortcutMenuRow(String labelText, String shortcutText, String actionId) {
+        Button row = new Button();
+        row.getStyleClass().add("shortcut-menu-row");
+        row.setMaxWidth(Double.MAX_VALUE);
+        row.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        row.setMnemonicParsing(false);
+
+        HBox content = new HBox(12);
+        content.setAlignment(Pos.CENTER_LEFT);
+
+        Label label = new Label(labelText);
+        label.getStyleClass().add("settings-card-title");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label value = new Label(shortcutText);
+        value.getStyleClass().add("shortcut-combo-label");
+
+        content.getChildren().addAll(label, spacer, value);
+        row.setGraphic(content);
+        row.setOnAction(_ -> {
+            closeShortcutMenu();
+            if (!ShortcutManager.MENU_ACTION_ID.equals(actionId)) {
+                shortcutManager.triggerAction(actionId);
+            }
+        });
+
+        return row;
     }
 
     //endregion
