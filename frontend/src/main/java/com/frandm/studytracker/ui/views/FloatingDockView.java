@@ -1,6 +1,6 @@
 package com.frandm.studytracker.ui.views;
 
-import com.frandm.studytracker.core.PomodoroEngine;
+import com.frandm.studytracker.core.TrackerEngine;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -14,6 +14,7 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
+import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -21,7 +22,6 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ public class FloatingDockView {
     }
 
     private final HBox container;
-    private final Supplier<PomodoroEngine> engineSupplier;
+    private final Supplier<TrackerEngine> engineSupplier;
     private final BiConsumer<Section, Integer> onNavigate;
     private final Runnable onSettingsRequested;
     private final Runnable onBackgroundsRequested;
@@ -62,7 +62,7 @@ public class FloatingDockView {
 
     public FloatingDockView(
             HBox container,
-            Supplier<PomodoroEngine> engineSupplier,
+            Supplier<TrackerEngine> engineSupplier,
             BiConsumer<Section, Integer> onNavigate,
             Runnable onSettingsRequested,
             Runnable onBackgroundsRequested
@@ -93,16 +93,17 @@ public class FloatingDockView {
         textGroups.clear();
         subtitleLabels.clear();
 
-        createSectionButton(Section.TIMER, "Focus", "", "mdi2t-timer-outline");
-        createSectionButton(Section.PLANNER, "Planner", "", "mdi2c-calendar-check");
-        createSectionButton(Section.STATS, "Stats", "", "mdi2c-chart-bar");
-        createSectionButton(Section.HISTORY, "Logs", "", "mdi2h-history");
+        createSectionButton(Section.TIMER, "Focus", "mdi2t-timer-outline");
+        createSectionButton(Section.PLANNER, "Planner", "mdi2c-calendar-check");
+        createSectionButton(Section.STATS, "Stats", "mdi2c-chart-bar");
+        createSectionButton(Section.HISTORY, "Logs", "mdi2h-history");
 
         Separator separator = new Separator(Orientation.VERTICAL);
         separator.setPrefHeight(24);
 
         Button settingsButton = new Button();
         settingsButton.getStyleClass().addAll("dock-button", "dock-button-utility");
+        settingsButton.setFocusTraversable(false);
         settingsButton.setTooltip(new Tooltip("Settings"));
         settingsButton.setOnAction(_ -> onSettingsRequested.run());
 
@@ -110,23 +111,13 @@ public class FloatingDockView {
         settingsIcon.getStyleClass().add("dock-icon");
         settingsButton.setGraphic(settingsIcon);
 
-        Button backgroundsButton = new Button();
-        backgroundsButton.getStyleClass().addAll("dock-button", "dock-button-utility");
-        backgroundsButton.setTooltip(new Tooltip("Backgrounds"));
-        backgroundsButton.setOnAction(_ -> onBackgroundsRequested.run());
-
-        FontIcon backgroundsIcon = new FontIcon("mdi2i-image-multiple-outline");
-        backgroundsIcon.getStyleClass().add("dock-icon");
-        backgroundsButton.setGraphic(backgroundsIcon);
-
         container.getChildren().addAll(
                 sectionButtons.get(Section.TIMER.name()),
                 sectionButtons.get(Section.PLANNER.name()),
                 sectionButtons.get(Section.STATS.name()),
                 sectionButtons.get(Section.HISTORY.name()),
                 separator,
-                settingsButton,
-                backgroundsButton
+                settingsButton
         );
 
         sectionButtons.get(Section.TIMER.name()).setSelected(true);
@@ -164,14 +155,14 @@ public class FloatingDockView {
         }
     }
 
-    private void createSectionButton(Section section, String title, String subtitle, String iconLiteral) {
+    private void createSectionButton(Section section, String title, String iconLiteral) {
         FontIcon icon = new FontIcon(iconLiteral);
         icon.getStyleClass().add("dock-icon");
 
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("dock-title");
 
-        Label subtitleLabel = new Label(subtitle);
+        Label subtitleLabel = new Label("");
         subtitleLabel.getStyleClass().add("dock-subtitle");
 
         VBox textBox = new VBox(titleLabel, subtitleLabel);
@@ -190,6 +181,7 @@ public class FloatingDockView {
 
         ToggleButton button = new ToggleButton();
         button.setToggleGroup(dockGroup);
+        button.setFocusTraversable(false);
         button.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
             if (button.isSelected()) {
                 e.consume();
@@ -231,6 +223,7 @@ public class FloatingDockView {
 
         ToggleButton button = new ToggleButton();
         button.setToggleGroup(dockGroup);
+        button.setFocusTraversable(false);
         button.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
             if (button.isSelected()) {
                 e.consume();
@@ -257,6 +250,7 @@ public class FloatingDockView {
 
         onNavigate.accept(section, lastDirection);
         refreshState();
+        releaseFocusToRoot();
     }
 
     private void handleGenericClick(String id) {
@@ -273,12 +267,23 @@ public class FloatingDockView {
         if (onTabChanged != null) {
             onTabChanged.accept(id);
         }
+        releaseFocusToRoot();
+    }
+
+    private void releaseFocusToRoot() {
+        if (container.getScene() == null) {
+            return;
+        }
+        Parent root = container.getScene().getRoot();
+        if (root != null) {
+            root.requestFocus();
+        }
     }
 
     public void refreshState() {
         if (genericMode || engineSupplier == null) return;
 
-        PomodoroEngine engine = engineSupplier.get();
+        TrackerEngine engine = engineSupplier.get();
 
         ToggleButton oldButton = (previousSection != null) ? sectionButtons.get(previousSection) : null;
         VBox oldText = (previousSection != null) ? textGroups.get(previousSection) : null;
@@ -377,10 +382,6 @@ public class FloatingDockView {
         this.onTabChanged = listener;
     }
 
-    public int getDirection() {
-        return lastDirection;
-    }
-
     private int indexOf(Section section) {
         return switch (section) {
             case TIMER -> 0;
@@ -409,11 +410,11 @@ public class FloatingDockView {
         intro.play();
     }
 
-    private String resolveDockSubtitle(Section section, PomodoroEngine engine) {
+    private String resolveDockSubtitle(Section section, TrackerEngine engine) {
         return switch (section) {
             case TIMER -> switch (engine.getCurrentState()) {
-                case WORK, SHORT_BREAK, LONG_BREAK -> engine.getCurrentMode() == PomodoroEngine.Mode.POMODORO ? "Pomodoro running" :
-                        engine.getCurrentMode() == PomodoroEngine.Mode.COUNTDOWN ? "Countdown in progress" : "Timer in progress";
+                case WORK, SHORT_BREAK, LONG_BREAK -> engine.getCurrentMode() == TrackerEngine.Mode.POMODORO ? "Pomodoro running" :
+                        engine.getCurrentMode() == TrackerEngine.Mode.COUNTDOWN ? "Countdown in progress" : "Timer in progress";
                 case WAITING -> "Paused at " + engine.getFormattedTime();
                 default -> "Ready to study";
             };

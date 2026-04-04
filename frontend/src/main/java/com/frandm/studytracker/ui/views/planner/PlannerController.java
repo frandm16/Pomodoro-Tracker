@@ -1,7 +1,8 @@
 package com.frandm.studytracker.ui.views.planner;
 
 import com.frandm.studytracker.client.ApiClient;
-import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.core.Logger;
+import com.frandm.studytracker.controllers.TrackerController;
 import javafx.application.Platform;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,13 +24,15 @@ public class PlannerController {
     );
     private final AtomicLong refreshVersion = new AtomicLong();
 
-    public PlannerController(PomodoroController controller) {
+    public PlannerController(TrackerController controller) {
         this.dailyTab = new DailyTab(controller);
         this.weeklyTab = new WeeklyTab(controller);
         this.dailyTab.setRefreshAction(this::refreshDailyOnly);
         this.weeklyTab.setRefreshAction(this::refresh);
         this.view = new PlannerView(controller, this, dailyTab, weeklyTab);
-        refresh();
+        if (ApiClient.isConfigured()) {
+            refresh();
+        }
     }
 
     public void refresh() {
@@ -41,6 +44,9 @@ public class PlannerController {
     }
 
     private void requestRefresh(boolean includeWeek) {
+        if (!ApiClient.isConfigured()) {
+            return;
+        }
         LocalDate targetDate = selectedDate;
         LocalDate weekStart = targetDate.with(java.time.DayOfWeek.MONDAY);
         LocalDate weekEnd = weekStart.plusDays(6);
@@ -75,7 +81,9 @@ public class PlannerController {
                     view.updateTitle();
                 });
             } catch (Exception e) {
-                System.err.println("Error refreshing Planner: " + e.getMessage());
+                if (ApiClient.isConfigured()) {
+                    Logger.error("Error refreshing Planner", e);
+                }
             }
         });
     }

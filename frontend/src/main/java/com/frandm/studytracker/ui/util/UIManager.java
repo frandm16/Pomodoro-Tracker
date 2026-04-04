@@ -1,15 +1,11 @@
 package com.frandm.studytracker.ui.util;
 
-import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.controllers.TrackerController;
 import javafx.animation.*;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.CacheHint;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -41,7 +37,7 @@ public class UIManager {
 
             ParallelTransition exitTransition = new ParallelTransition(slideOut, fadeOut);
 
-            exitTransition.setOnFinished(e -> {
+            exitTransition.setOnFinished(_ -> {
                 toHide.setVisible(false);
                 toHide.setManaged(false);
                 toHide.setTranslateX(0);
@@ -63,7 +59,7 @@ public class UIManager {
 
             SequentialTransition fullTransition = new SequentialTransition(exitTransition, enterTransition);
 
-            fullTransition.setOnFinished(e -> {
+            fullTransition.setOnFinished(_ -> {
                 toHide.setOpacity(1.0);
                 toHide.setCache(false);
                 toShow.setCache(false);
@@ -75,7 +71,7 @@ public class UIManager {
         });
     }
 
-    public void updateActiveBadge(HBox container, String tag, String task, String color, PomodoroController controller) {
+    public void updateActiveBadge(HBox container, String tag, String task, String color, TrackerController controller) {
         container.getChildren().clear();
 
         HBox tagBox = new HBox(5);

@@ -1,28 +1,35 @@
 package com.frandm.studytracker.ui.views.planner;
 
-import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.controllers.TrackerController;
 import com.frandm.studytracker.ui.views.FloatingDockView;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.ParallelTransition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.util.List;
 
 public class PlannerView extends VBox {
 
+    public static final int ANIMATION_DURATION = 150;
     private final Label lblTitle = new Label();
-    private final StackPane contentArea = new StackPane();
     private final PlannerController plannerController;
     private final DailyTab dailyTab;
     private final WeeklyTab weeklyTab;
 
-    private FloatingDockView tabBar;
+    private final FloatingDockView tabBar;
+    private String currentTabId = "daily";
 
-    public PlannerView(PomodoroController controller, PlannerController plannerController, DailyTab daily, WeeklyTab weekly) {
+    public PlannerView(TrackerController controller, PlannerController plannerController, DailyTab daily, WeeklyTab weekly) {
         this.plannerController = plannerController;
         this.dailyTab = daily;
         this.weeklyTab = weekly;
@@ -37,8 +44,45 @@ public class PlannerView extends VBox {
         ));
 
         tabBar.setOnTabChanged(tabId -> {
-            dailyTab.setVisible("daily".equals(tabId));
-            weeklyTab.setVisible("weekly".equals(tabId));
+            if (currentTabId.equals(tabId)) return;
+            Node oldNode = "daily".equals(currentTabId) ? dailyTab : weeklyTab;
+            Node newNode = "daily".equals(tabId) ? dailyTab : weeklyTab;
+            boolean slideRight = "weekly".equals(tabId);
+
+            double offset = 800;
+            newNode.setTranslateX(slideRight ? offset : -offset);
+            newNode.setOpacity(0);
+            newNode.setVisible(true);
+
+            newNode.toFront();
+
+            TranslateTransition slideOut = new TranslateTransition(Duration.millis(ANIMATION_DURATION), oldNode);
+            slideOut.setByX(slideRight ? -offset : offset);
+            slideOut.setInterpolator(Interpolator.EASE_IN);
+            
+            javafx.animation.FadeTransition fadeOut = new javafx.animation.FadeTransition(Duration.millis(ANIMATION_DURATION), oldNode);
+            fadeOut.setFromValue(1.0);
+            fadeOut.setToValue(0.0);
+
+            TranslateTransition slideIn = new TranslateTransition(Duration.millis(ANIMATION_DURATION), newNode);
+            slideIn.setToX(0);
+            slideIn.setInterpolator(Interpolator.EASE_OUT);
+            
+            javafx.animation.FadeTransition fadeIn = new javafx.animation.FadeTransition(Duration.millis(ANIMATION_DURATION), newNode);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+
+            ParallelTransition transition = new ParallelTransition(
+                slideOut, fadeOut, slideIn, fadeIn
+            );
+            transition.setOnFinished(_ -> {
+                oldNode.setVisible(false);
+                oldNode.setTranslateX(0);
+                oldNode.setOpacity(1);
+            });
+            transition.play();
+            
+            currentTabId = tabId;
             updateTitle();
         });
 
@@ -47,6 +91,7 @@ public class PlannerView extends VBox {
 
         HBox header = createNavigationHeader(controller);
 
+        StackPane contentArea = new StackPane();
         VBox.setVgrow(contentArea, Priority.ALWAYS);
         contentArea.getChildren().addAll(dailyTab, weeklyTab);
 
@@ -54,7 +99,7 @@ public class PlannerView extends VBox {
         updateTitle();
     }
 
-    private HBox createNavigationHeader(PomodoroController controller) {
+    private HBox createNavigationHeader(TrackerController controller) {
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(10, 30, 10, 30));
@@ -64,8 +109,8 @@ public class PlannerView extends VBox {
         Button btnPrev = new Button();
         Button btnNext = new Button();
 
-        controller.updateIcon(btnPrev, "calendar-icon", "mdi2c-chevron-left", "Anterior");
-        controller.updateIcon(btnNext, "calendar-icon", "mdi2c-chevron-right", "Siguiente");
+        controller.updateIcon(btnPrev, "calendar-icon", "mdi2c-chevron-left", "Previous");
+        controller.updateIcon(btnNext, "calendar-icon", "mdi2c-chevron-right", "Next");
 
         btnToday.getStyleClass().add("calendar-button-today");
         btnPrev.getStyleClass().add("calendar-button-icon");
@@ -111,7 +156,7 @@ public class PlannerView extends VBox {
             double x = bounds != null ? bounds.getMinX() : 200;
             double y = bounds != null ? bounds.getMaxY() + 8 : 200;
             if (isDaily()) {
-                plannerController.getDailyTab().openCreateScheduledSession(x, y);
+                plannerController.getDailyTab().openCreateScheduledSession();
             } else {
                 plannerController.getWeeklyTab().openCreateScheduledSession(x, y);
             }
@@ -122,7 +167,7 @@ public class PlannerView extends VBox {
             double x = bounds != null ? bounds.getMinX() : 220;
             double y = bounds != null ? bounds.getMaxY() + 8 : 220;
             if (isDaily()) {
-                plannerController.getDailyTab().openCreateDeadline(x, y);
+                plannerController.getDailyTab().openCreateDeadline();
             } else {
                 plannerController.getWeeklyTab().openCreateDeadline(x, y);
             }

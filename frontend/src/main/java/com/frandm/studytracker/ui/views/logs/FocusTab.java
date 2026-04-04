@@ -1,22 +1,19 @@
 package com.frandm.studytracker.ui.views.logs;
 
 import com.frandm.studytracker.client.ApiClient;
+import com.frandm.studytracker.core.Logger;
 import com.frandm.studytracker.core.TagEventBus;
-import com.frandm.studytracker.ui.util.Animations;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class FocusTab extends VBox {
     private final LogsController logsController;
@@ -43,6 +40,7 @@ public class FocusTab extends VBox {
         archiveFilterCombo.getItems().addAll("Active", "Archived", "Favorites", "All");
         archiveFilterCombo.setValue("Active");
         archiveFilterCombo.setMaxWidth(120);
+        archiveFilterCombo.getStyleClass().add("filter-button-logger");
         archiveFilterCombo.setOnAction(_ -> refreshFocusAreasGrid());
 
         Region spacer = new Region();
@@ -87,7 +85,7 @@ public class FocusTab extends VBox {
 
         this.getChildren().addAll(focusAreasRoot, detailRoot);
 
-        TagEventBus.getInstance().subscribe(event -> refreshFocusAreasGrid());
+        TagEventBus.getInstance().subscribe(_ -> refreshFocusAreasGrid());
 
         refreshFocusAreasGrid();
     }
@@ -122,6 +120,9 @@ public class FocusTab extends VBox {
 
     public void refreshFocusAreasGrid() {
         focusAreasRoot.getChildren().removeIf(n -> n instanceof GridPane);
+        if (!ApiClient.isConfigured()) {
+            return;
+        }
 
         String filter = archiveFilterCombo.getValue();
         Map<String, Map<String, Object>> allTags = new LinkedHashMap<>();
@@ -130,7 +131,9 @@ public class FocusTab extends VBox {
                 allTags.put((String) t.get("name"), t);
             }
         } catch (Exception e) {
-            System.err.println("Error loading tags: " + e.getMessage());
+            if (ApiClient.isConfigured()) {
+                Logger.error("Error loading tags", e);
+            }
         }
 
         Map<String, Map<String, Object>> filteredTags = new LinkedHashMap<>();
@@ -143,7 +146,6 @@ public class FocusTab extends VBox {
                 case "Active" -> !isArchived;
                 case "Archived" -> isArchived;
                 case "Favorites" -> isFavorite && !isArchived;
-                case "All" -> true;
                 default -> true;
             };
             if (include) {
@@ -227,7 +229,6 @@ public class FocusTab extends VBox {
     private VBox createTagCard(String name, String color, int totalMinutes, int maxTotal, long tagId, boolean isArchived, boolean isFavorite) {
         VBox card = new VBox();
         card.getStyleClass().add("tag-explorer-card");
-        if (isArchived) card.setOpacity(0.5);
 
         HBox topRow = new HBox();
         topRow.getStyleClass().add("tag-card-header");
@@ -256,12 +257,11 @@ public class FocusTab extends VBox {
         btnFavorite.setOnAction(e -> {
             e.consume();
             btnFavorite.setDisable(true);
-            final boolean previousState = isFavorite;
             new Thread(() -> {
                 try {
                     ApiClient.patchTag(tagId, Map.of("isFavorite", !isFavorite));
                 } catch (Exception ex) {
-                    System.err.println("Error toggling favorite: " + ex.getMessage());
+                    Logger.error("Error toggling favorite", ex);
                 } finally {
                     Platform.runLater(() -> btnFavorite.setDisable(false));
                 }
@@ -281,7 +281,7 @@ public class FocusTab extends VBox {
                 try {
                     ApiClient.patchTag(tagId, Map.of("isArchived", !isArchived));
                 } catch (Exception ex) {
-                    System.err.println("Error toggling archive: " + ex.getMessage());
+                    Logger.error("Error toggling archive", ex);
                 } finally {
                     Platform.runLater(() -> btnArchive.setDisable(false));
                 }
@@ -296,7 +296,7 @@ public class FocusTab extends VBox {
         Tooltip.install(btnDelete, new Tooltip("Delete"));
         btnDelete.setOnAction(e -> {
             e.consume();
-            logsController.openDeleteTagOverlay(tagId, name);
+            logsController.openDeleteTagOverlay(tagId);
         });
 
         actionsRow.getChildren().addAll(btnFavorite, btnArchive, btnDelete);
@@ -354,7 +354,9 @@ public class FocusTab extends VBox {
         try {
             summary = ApiClient.getSummaryByTag(tagName);
         } catch (Exception e) {
-            System.err.println("Error loading summary: " + e.getMessage());
+            if (ApiClient.isConfigured()) {
+                Logger.error("Error loading summary", e);
+            }
             summary = new LinkedHashMap<>();
         }
 
@@ -366,9 +368,9 @@ public class FocusTab extends VBox {
         if (totalMinutes >= 60) {
             long h = totalMinutes / 60;
             long m = totalMinutes % 60;
-            timeText = String.format("%dh %02dm total \u00b7 %d task%s", h, m, sessions, sessions != 1 ? "s" : "");
+            timeText = String.format("%dh %02dm total · %d task%s", h, m, sessions, sessions != 1 ? "s" : "");
         } else {
-            timeText = String.format("%dm total \u00b7 %d task%s", totalMinutes, sessions, sessions != 1 ? "s" : "");
+            timeText = String.format("%dm total · %d task%s", totalMinutes, sessions, sessions != 1 ? "s" : "");
         }
         totalStatsLabel.setText(timeText);
 

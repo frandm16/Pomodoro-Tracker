@@ -1,0 +1,335 @@
+package com.frandm.studytracker.core;
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+
+public class TrackerEngine {
+
+    public enum Mode { POMODORO, TIMER, COUNTDOWN }
+    public enum State { MENU, WORK, SHORT_BREAK, LONG_BREAK, WAITING }
+
+    //region Variables
+    private Mode currentMode = Mode.POMODORO;
+    private State currentState = State.MENU;
+    private State lastActiveState = State.WORK;
+    private Timeline timeline;
+
+    //region pomodoro variables
+    private int workMins = 25, shortMins = 5, longMins = 15, interval = 4;
+    private boolean autoStartBreaks = false;
+    private boolean autoStartPomodoros = false;
+    private boolean countBreakTime = false;
+    private int sessionCounter = 0;
+    //endregion
+    //region countdown variables
+    private int CountdownMins = 10;
+    //endregion
+
+    private String currentTheme = "primer-dark";
+    private String currentFont = "sf-pro";
+    private String backgroundVideoSource = "";
+
+    private int secondsRemaining;
+    private int secondsElapsed = 0;
+
+    private final int timePerSeconds = 19;
+
+    private int masterVolume = 100;
+    private int alarmVolume = 100;
+    private int notificationVolume = 100;
+
+    private int widthStats = 50;
+    private int uiSize = 55;
+
+    private int notificationDuration = 4;
+    private boolean enableToastNotifications = true;
+
+    private String notificationSoundSuccess = "";
+    private String notificationSoundError = "";
+    private String notificationSoundWarning = "";
+    private String notificationSoundInfo = "";
+    private String customAlarmSoundPath = "";
+    private String selectedAlarmPreset = "BELLS";
+
+    private Runnable onTick;
+    private Runnable onStateChange;
+    private Runnable onTimerFinished;
+    //endregion
+
+    public TrackerEngine() {
+        this.secondsRemaining = workMins * 60;
+        setupTimeline();
+    }
+
+    private void setupTimeline() {
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), _ -> {
+            if (currentMode != Mode.POMODORO || currentState == State.WORK || countBreakTime) {
+                secondsElapsed += timePerSeconds;
+            }
+            if(currentMode == Mode.TIMER){
+                secondsRemaining = secondsElapsed; // PROVISIONAL
+            } else {
+                if (secondsRemaining > 0) {
+                    secondsRemaining-=timePerSeconds;
+                }
+                if (secondsRemaining <= 0) {
+                    secondsRemaining = 0;
+                    stop();
+
+                    if (onTimerFinished != null) onTimerFinished.run();
+
+                    if (currentMode == Mode.POMODORO) {
+                        next();
+                    } else {
+                        if (onStateChange != null) onStateChange.run();
+                    }
+                }
+            }
+            if (onTick != null){
+                onTick.run();
+            }
+        }));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+    }
+    public void resetTimeForState(State state) {
+        this.currentState = state;
+
+        switch (state) {
+            case WORK, MENU -> secondsRemaining = workMins * 60;
+            case SHORT_BREAK -> secondsRemaining = shortMins * 60;
+            case LONG_BREAK -> secondsRemaining = longMins * 60;
+            case WAITING -> {}
+        }
+
+        if (onTick != null) onTick.run();
+        if (onStateChange != null) onStateChange.run();
+    }
+    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo, boolean cBreak, int masterVolume, int alarmVolume, int notificationVolume, int inWidthStats, int uiSize, Mode mode, int countdownMins, String currentTheme, String currentFont, int notificationDuration, boolean enableToastNotifications) {
+        this.workMins = w;
+        this.shortMins = s;
+        this.longMins = l;
+        this.interval = i;
+        this.autoStartBreaks = aBreak;
+        this.autoStartPomodoros = aPomo;
+        this.countBreakTime = cBreak;
+        this.widthStats = inWidthStats;
+        this.uiSize = uiSize;
+        this.CountdownMins = countdownMins;
+
+        this.alarmVolume = alarmVolume;
+        this.masterVolume = masterVolume;
+        this.notificationVolume = notificationVolume;
+
+        this.currentTheme = currentTheme;
+        this.currentFont = currentFont;
+
+        this.notificationDuration = notificationDuration;
+        this.enableToastNotifications = enableToastNotifications;
+
+        if (currentState == State.MENU) {
+            setMode(mode);
+        }
+
+        if (currentState == State.MENU && currentMode == Mode.POMODORO) {
+            resetTimeForState(State.MENU);
+        }
+    }
+
+    public void updateSoundSettings(String notificationSoundSuccess, String notificationSoundError,
+                                     String notificationSoundWarning, String notificationSoundInfo,
+                                     String customAlarmSoundPath, String selectedAlarmPreset) {
+        this.notificationSoundSuccess = notificationSoundSuccess;
+        this.notificationSoundError = notificationSoundError;
+        this.notificationSoundWarning = notificationSoundWarning;
+        this.notificationSoundInfo = notificationSoundInfo;
+        this.customAlarmSoundPath = customAlarmSoundPath;
+        this.selectedAlarmPreset = selectedAlarmPreset;
+    }
+
+    public void fullReset() {
+        this.secondsElapsed = 0;
+        this.sessionCounter = 0;
+    }
+
+    //region Functionalities
+    public void start() {
+        if (currentState == State.MENU || currentState == State.WAITING) {
+            if (currentState == State.MENU) {
+                currentState = State.WORK;
+                secondsElapsed = 0;
+                if (currentMode == Mode.COUNTDOWN) {
+                    this.secondsRemaining = CountdownMins * 60;
+                }
+            } else {
+                currentState = lastActiveState;
+            }
+        }
+        timeline.play();
+        if (onStateChange != null) onStateChange.run();
+    }
+    public void pause() {
+        if (currentState != State.WAITING && currentState != State.MENU) {
+            timeline.pause();
+            lastActiveState = currentState;
+            currentState = State.WAITING;
+            if (onStateChange != null) onStateChange.run();
+        }
+    }
+    public void next() {
+        stop();
+
+        if (currentState == State.WORK || (currentState == State.WAITING && lastActiveState == State.WORK)) {
+            sessionCounter++;
+            currentState = (sessionCounter % interval == 0) ? State.LONG_BREAK : State.SHORT_BREAK;
+        } else {
+            currentState = State.WORK;
+        }
+
+        resetTimeForState(currentState);
+
+        boolean shouldAutoStart = (currentState == State.WORK && autoStartPomodoros) ||
+                ((currentState == State.SHORT_BREAK || currentState == State.LONG_BREAK) && autoStartBreaks);
+
+        if (shouldAutoStart) {
+            start();
+        } else {
+            lastActiveState = currentState;
+            currentState = State.WAITING;
+            if (onStateChange != null) onStateChange.run();
+        }
+    }
+    public void skip() {
+        next();
+    }
+    public void stop() {
+        timeline.stop();
+    }
+    public void resetToDefaults() {
+        this.workMins = 25;
+        this.shortMins = 5;
+        this.longMins = 15;
+        this.interval = 4;
+        this.autoStartBreaks = false;
+        this.autoStartPomodoros = false;
+        this.countBreakTime = false;
+        this.notificationDuration = 4;
+        this.enableToastNotifications = true;
+        this.masterVolume = 100;
+        this.alarmVolume = 100;
+        this.notificationVolume = 100;
+        this.widthStats = 50;
+        this.uiSize = 55;
+        this.CountdownMins = 10;
+        this.currentTheme = "primer-dark";
+        this.currentFont = "sf-pro";
+
+        this.notificationSoundSuccess = "";
+        this.notificationSoundError = "";
+        this.notificationSoundWarning = "";
+        this.notificationSoundInfo = "";
+        this.customAlarmSoundPath = "";
+        this.selectedAlarmPreset = "BELLS";
+    }
+    //endregion
+
+    //region Setters
+    public void setWorkMins(int mins) { this.workMins = mins; if(currentState == State.MENU) resetTimeForState(State.MENU); }
+    public void setShortMins(int mins) { this.shortMins = mins; }
+    public void setLongMins(int mins) { this.longMins = mins; }
+    public void setInterval(int interval) { this.interval = interval; }
+    public void setOnTick(Runnable r) { this.onTick = r; }
+    public void setOnStateChange(Runnable r) { this.onStateChange = r; }
+    public void setOnTimerFinished(Runnable r) {this.onTimerFinished = r;}
+    public void setWidthStats(int widthStats) {this.widthStats = widthStats;}
+    public void setUiSize(int uiSize) { this.uiSize = uiSize; }
+    public void setCurrentTheme(String currentTheme) { this.currentTheme = currentTheme;}
+    public void setCurrentFont(String currentFont) { this.currentFont = currentFont; }
+    public void setMode(Mode mode) {
+        stop();
+        this.currentMode = mode;
+        this.secondsElapsed = 0;
+
+        if (mode == Mode.POMODORO) {
+            resetTimeForState(State.MENU);
+        } else if (mode == Mode.TIMER) {
+            this.secondsRemaining = 0;
+            this.currentState = State.MENU;
+        } else if (mode == Mode.COUNTDOWN) {
+            this.secondsRemaining = CountdownMins * 60;
+            this.currentState = State.MENU;
+        }
+
+        if (onStateChange != null) onStateChange.run();
+        if (onTick != null) onTick.run();
+    }
+    public void setCountdownMins(int mins) {
+        this.CountdownMins = mins;
+        if (currentMode == Mode.COUNTDOWN && currentState == State.MENU) {
+            this.secondsRemaining = mins * 60;
+            if (onTick != null) onTick.run();
+        }
+    }
+
+    public void setMasterVolume(int masterVolume) {this.masterVolume = masterVolume;}
+    public void setAlarmVolume(int alarmVolume) {this.alarmVolume = alarmVolume;}
+    public void setNotificationVolume(int notificationVolume) {this.notificationVolume = notificationVolume;}
+    public void setBackgroundVideoSource(String backgroundVideoSource) { this.backgroundVideoSource = backgroundVideoSource; }
+    public void setNotificationDuration(int v) { this.notificationDuration = v; }
+
+    public void setNotificationSoundSuccess(String path) { this.notificationSoundSuccess = path; }
+    public void setNotificationSoundError(String path) { this.notificationSoundError = path; }
+    public void setNotificationSoundWarning(String path) { this.notificationSoundWarning = path; }
+    public void setNotificationSoundInfo(String path) { this.notificationSoundInfo = path; }
+    public void setCustomAlarmSoundPath(String path) { this.customAlarmSoundPath = path; }
+    public void setSelectedAlarmPreset(String preset) { this.selectedAlarmPreset = preset; }
+    //endregion
+
+    //region Getters
+    public String getFormattedTime() {
+        return String.format("%02d:%02d", secondsRemaining / 60, secondsRemaining % 60);}
+    public State getCurrentState() { return currentState; }
+    public int getSessionCounter() {return sessionCounter;}
+    public State getLogicalState() {
+        if (currentState == State.WAITING) {
+            return lastActiveState;
+        }
+        return currentState;
+    }
+    public int getRealMinutesElapsed() {
+        return secondsElapsed/60;
+    }
+    public int getWorkMins() { return workMins; }
+    public int getShortMins() { return shortMins; }
+    public int getLongMins() { return longMins; }
+    public int getInterval() { return interval; }
+    public boolean isAutoStartBreaks() { return this.autoStartBreaks; }
+    public boolean isAutoStartPomo() { return this.autoStartPomodoros; }
+    public boolean isCountBreakTime() { return this.countBreakTime; }
+    public int getSecondsRemaining() {
+        return secondsRemaining;
+    }
+    public int getWidthStats() {return widthStats;}
+    public int getUiSize() { return uiSize; }
+    public int getCountdownMins() { return CountdownMins; }
+    public Mode getCurrentMode() { return currentMode; }
+
+    public String getCurrentTheme() {return currentTheme; }
+    public String getCurrentFont() { return currentFont; }
+    public String getBackgroundVideoSource() { return backgroundVideoSource; }
+
+    public int getMasterVolume() {return masterVolume;}
+    public int getAlarmVolume() {return alarmVolume;}
+    public int getNotificationVolume() {return notificationVolume;}
+
+    public int getNotificationDuration() { return notificationDuration; }
+    public boolean isEnableToastNotifications() { return enableToastNotifications; }
+
+    public String getNotificationSoundSuccess() { return notificationSoundSuccess; }
+    public String getNotificationSoundError() { return notificationSoundError; }
+    public String getNotificationSoundWarning() { return notificationSoundWarning; }
+    public String getNotificationSoundInfo() { return notificationSoundInfo; }
+    public String getCustomAlarmSoundPath() { return customAlarmSoundPath; }
+    public String getSelectedAlarmPreset() { return selectedAlarmPreset; }
+    //endregion
+}

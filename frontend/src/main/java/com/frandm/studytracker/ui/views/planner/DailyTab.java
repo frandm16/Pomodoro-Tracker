@@ -3,8 +3,10 @@ package com.frandm.studytracker.ui.views.planner;
 import atlantafx.base.theme.Styles;
 import com.frandm.studytracker.client.ApiClient;
 import com.frandm.studytracker.core.NotificationManager;
-import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.core.Logger;
+import com.frandm.studytracker.controllers.TrackerController;
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -39,7 +41,7 @@ public class DailyTab extends VBox {
     private final Label lblTodoHeader = new Label("To-Do List");
     private final Label overlayTitle = new Label();
 
-    private final PomodoroController pomodoroController;
+    private final TrackerController trackerController;
     private LocalDate currentDate = LocalDate.now();
     private Runnable refreshAction = () -> {};
     private Popup activePopup;
@@ -47,8 +49,8 @@ public class DailyTab extends VBox {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
-    public DailyTab(PomodoroController pomodoroController) {
-        this.pomodoroController = pomodoroController;
+    public DailyTab(TrackerController trackerController) {
+        this.trackerController = trackerController;
         this.getStyleClass().add("daily-tab");
         VBox.setVgrow(this, Priority.ALWAYS);
         initLayout();
@@ -58,12 +60,12 @@ public class DailyTab extends VBox {
         this.refreshAction = refreshAction != null ? refreshAction : () -> {};
     }
 
-    public void openCreateScheduledSession(double screenX, double screenY) {
-        showScheduledSessionPopup(new LinkedHashMap<>(), screenX, screenY);
+    public void openCreateScheduledSession() {
+        showScheduledSessionPopup(new LinkedHashMap<>());
     }
 
-    public void openCreateDeadline(double screenX, double screenY) {
-        showDeadlinePopup(new LinkedHashMap<>(), screenX, screenY);
+    public void openCreateDeadline() {
+        showDeadlinePopup(new LinkedHashMap<>());
     }
 
     public void openCreateTodo() {
@@ -91,24 +93,11 @@ public class DailyTab extends VBox {
         ensureIndependentEmptyStates();
 
         content.getChildren().addAll(
-                createHeader("Notes"), createNotesPreviewNode(),
+                createHeader(), createNotesPreviewNode(),
                 createReadOnlySectionHeader(lblDeadlinesHeader), deadlinesContainer,
                 createReadOnlySectionHeader(lblTodoHeader), todoListContainer,
                 createReadOnlySectionHeader(new Label("Scheduled Sessions")), dayEventsContainer
         );
-    }
-
-    private HBox createSectionHeader(Label titleLabel, javafx.event.EventHandler<javafx.event.ActionEvent> onAdd) {
-        titleLabel.getStyleClass().add("section-header");
-        Button btnAdd = new Button();
-        btnAdd.setGraphic(new FontIcon("mdi2p-plus"));
-        btnAdd.getStyleClass().addAll(Styles.BUTTON_CIRCLE, Styles.FLAT);
-        btnAdd.setOnAction(onAdd);
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox header = new HBox(10, titleLabel, spacer, btnAdd);
-        header.setAlignment(Pos.CENTER_LEFT);
-        return header;
     }
 
     private HBox createReadOnlySectionHeader(Label titleLabel) {
@@ -278,7 +267,7 @@ public class DailyTab extends VBox {
                         closeOverlay();
                     });
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.error(e);
                 }
             }, "todo-save-thread").start();
         });
@@ -296,7 +285,7 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.deleteTodo(id);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.error(e);
                 }
             }, "todo-delete-thread").start();
         });
@@ -314,7 +303,7 @@ public class DailyTab extends VBox {
         overlayCard.setPrefWidth(900);
         overlayCard.setMaxWidth(960);
         overlayCard.setMaxHeight(Region.USE_PREF_SIZE);
-        overlayCard.setOnMouseClicked(e -> e.consume());
+        overlayCard.setOnMouseClicked(Event::consume);
 
         Button closeButton = new Button();
         closeButton.setGraphic(new FontIcon("mdi2c-close"));
@@ -337,11 +326,11 @@ public class DailyTab extends VBox {
         overlayRoot.setPickOnBounds(true);
         overlayRoot.setOnMouseClicked(_ -> closeOverlay());
 
-        pomodoroController.showPlannerOverlay(overlayRoot);
+        trackerController.showPlannerOverlay(overlayRoot);
     }
 
     private void closeOverlay() {
-        pomodoroController.hidePlannerOverlay();
+        trackerController.hidePlannerOverlay();
     }
 
     private void saveCurrentNote() {
@@ -351,7 +340,7 @@ public class DailyTab extends VBox {
         LocalDate dateToSave = currentDate;
         new Thread(() -> {
             try { ApiClient.saveNote(dateToSave, content); }
-            catch (Exception e) { e.printStackTrace(); }
+            catch (Exception e) { Logger.error(e); }
             finally { savingNote = false; }
         }, "note-save-thread").start();
     }
@@ -359,24 +348,19 @@ public class DailyTab extends VBox {
     private void handleAddTodo(TextField todoField) {
         String text = todoField.getText().trim();
         if (text.isEmpty()) return;
-        String tagName = pomodoroController.getSelectedTag();
-        String taskName = pomodoroController.getSelectedTask();
-        if (tagName == null || tagName.isBlank() || taskName == null || taskName.isBlank()) {
-            NotificationManager.show("Select task", "Choose an active task before creating a to-do", NotificationManager.NotificationType.INFO);
-            return;
-        }
+
         todoField.clear();
 
         new Thread(() -> {
             try {
-                Map<String, Object> created = ApiClient.createTodo(currentDate, text, tagName, taskName);
+                Map<String, Object> created = ApiClient.createTodo(currentDate, text);
                 Platform.runLater(() -> {
                     todoListContainer.getChildren().removeIf(node -> node instanceof Label && node.getStyleClass().contains("empty-state-label"));
                     todoListContainer.getChildren().add(createTodoRow(created));
                     updateTodoHeaderCount();
                     closeOverlay();
                 });
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) { Logger.error(e); }
         }, "todo-create-thread").start();
     }
 
@@ -429,7 +413,7 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.updateTodoCompleted(id, nextState);
                 } catch (Exception e1) {
-                    e1.printStackTrace();
+                    Logger.error(e1);
                     Platform.runLater(() -> {
                         row.getProperties().put("todoCompleted", previousState);
                         data.put("completed", previousState);
@@ -454,19 +438,6 @@ public class DailyTab extends VBox {
         return row;
     }
 
-    private void checkEmptyDay(VBox content) {
-        boolean hasData = !deadlinesContainer.getChildren().isEmpty() ||
-                !dayEventsContainer.getChildren().isEmpty() ||
-                !todoListContainer.getChildren().isEmpty();
-
-        if (!hasData) {
-            content.getChildren().clear();
-            Label lblEmpty = new Label("No plan for this day yet.");
-            lblEmpty.getStyleClass().addAll(Styles.TEXT_MUTED, "daily-empty-day-label");
-            content.getChildren().add(lblEmpty);
-        }
-    }
-
     private void applyTodoCompletedState(HBox row, FontIcon completedIcon, FontIcon todoIcon, VBox info, boolean completed) {
         completedIcon.setIconLiteral(completed ? "mdi2c-check-circle" : "mdi2c-checkbox-blank-circle-outline");
         row.setOpacity(completed ? 0.75 : 1.0);
@@ -483,33 +454,6 @@ public class DailyTab extends VBox {
             todoListContainer.getChildren().add(newRow);
         }
         updateTodoHeaderCount();
-    }
-
-    public void updateHeaderDate(LocalDate date) {
-        this.currentDate = date;
-        noteArea.setText("");
-        updateNotesPreview();
-        deadlinesContainer.getChildren().clear();
-        dayEventsContainer.getChildren().clear();
-        todoListContainer.getChildren().clear();
-        closeOverlay();
-        rebuildUI();
-
-        new Thread(() -> {
-            try {
-                String note = ApiClient.getNoteByDate(date);
-                List<Map<String, Object>> todos = ApiClient.getTodosByDate(date);
-                Platform.runLater(() -> {
-                    noteArea.setText(note);
-                    updateNotesPreview();
-                    if (todos != null) {
-                        todos.forEach(t -> todoListContainer.getChildren().add(createTodoRow(t)));
-                    }
-                    ensureTodoPlaceholder();
-                    updateTodoHeaderCount();
-                });
-            } catch (Exception e) { e.printStackTrace(); }
-        }, "daily-data-loader").start();
     }
 
     public void updateDayContent(LocalDate date,
@@ -547,29 +491,6 @@ public class DailyTab extends VBox {
 
         fill(deadlinesContainer, sortedDeadlines, "No deadlines", this::createDeadlineRow);
         fill(dayEventsContainer, sortedScheduled, "No scheduled sessions", this::createEventRow);
-        updateDeadlineHeaderCount();
-    }
-
-    public void refreshData(List<Map<String, Object>> scheduled, List<Map<String, Object>> deadlines) {
-        List<Map<String, Object>> sortedDeadlines = deadlines == null ? List.of() : deadlines.stream()
-            .sorted(Comparator
-                    .comparing((Map<String, Object> item) -> !Boolean.TRUE.equals(item.get("allDay")))
-                    .thenComparing(item -> {
-                        LocalDateTime due = extractDeadlineDate(item);
-                        return due != null ? due : LocalDateTime.MAX;
-                    }))
-            .collect(Collectors.toList());
-
-        List<Map<String, Object>> sortedScheduled = scheduled == null ? List.of() : scheduled.stream()
-            .sorted(Comparator.comparing(item -> {
-                LocalDateTime start = extractScheduledStart(item);
-                return start != null ? start : LocalDateTime.MAX;
-            }))
-            .collect(Collectors.toList());
-
-        fill(deadlinesContainer, sortedDeadlines, "No deadlines", this::createDeadlineRow);
-        fill(dayEventsContainer, sortedScheduled, "No scheduled sessions", this::createEventRow);
-
         updateDeadlineHeaderCount();
     }
 
@@ -649,7 +570,7 @@ public class DailyTab extends VBox {
                     ApiClient.patchDeadline(((Number) data.get("id")).longValue(), null, null, null, null, false, nextState);
                     Platform.runLater(this::refreshPlannerAndMenu);
                 } catch (Exception error) {
-                    error.printStackTrace();
+                    Logger.error(error);
                     completedState[0] = previousState;
                     data.put("isCompleted", previousState);
                     Platform.runLater(() -> applyDeadlineCompletedState(row, completedIcon, info, badges, previousState));
@@ -662,7 +583,7 @@ public class DailyTab extends VBox {
         FontIcon deadlineIcon = new FontIcon("mdi2a-alarm");
         row.getChildren().addAll(completedButton, deadlineIcon, info, spacer, badges);
         row.setOnMouseClicked(e -> {
-            showDeadlinePopup(data, e.getScreenX(), e.getScreenY());
+            showDeadlinePopup(data);
             e.consume();
         });
         row.setCursor(javafx.scene.Cursor.HAND);
@@ -698,9 +619,18 @@ public class DailyTab extends VBox {
         time.getStyleClass().addAll(Styles.TEXT_MUTED, Styles.TEXT_SMALL);
 
         info.getChildren().addAll(title, time);
-        row.getChildren().add(info);
+        
+        Region colorBar = new Region();
+        colorBar.getStyleClass().add("event-row-color-bar");
+        if (rawTagColor instanceof String tagColor && !tagColor.isBlank()) {
+            colorBar.setStyle("-fx-background-color: " + tagColor + ";");
+        } else {
+            colorBar.setStyle("-fx-background-color: -color-accent;");
+        }
+        
+        row.getChildren().addAll(colorBar, info);
         row.setOnMouseClicked(e -> {
-            showScheduledSessionPopup(data, e.getScreenX(), e.getScreenY());
+            showScheduledSessionPopup(data);
             e.consume();
         });
         row.setCursor(javafx.scene.Cursor.HAND);
@@ -723,13 +653,13 @@ public class DailyTab extends VBox {
         return label;
     }
 
-    private Label createHeader(String title) {
-        Label header = new Label(title);
+    private Label createHeader() {
+        Label header = new Label("Notes");
         header.getStyleClass().add("section-header");
         return header;
     }
 
-    private void showScheduledSessionPopup(Map<String, Object> data, double screenX, double screenY) {
+    private void showScheduledSessionPopup(Map<String, Object> data) {
         closeActivePopup();
         boolean isEdit = data.get("id") != null;
 
@@ -798,7 +728,7 @@ public class DailyTab extends VBox {
                     );
                 }
             } catch (Exception error) {
-                error.printStackTrace();
+                Logger.error(error);
                 return;
             }
             popup.hide();
@@ -823,7 +753,7 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.deleteScheduledSession(((Number) data.get("id")).longValue());
                 } catch (Exception error) {
-                    error.printStackTrace();
+                    Logger.error(error);
                     return;
                 }
                 popup.hide();
@@ -832,10 +762,10 @@ public class DailyTab extends VBox {
             root.getChildren().add(delete);
         }
 
-        showPopup(popup, root, screenX, screenY);
+        showPopup(popup, root);
     }
 
-    private void showDeadlinePopup(Map<String, Object> data, double screenX, double screenY) {
+    private void showDeadlinePopup(Map<String, Object> data) {
         closeActivePopup();
         boolean isEdit = data.get("id") != null;
 
@@ -922,7 +852,7 @@ public class DailyTab extends VBox {
                 popup.hide();
                 refreshPlannerAndMenu();
             } catch (Exception error) {
-                error.printStackTrace();
+                Logger.error(error);
             }
         });
 
@@ -946,7 +876,7 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.deleteDeadline(((Number) data.get("id")).longValue());
                 } catch (Exception error) {
-                    error.printStackTrace();
+                    Logger.error(error);
                     return;
                 }
                 popup.hide();
@@ -955,7 +885,7 @@ public class DailyTab extends VBox {
             root.getChildren().add(delete);
         }
 
-        showPopup(popup, root, screenX, screenY);
+        showPopup(popup, root);
     }
 
     private Popup buildPopup() {
@@ -970,8 +900,8 @@ public class DailyTab extends VBox {
 
     private VBox popupRoot() {
         VBox root = new VBox(12);
-        root.getStyleClass().addAll("calendar-popup", pomodoroController.getCurrentTheme());
-        root.getStylesheets().add(getClass().getResource("/com/frandm/studytracker/css/styles.css").toExternalForm());
+        root.getStyleClass().addAll("calendar-popup", trackerController.getCurrentTheme());
+        root.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/frandm/studytracker/css/styles.css")).toExternalForm());
         root.setPadding(new Insets(20));
         root.setPrefWidth(420);
         return root;
@@ -983,7 +913,7 @@ public class DailyTab extends VBox {
         return label;
     }
 
-    private void showPopup(Popup popup, VBox root, double screenX, double screenY) {
+    private void showPopup(Popup popup, VBox root) {
         popup.getContent().add(root);
         root.applyCss();
         root.layout();
@@ -1066,7 +996,7 @@ public class DailyTab extends VBox {
         List<Map<String, Object>> currentDeadlines = deadlinesContainer.getChildren().stream()
                 .filter(node -> node.getProperties().containsKey("data"))
                 .map(node -> (Map<String, Object>) node.getProperties().get("data"))
-                .collect(Collectors.toList());
+                .toList();
 
         long total = currentDeadlines.size();
         long completed = currentDeadlines.stream()

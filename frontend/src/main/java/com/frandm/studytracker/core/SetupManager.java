@@ -1,7 +1,8 @@
 package com.frandm.studytracker.core;
 
 import com.frandm.studytracker.client.ApiClient;
-import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.controllers.TrackerController;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -18,9 +19,9 @@ public class SetupManager {
     private String filterTag = null;
     private String selectedTag = null;
     private String selectedTask = null;
-    private final PomodoroController controller;
+    private final TrackerController controller;
 
-    public SetupManager(PomodoroController p){
+    public SetupManager(TrackerController p){
         this.controller = p;
     }
 
@@ -35,22 +36,25 @@ public class SetupManager {
             Button createBtn = new Button("+ Create Task: '" + input + "'");
             createBtn.setMaxWidth(Double.MAX_VALUE);
             if(filterTag != null){
-                createBtn.setOnAction(e -> {
+                createBtn.setOnAction(_ -> new Thread(() -> {
                     try {
                         ApiClient.getOrCreateTask(filterTag, colors.getOrDefault(filterTag, "#ffffff"), input);
+                        Platform.runLater(() -> {
+                            selectedTask = input;
+                            selectedTag = filterTag;
+                            controller.refreshDatabaseData();
+                            updateFuzzyResults(input, container, tagsMap, colors, onSelect);
+                            controller.handleStartSessionFromSetup();
+                            onSelect.run();
+                            NotificationManager.show("Task created", "Successfully created " + input, NotificationManager.NotificationType.SUCCESS);
+                        });
                     } catch (Exception err) {
-                        System.err.println("Error creating task: " + err.getMessage());
+                        Logger.error("Error creating task", err);
+                        Platform.runLater(() -> controller.showBackendOperationError("Task could not be created", err));
                     }
-                    selectedTask = input;
-                    selectedTag = filterTag;
-                    controller.refreshDatabaseData();
-                    updateFuzzyResults(input, container, tagsMap, colors, onSelect);
-                    controller.handleStartSessionFromSetup();
-                    onSelect.run();
-                    NotificationManager.show("Task created", "Successfully created " + input, NotificationManager.NotificationType.SUCCESS);
-                });
+                }, "task-create-thread").start());
             }else{
-                createBtn.setOnAction(e -> NotificationManager.show("Cant create task", "A tag must be selected", NotificationManager.NotificationType.ERROR));
+                createBtn.setOnAction(_ -> NotificationManager.show("Cant create task", "A tag must be selected", NotificationManager.NotificationType.ERROR));
             }
             container.getChildren().addAll(createBtn, new Separator());
         }
@@ -89,7 +93,7 @@ public class SetupManager {
         btn.setAlignment(Pos.CENTER_LEFT);
         String color = colors.getOrDefault(tag, "#ffffff");
         btn.setStyle("-fx-border-color: " + color + "; -fx-border-width: 0 0 0 4;");
-        btn.setOnAction(e -> {
+        btn.setOnAction(_ -> {
             selectedTask = task;
             selectedTag = tag;
             controller.handleStartSessionFromSetup();
@@ -115,9 +119,9 @@ public class SetupManager {
 
             Button deleteBtn = new Button();
             deleteBtn.getStyleClass().add("card-options-button");
-            FontIcon optionsIcon = new FontIcon("mdi2d-dots-horizontal");
-            optionsIcon.getStyleClass().add("options-icon");
-            deleteBtn.setGraphic(optionsIcon);
+            FontIcon deleteIcon = new FontIcon("mdi2t-trash-can-outline");
+            deleteIcon.getStyleClass().add("options-icon");
+            deleteBtn.setGraphic(deleteIcon);
 
             deleteBtn.setOnAction(e -> {
                 e.consume();
@@ -128,7 +132,7 @@ public class SetupManager {
             });
 
             row.getChildren().addAll(colorCircle, tagLabel, spacer, deleteBtn);
-            row.setOnMouseClicked(e -> {
+            row.setOnMouseClicked(_ -> {
                 filterTag = (name.equals(filterTag)) ? null : name;
                 onFilterChange.run();
                 renderTagsList(container, colors, tagIds, onFilterChange);
@@ -139,7 +143,6 @@ public class SetupManager {
 
     public String getSelectedTag() { return selectedTag; }
     public String getSelectedTask() { return selectedTask; }
-    public String getFilterTag() { return filterTag; }
 
     public void setSelectedTag(String tag) { this.selectedTag = tag; }
     public void setSelectedTask(String task) { this.selectedTask = task; }

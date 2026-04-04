@@ -1,6 +1,7 @@
 package com.frandm.studytracker.ui.views.logs;
 
 import com.frandm.studytracker.client.ApiClient;
+import com.frandm.studytracker.core.Logger;
 import com.frandm.studytracker.models.Session;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -21,7 +22,6 @@ public class CalendarTab extends VBox {
     private GridPane calendarGrid;
     private GridPane headerGrid;
     private ScrollPane scrollPane;
-    private HBox headerBar;
     private LocalDate currentWeekStart;
     private final LogsController logsController;
     private final double ROW_HEIGHT = 60.0;
@@ -40,7 +40,7 @@ public class CalendarTab extends VBox {
     }
 
     private void initializeUI() {
-        headerBar = new HBox(15);
+        HBox headerBar = new HBox(15);
         headerBar.setAlignment(Pos.CENTER_LEFT);
         headerBar.setPadding(new Insets(10, 30, 10, 30));
         headerBar.getStyleClass().add("planner-nav-bar");
@@ -108,6 +108,11 @@ public class CalendarTab extends VBox {
     }
 
     private void loadAndRefresh() {
+        if (!ApiClient.isConfigured()) {
+            weekSessions = new ArrayList<>();
+            refresh();
+            return;
+        }
         loadWeekSessions();
         refresh();
     }
@@ -152,7 +157,7 @@ public class CalendarTab extends VBox {
         timeGrid.setPrefHeight(ROW_HEIGHT * 24);
         timeGrid.setMinHeight(ROW_HEIGHT * 24);
 
-        for (int h = 0; h < 24; h++) {
+        for (int h = 1; h < 24; h++) {
             Label lblHour = new Label(String.format("%02d:00", h));
             lblHour.getStyleClass().add("calendar-hour-label");
             lblHour.setLayoutY(h * ROW_HEIGHT - 7);
@@ -178,7 +183,7 @@ public class CalendarTab extends VBox {
             columnCanvas.setMinHeight(ROW_HEIGHT * 24);
             dayColumns[i] = columnCanvas;
 
-            for (int h = 0; h < 24; h++) {
+            for (int h = 1; h < 24; h++) {
                 Region hourLine = new Region();
                 hourLine.getStyleClass().add("calendar-hour-line");
                 hourLine.setPrefHeight(1);
@@ -450,19 +455,11 @@ public class CalendarTab extends VBox {
                     currentWeekStart.plusDays(6).atTime(23, 59, 59).toString()
             );
         } catch (Exception e) {
-            System.err.println("[CalendarTab] Error loading sessions: " + e.getMessage());
-            e.printStackTrace();
+            if (ApiClient.isConfigured()) {
+                Logger.error("Error loading sessions", e);
+            }
             weekSessions = new ArrayList<>();
         }
-    }
-
-    public void setCurrentWeekStart(LocalDate date) {
-        this.currentWeekStart = date.with(DayOfWeek.MONDAY);
-    }
-
-    public String getHeaderTitle() {
-        String m = currentWeekStart.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
-        return m.substring(0, 1).toUpperCase() + m.substring(1) + " " + currentWeekStart.getYear();
     }
 
     private LocalDateTime parseDateValue(Object value) {
