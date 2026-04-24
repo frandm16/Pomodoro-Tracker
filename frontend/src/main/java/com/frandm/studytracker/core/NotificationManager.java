@@ -3,6 +3,7 @@ package com.frandm.studytracker.core;
 import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.application.Platform;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
@@ -45,6 +46,11 @@ public class NotificationManager {
     }
 
     public static void show(String title, String message, NotificationType type) {
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> show(title, message, type));
+            return;
+        }
+
         if (container == null) return;
         if (engine != null && !engine.isEnableToastNotifications()) return;
 

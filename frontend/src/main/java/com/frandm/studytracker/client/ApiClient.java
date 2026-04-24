@@ -18,6 +18,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.frandm.studytracker.core.NotificationManager;
 import com.frandm.studytracker.core.TagEventBus;
 import com.frandm.studytracker.core.Logger;
 
@@ -219,6 +221,7 @@ public class ApiClient {
         invalidateTagsCache();
         Long id = result.get("id") != null ? ((Number) result.get("id")).longValue() : null;
         TagEventBus.getInstance().publish(TagEventBus.Type.CREATED, id, name);
+        NotificationManager.show("Success", "Tag created: " + name, NotificationManager.NotificationType.SUCCESS);
     }
 
     public static void patchTag(long id, Map<String, Object> body) throws Exception {
@@ -238,6 +241,7 @@ public class ApiClient {
         delete("/tags/" + id);
         invalidateTagsCache();
         TagEventBus.getInstance().publish(TagEventBus.Type.DELETED, id, null);
+        NotificationManager.show("Success", "Tag deleted" , NotificationManager.NotificationType.SUCCESS);
     }
 
     // --- Tasks ---
@@ -257,6 +261,7 @@ public class ApiClient {
     public static void getOrCreateTask(String tagName, String tagColor, String taskName) throws Exception {
         post("/tasks", Map.of("tagName", tagName, "tagColor", tagColor, "taskName", taskName));
         invalidateTasksCache(tagName);
+        NotificationManager.show("Success", "Task created: " + taskName, NotificationManager.NotificationType.SUCCESS);
     }
 
     public static void deleteTask(long id, String tagName) throws Exception {
@@ -266,6 +271,7 @@ public class ApiClient {
         } else {
             cachedTasksByTag.clear();
         }
+        NotificationManager.show("Success", "Task deleted", NotificationManager.NotificationType.SUCCESS);
     }
 
     // --- Sessions ---
@@ -330,6 +336,7 @@ public class ApiClient {
                 "tagName", tagName, "taskName", taskName,
                 "title", title, "startDate", start, "endDate", end
         ));
+        NotificationManager.show("Success", "Successfully created " + title + " scheduled session", NotificationManager.NotificationType.SUCCESS);
     }
 
     public static void updateScheduledSession(long id, String tagName, String taskName,
@@ -339,10 +346,12 @@ public class ApiClient {
                 "title", title, "startDate", start, "endDate", end
         )), new TypeReference<>() {
         });
+        NotificationManager.show("Success", "Successfully updated " + title + " scheduled session", NotificationManager.NotificationType.SUCCESS);
     }
 
     public static void deleteScheduledSession(long id) throws Exception {
         delete("/scheduled/" + id);
+        NotificationManager.show("Success", "Successfully deleted scheduled session", NotificationManager.NotificationType.SUCCESS);
     }
 
     // --- Stats ---
@@ -624,10 +633,9 @@ public class ApiClient {
         return mapper.readValue(get("/deadlines"), new TypeReference<>() {});
     }
 
-
-    private static void createDeadline(String tagName, String tagColor, String taskName,
-                                       String title, String description, String urgency,
-                                       String dueDate, boolean allDay, Boolean isCompleted) throws Exception {
+    public static void saveDeadline(String tagName, String tagColor, String taskName,
+                                    String title, String description, String urgency,
+                                    String dueDate, boolean allDay, Boolean isCompleted) throws Exception {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("tagName", tagName);
         body.put("tagColor", tagColor);
@@ -640,12 +648,7 @@ public class ApiClient {
         if (isCompleted != null) body.put("isCompleted", isCompleted);
         mapper.readValue(post("/deadlines", body), new TypeReference<>() {
         });
-    }
-
-    public static void saveDeadline(String tagName, String tagColor, String taskName,
-                                    String title, String description, String urgency,
-                                    String dueDate, boolean allDay, Boolean isCompleted) throws Exception {
-        createDeadline(tagName, tagColor, taskName, title, description, urgency, dueDate, allDay, isCompleted);
+        NotificationManager.show("Success", "Successfully created " + title + " deadline", NotificationManager.NotificationType.SUCCESS);
     }
 
     public static void updateDeadline(long id, String tagName, String tagColor, String taskName,
@@ -663,6 +666,7 @@ public class ApiClient {
         if (isCompleted != null) body.put("isCompleted", isCompleted);
         mapper.readValue(put("/deadlines/" + id, body), new TypeReference<>() {
         });
+        NotificationManager.show("Success", "Successfully updated " + title + " deadline", NotificationManager.NotificationType.SUCCESS);
     }
 
     public static void patchDeadline(long id, String title, String description, String urgency,
@@ -680,6 +684,7 @@ public class ApiClient {
 
     public static void deleteDeadline(long id) throws Exception {
         delete("/deadlines/" + id);
+        NotificationManager.show("Success", "Successfully deleted deadline", NotificationManager.NotificationType.SUCCESS);
     }
 
     public static String formatApiTimestamp(LocalDateTime value) {

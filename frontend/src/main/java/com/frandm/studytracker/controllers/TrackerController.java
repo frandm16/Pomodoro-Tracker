@@ -34,7 +34,7 @@ import java.util.*;
 
 public class TrackerController {
 
-    public static final String PROJECT_VERSION = "v2.0.1";
+    public static final String PROJECT_VERSION = "v2.0.2";
 
     @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane, shortcutMenuPane, connectionSetupPane, welcomeGuidePane;
     @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle, connectionSetupBox, welcomeGuideBox,
@@ -1094,9 +1094,6 @@ public class TrackerController {
             new Thread(() -> {
                 try {
                     ApiClient.createTag(newTagName, hexColor);
-                    Platform.runLater(() ->
-                            NotificationManager.show("Tag created", newTagName, NotificationManager.NotificationType.SUCCESS)
-                    );
                 } catch (Exception e) {
                     Logger.error("Error creating tag", e);
                     Platform.runLater(() -> showBackendOperationError("Tag could not be created", e));
@@ -1890,7 +1887,6 @@ public class TrackerController {
                             resetFullApp();
                         }
                         refreshDatabaseData();
-                        NotificationManager.show("Tag Deleted", "Success", NotificationManager.NotificationType.SUCCESS);
                     });
                 } catch (Exception e) {
                     Logger.error("Error deleting tag", e);
@@ -1917,7 +1913,6 @@ public class TrackerController {
                             setupManager.resetSelection();
                         }
                         refreshDatabaseData();
-                        NotificationManager.show("Task Deleted", "Success", NotificationManager.NotificationType.SUCCESS);
                     });
                 } catch (Exception e) {
                     Logger.error("Error deleting task", e);

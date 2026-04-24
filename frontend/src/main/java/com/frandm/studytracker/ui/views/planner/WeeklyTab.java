@@ -2,7 +2,6 @@ package com.frandm.studytracker.ui.views.planner;
 
 import com.frandm.studytracker.client.ApiClient;
 import com.frandm.studytracker.core.NotificationManager;
-import com.frandm.studytracker.core.TagEventBus;
 import com.frandm.studytracker.core.Logger;
 import com.frandm.studytracker.controllers.TrackerController;
 import javafx.application.Platform;
@@ -48,11 +47,14 @@ public class WeeklyTab extends VBox {
         this.getStyleClass().add("calendar-root");
         VBox.setVgrow(this, Priority.ALWAYS);
         initializeUI();
-        TagEventBus.getInstance().subscribe(_ -> cachedTagData = null);
     }
 
     public void setRefreshAction(Runnable refreshAction) {
         this.refreshAction = refreshAction != null ? refreshAction : () -> {};
+    }
+
+    public void invalidateTagSelectionCache() {
+        cachedTagData = null;
     }
 
     public void refreshData(LocalDate weekStart, List<Map<String, Object>> scheduled, List<Map<String, Object>> deadlines) {
@@ -662,12 +664,14 @@ public class WeeklyTab extends VBox {
         configureTagSelectorsAsync(cTags, cTasks, initialTask, btnS);
 
         btnS.setOnAction(_ -> {
-
-            if (hs.getText().isEmpty() ||
-                    ms.getText().isEmpty() ||
-                    he.getText().isEmpty() ||
-                    me.getText().isEmpty() ||
-                    cTasks.getValue() == null) return;
+            if (!PlannerHelpers.requireDate(dpStart, "Start")
+                    || !PlannerHelpers.requireDate(dpEnd, "End")
+                    || !PlannerHelpers.requireSelection(cTags, "Tag")
+                    || !PlannerHelpers.requireSelection(cTasks, "Task")
+                    || !PlannerHelpers.requireTime(hs, ms, "Start")
+                    || !PlannerHelpers.requireTime(he, me, "End")) {
+                return;
+            }
 
             LocalDateTime fS = dpStart.getValue()
                     .atTime(PlannerHelpers.parseInt(hs.getText()), PlannerHelpers.parseInt(ms.getText()));
@@ -675,12 +679,7 @@ public class WeeklyTab extends VBox {
             LocalDateTime fE = dpEnd.getValue()
                     .atTime(PlannerHelpers.parseInt(he.getText()), PlannerHelpers.parseInt(me.getText()));
 
-            if (!fS.isBefore(fE)) {
-                NotificationManager.show(
-                        "Error",
-                        "Start time must be earlier than end time",
-                        NotificationManager.NotificationType.ERROR
-                );
+            if (!PlannerHelpers.requireChronologicalRange(fS, fE)) {
                 return;
             }
 
@@ -814,7 +813,13 @@ public class WeeklyTab extends VBox {
         String initialTask = String.valueOf(deadline.getOrDefault("task_name", deadline.getOrDefault("taskName", "")));
         configureTagSelectorsAsync(tagBox, taskBox, initialTask, saveButton);
         saveButton.setOnAction(_ -> {
-            if (duePicker.getValue() == null || taskBox.getValue() == null || urgencyBox.getValue() == null) return;
+            if (!PlannerHelpers.requireDate(duePicker, "Due")
+                    || !PlannerHelpers.requireSelection(tagBox, "Tag")
+                    || !PlannerHelpers.requireSelection(taskBox, "Task")
+                    || !PlannerHelpers.requireValue(urgencyBox.getValue(), "Urgency")
+                    || (!allDayBox.isSelected() && !PlannerHelpers.requireTime(hourField, minuteField, "Due"))) {
+                return;
+            }
             int hour = allDayBox.isSelected() ? 0 : PlannerHelpers.parseInt(hourField.getText());
             int minute = allDayBox.isSelected() ? 0 : PlannerHelpers.parseInt(minuteField.getText());
             LocalDateTime newDue = duePicker.getValue().atTime(hour, minute);

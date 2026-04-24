@@ -1883,7 +1883,7 @@
     -fx-font-weight: 500;
 }
 
-.calendar-column-canvas {
+.day-column-wrapper  {
     -fx-background-color: rgba(255,255,255,0.01);
     -fx-background-radius: 8;
 }

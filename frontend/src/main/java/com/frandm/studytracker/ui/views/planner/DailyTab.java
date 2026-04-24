@@ -705,9 +705,21 @@ public class DailyTab extends VBox {
         save.getStyleClass().add("button-primary");
         save.setMaxWidth(Double.MAX_VALUE);
         save.setOnAction(_ -> {
-            if (dpStart.getValue() == null || dpEnd.getValue() == null || tasks.getValue() == null) return;
+            if (!PlannerHelpers.requireDate(dpStart, "Start")
+                    || !PlannerHelpers.requireDate(dpEnd, "End")
+                    || !PlannerHelpers.requireSelection(tags, "Tag")
+                    || !PlannerHelpers.requireSelection(tasks, "Task")
+                    || !PlannerHelpers.requireTime(hs, ms, "Start")
+                    || !PlannerHelpers.requireTime(he, me, "End")) {
+                return;
+            }
+
             LocalDateTime newStart = dpStart.getValue().atTime(PlannerHelpers.parseInt(hs.getText()), PlannerHelpers.parseInt(ms.getText()));
             LocalDateTime newEnd = dpEnd.getValue().atTime(PlannerHelpers.parseInt(he.getText()), PlannerHelpers.parseInt(me.getText()));
+            if (!PlannerHelpers.requireChronologicalRange(newStart, newEnd)) {
+                return;
+            }
+
             try {
                 if (isEdit) {
                     ApiClient.updateScheduledSession(
@@ -729,6 +741,7 @@ public class DailyTab extends VBox {
                 }
             } catch (Exception error) {
                 Logger.error(error);
+                trackerController.showBackendOperationError("Scheduled session could not be saved", error);
                 return;
             }
             popup.hide();
@@ -817,7 +830,14 @@ public class DailyTab extends VBox {
         save.getStyleClass().add("button-primary");
         save.setMaxWidth(Double.MAX_VALUE);
         save.setOnAction(_ -> {
-            if (dueDate.getValue() == null || tasks.getValue() == null || urgency.getValue() == null) return;
+            if (!PlannerHelpers.requireDate(dueDate, "Due")
+                    || !PlannerHelpers.requireSelection(tags, "Tag")
+                    || !PlannerHelpers.requireSelection(tasks, "Task")
+                    || !PlannerHelpers.requireValue(urgency.getValue(), "Urgency")
+                    || (!allDay.isSelected() && !PlannerHelpers.requireTime(hourField, minuteField, "Due"))) {
+                return;
+            }
+
             int hour = allDay.isSelected() ? 0 : PlannerHelpers.parseInt(hourField.getText());
             int minute = allDay.isSelected() ? 0 : PlannerHelpers.parseInt(minuteField.getText());
             LocalDateTime newDue = dueDate.getValue().atTime(hour, minute);
@@ -853,6 +873,7 @@ public class DailyTab extends VBox {
                 refreshPlannerAndMenu();
             } catch (Exception error) {
                 Logger.error(error);
+                trackerController.showBackendOperationError("Deadline could not be saved", error);
             }
         });
 
@@ -877,6 +898,7 @@ public class DailyTab extends VBox {
                     ApiClient.deleteDeadline(((Number) data.get("id")).longValue());
                 } catch (Exception error) {
                     Logger.error(error);
+                    trackerController.showBackendOperationError("Deadline could not be deleted", error);
                     return;
                 }
                 popup.hide();

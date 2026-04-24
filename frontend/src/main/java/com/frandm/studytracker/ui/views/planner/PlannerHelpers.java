@@ -1,10 +1,13 @@
 package com.frandm.studytracker.ui.views.planner;
 
 import com.frandm.studytracker.client.ApiClient;
+import com.frandm.studytracker.core.NotificationManager;
 import javafx.geometry.Pos;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -87,6 +90,46 @@ public class PlannerHelpers {
             return 0;
         }
         return Integer.parseInt(value);
+    }
+
+    public static boolean requireDate(DatePicker datePicker, String label) {
+        if (datePicker.getValue() != null) {
+            return true;
+        }
+        NotificationManager.show("Missing data", label + " date is required", NotificationManager.NotificationType.ERROR);
+        return false;
+    }
+
+    public static boolean requireSelection(ComboBox<String> comboBox, String label) {
+        if (comboBox.getValue() != null && !comboBox.getValue().isBlank()) {
+            return true;
+        }
+        NotificationManager.show("Missing data", label + " must be selected", NotificationManager.NotificationType.ERROR);
+        return false;
+    }
+
+    public static boolean requireTime(TextField hourField, TextField minuteField, String label) {
+        if (!hourField.getText().isBlank() && !minuteField.getText().isBlank()) {
+            return true;
+        }
+        NotificationManager.show("Missing data", label + " time is required", NotificationManager.NotificationType.ERROR);
+        return false;
+    }
+
+    public static boolean requireValue(String value, String label) {
+        if (value != null && !value.isBlank()) {
+            return true;
+        }
+        NotificationManager.show("Missing data", label + " must be selected", NotificationManager.NotificationType.ERROR);
+        return false;
+    }
+
+    public static boolean requireChronologicalRange(LocalDateTime start, LocalDateTime end) {
+        if (start.isBefore(end)) {
+            return true;
+        }
+        NotificationManager.show("Invalid time range", "Start time must be earlier than end time", NotificationManager.NotificationType.ERROR);
+        return false;
     }
 
     public record TagSelectionData(Map<String, List<String>> tagMap, Map<String, String> tagColors) {}

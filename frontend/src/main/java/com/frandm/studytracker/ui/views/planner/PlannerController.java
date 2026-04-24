@@ -2,6 +2,7 @@ package com.frandm.studytracker.ui.views.planner;
 
 import com.frandm.studytracker.client.ApiClient;
 import com.frandm.studytracker.core.Logger;
+import com.frandm.studytracker.core.TagEventBus;
 import com.frandm.studytracker.controllers.TrackerController;
 import javafx.application.Platform;
 import java.time.LocalDate;
@@ -30,6 +31,10 @@ public class PlannerController {
         this.dailyTab.setRefreshAction(this::refreshDailyOnly);
         this.weeklyTab.setRefreshAction(this::refresh);
         this.view = new PlannerView(controller, this, dailyTab, weeklyTab);
+        TagEventBus.getInstance().subscribe(_ -> {
+            weeklyTab.invalidateTagSelectionCache();
+            refresh();
+        });
         if (ApiClient.isConfigured()) {
             refresh();
         }

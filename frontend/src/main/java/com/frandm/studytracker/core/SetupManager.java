@@ -48,7 +48,6 @@ public class SetupManager {
                             updateFuzzyResults(input, container, tagsMap, colors, onSelect);
                             controller.handleStartSessionFromSetup();
                             onSelect.run();
-                            NotificationManager.show("Task created", "Successfully created " + input, NotificationManager.NotificationType.SUCCESS);
                         });
                     } catch (Exception err) {
                         Logger.error("Error creating task", err);
